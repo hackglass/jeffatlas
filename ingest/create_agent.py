@@ -148,6 +148,15 @@ TOOLS = [
         },
     },
     {
+        "name": "show_usage",
+        "description": "Put the Usage view on the screen: a Sankey diagram of every question people have asked you so far (who asked, by access level -> kind of question: by topic, by person, staffing move, team shape, by region, suggestion, other -> what it was about -> what happened: answered, nothing found, declined) plus a leaderboard of the most-asked topics. Use it when someone asks how you are being used, what people ask about, what is popular, or wants a usage report for leadership. Returns a short summary you can narrate; the screen is interactive and the user can click a node to filter.",
+        "parameters": {
+            "type": "object",
+            "properties": {"focus": {"type": "string", "description": "Optional node to highlight, e.g. a topic name, a kind ('by topic'), an outcome ('nothing found') or an access level ('New hire')."}},
+            "required": [],
+        },
+    },
+    {
         "name": "board_clear",
         "description": "Wipe the whiteboard and go back to the org graph. Use when changing subject.",
         "parameters": {"type": "object", "properties": {}, "required": []},

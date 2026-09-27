@@ -30,11 +30,31 @@ That route needs a server, so it runs in `npm run dev` (or any Node host)
 but not on the static GitHub Pages build, where Jeff falls back to
 `board_write`. Preview the board without talking: `http://localhost:3000/?board=demo`.
 
+Jeff can also show how he is being used. `show_usage` puts a Sankey of every
+question from the saved transcripts on the canvas (who asked → kind of
+question → topic → outcome) with a leaderboard of topics, so leadership can see
+what people come to Jeff for and where he came up empty. Refresh it with
+`python3 ingest/fetch_transcripts.py`, which pulls the ElevenLabs transcripts
+into `ingest/transcripts/` and writes `src/public/data/usage.json`. Preview:
+`http://localhost:3000/?view=usage`.
+
+Every conversation is recorded. ElevenLabs keeps the full transcript and every
+tool call (name, parameters, result) for each session, and the page passes the
+viewer's name or email (the "you are" box) as the session's user id.
+`/xray` opens that record: the list of conversations by user, with flags for
+the ones where Jeff found nothing, declined, or got a suggestion, and each one
+turn by turn with the tool calls expanded. It reads `/api/convos`, which uses
+the server-side ElevenLabs key and snapshots every record to
+`ingest/transcripts/`, so it works in `npm run dev` or on a Node host but not
+on the static Pages build.
+
 - `src/` — Next.js app (static export, deploys to GitHub Pages)
   - `app/page.tsx` — the page; wires the agent's client tools to the data
   - `components/JeffBlob.tsx` + `app/jeff.css` — the green blob (lifted from the Situent voice dock)
   - `components/OrgGraph.tsx` — animated skill/person graph
   - `components/Whiteboard.tsx` + `lib/board.ts` — Jeff's animated sketchpad and its scene format
+  - `components/UsageSankey.tsx` — the usage Sankey and topic leaderboard
+  - `app/xray/page.tsx` + `app/api/convos/route.ts` + `lib/convos.ts` — the conversation record and its viewer
   - `app/api/board/route.ts` — the drawing brain (needs `SCIFORIUM_API_KEY` or `ANTHROPIC_API_KEY`)
   - `lib/jeffData.ts` — ranking, person lookup, impact analysis
 - `ingest/` — data collection and agent setup
@@ -42,6 +62,7 @@ but not on the static GitHub Pages build, where Jeff falls back to
   - `export_json.py` — writes `src/public/data/*.json`
   - `jeff_prompt.md` — Jeff's personality and rules
   - `create_agent.py` — creates/updates the ElevenLabs agent
+  - `fetch_transcripts.py` — pulls conversation transcripts and classifies every question into `usage.json`
 - `data/` — `boston_people.csv`, `redhat.db`
 
 ## Setup

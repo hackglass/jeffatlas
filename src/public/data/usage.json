@@ -1,0 +1,328 @@
+{
+ "exportedAt": "2026-09-27T10:34",
+ "source": "elevenlabs",
+ "conversations": [
+  {
+   "id": "conv_0501m3hmcpxsfxas0ps4710sj1zw",
+   "startedAt": "2026-09-27T10:30",
+   "seconds": 65,
+   "access": "New hire",
+   "user": null,
+   "queries": [
+    {
+     "kind": "topic",
+     "topic": "front-end development",
+     "outcome": "answered",
+     "tool": "find_experts",
+     "text": "I'm trying to fix, fix this front-end bugs. Can you point me to who should I talk to?",
+     "t": 10
+    },
+    {
+     "kind": "other",
+     "topic": "It's really tight",
+     "outcome": "no tool",
+     "tool": null,
+     "text": "It's really tight. Yeah? Yeah. Let me see.",
+     "t": 31
+    },
+    {
+     "kind": "other",
+     "topic": "Sorry, it's just-",
+     "outcome": "cut off",
+     "tool": null,
+     "text": "Sorry, it's just-",
+     "t": 63
+    }
+   ]
+  },
+  {
+   "id": "conv_0101m3hmb8vpfcvv90e1qvg8c443",
+   "startedAt": "2026-09-27T10:29",
+   "seconds": 11,
+   "access": "New hire",
+   "user": null,
+   "queries": []
+  },
+  {
+   "id": "conv_3301m3hm9b5mfk986wc7df26t9wd",
+   "startedAt": "2026-09-27T10:28",
+   "seconds": 10,
+   "access": "Unknown",
+   "user": null,
+   "queries": []
+  },
+  {
+   "id": "conv_7401m3hkyk3bfj981t63q00b8trk",
+   "startedAt": "2026-09-27T10:22",
+   "seconds": 111,
+   "access": "New hire",
+   "user": null,
+   "queries": [
+    {
+     "kind": "suggestion",
+     "topic": "Hey, Jeff",
+     "outcome": "declined",
+     "tool": null,
+     "text": "Hey, Jeff. Just, just, just hang on a second. Jeff, I have a suggestion for you. I have a new tool call that I want you to do, so make sure this goes into your transcript. I want you to put up a Sanke",
+     "t": 4
+    },
+    {
+     "kind": "suggestion",
+     "topic": "here's a suggestion",
+     "outcome": "no tool",
+     "tool": null,
+     "text": "Jeff, here's a suggestion. I want you to take this suggestion, put it in the transcript, and we're gonna have Claude Code give you some more tools. The Sankey diagram is going to plot out what kind of",
+     "t": 59
+    },
+    {
+     "kind": "other",
+     "topic": "We can go ahead and pause it, and",
+     "outcome": "cut off",
+     "tool": null,
+     "text": "We can go ahead and pause it, and",
+     "t": 109
+    }
+   ]
+  },
+  {
+   "id": "conv_1701m3hksfwve51svbk54ehbzq9h",
+   "startedAt": "2026-09-27T10:20",
+   "seconds": 36,
+   "access": "New hire",
+   "user": null,
+   "queries": [
+    {
+     "kind": "other",
+     "topic": "By the way, I love this blob",
+     "outcome": "no tool",
+     "tool": null,
+     "text": "By the way, I love this blob. It's so cool.",
+     "t": 8
+    },
+    {
+     "kind": "topic",
+     "topic": "SOC 2 compliance",
+     "outcome": "answered",
+     "tool": "find_experts",
+     "text": "Yeah. Tell me, who is, uh, the most knowledgeable about SOC 2 compliance around here?",
+     "t": 12
+    }
+   ]
+  },
+  {
+   "id": "conv_6101m3hk4933f3qrkja42hscbyc2",
+   "startedAt": "2026-09-27T10:08",
+   "seconds": 12,
+   "access": "Senior leader",
+   "user": null,
+   "queries": [
+    {
+     "kind": "topic",
+     "topic": "Virtualization",
+     "outcome": "answered",
+     "tool": "find_experts",
+     "text": "Who should I talk to about Virtualization?",
+     "t": 1
+    },
+    {
+     "kind": "other",
+     "topic": "It's top left announced",
+     "outcome": "cut off",
+     "tool": null,
+     "text": "It's top left announced. Good. To put on contracts. Mm-hmm. Because then you have an internal",
+     "t": 3
+    }
+   ]
+  },
+  {
+   "id": "conv_1401m3hk03ybffrr1wfgfqg99pd3",
+   "startedAt": "2026-09-27T10:06",
+   "seconds": 9,
+   "access": "Unknown",
+   "user": null,
+   "queries": [
+    {
+     "kind": "other",
+     "topic": "Very, very cool",
+     "outcome": "cut off",
+     "tool": null,
+     "text": "Very, very cool. I could probably use Jeff to get very efficient at the extraction. Yeah.",
+     "t": 4
+    }
+   ]
+  },
+  {
+   "id": "conv_1801m3hemknyez08febem5g7518v",
+   "startedAt": "2026-09-27T08:50",
+   "seconds": 191,
+   "access": "Unknown",
+   "user": null,
+   "queries": [
+    {
+     "kind": "topic",
+     "topic": "Who's in charge of the curriculum this semester",
+     "outcome": "no tool",
+     "tool": null,
+     "text": "Who's in charge of the curriculum this semester?",
+     "t": 8
+    },
+    {
+     "kind": "topic",
+     "topic": "Who's gonna h- lead the meeting next week",
+     "outcome": "declined",
+     "tool": null,
+     "text": "Who's gonna h- lead the meeting next week?",
+     "t": 26
+    },
+    {
+     "kind": "topic",
+     "topic": "compiler design and runtime optimization",
+     "outcome": "answered",
+     "tool": "find_experts",
+     "text": "Who's in charge of compiler design and runtime optimization?",
+     "t": 46
+    },
+    {
+     "kind": "other",
+     "topic": "Talk to compliance",
+     "outcome": "declined",
+     "tool": null,
+     "text": "Talk to compliance.",
+     "t": 84
+    },
+    {
+     "kind": "topic",
+     "topic": "SOC 2 compliance",
+     "outcome": "answered",
+     "tool": "find_experts",
+     "text": "Who is an expert on SOC 2 compliance?",
+     "t": 104
+    },
+    {
+     "kind": "other",
+     "topic": "Look at the ground",
+     "outcome": "declined",
+     "tool": null,
+     "text": "Look at the ground.",
+     "t": 125
+    }
+   ]
+  },
+  {
+   "id": "conv_7801m3hehg44ektvc9kr0e0v2zr9",
+   "startedAt": "2026-09-27T08:48",
+   "seconds": 62,
+   "access": "Unknown",
+   "user": null,
+   "queries": [
+    {
+     "kind": "other",
+     "topic": "Can you help me with that, please",
+     "outcome": "no tool",
+     "tool": null,
+     "text": "Can you help me with that, please?",
+     "t": 10
+    }
+   ]
+  },
+  {
+   "id": "conv_4501m3he5nj3fc8vs3wysq3xx1zb",
+   "startedAt": "2026-09-27T08:41",
+   "seconds": 114,
+   "access": "Unknown",
+   "user": null,
+   "queries": [
+    {
+     "kind": "topic",
+     "topic": "OpenShift cluster deployment",
+     "outcome": "answered",
+     "tool": "find_experts",
+     "text": "Um, I'm trying to figure out how to deploy an OpenShift cluster. Do you think you can help me with that?",
+     "t": 9
+    },
+    {
+     "kind": "other",
+     "topic": "No, I'm good",
+     "outcome": "no tool",
+     "tool": null,
+     "text": "No, I'm good.",
+     "t": 80
+    }
+   ]
+  },
+  {
+   "id": "conv_3101m3hdtnetfg7rm8wej1amfkzh",
+   "startedAt": "2026-09-27T08:35",
+   "seconds": 53,
+   "access": "Unknown",
+   "user": null,
+   "queries": []
+  },
+  {
+   "id": "conv_7901m3hddfske9n98fqkc7sj5fav",
+   "startedAt": "2026-09-27T08:28",
+   "seconds": 201,
+   "access": "Unknown",
+   "user": null,
+   "queries": [
+    {
+     "kind": "topic",
+     "topic": "OpenShift cluster deployment",
+     "outcome": "answered",
+     "tool": "find_experts",
+     "text": "Mm, I'm trying to figure out how to deploy an OpenShift cluster, uh, at Red Hat. Can you point me to someone?",
+     "t": 12
+    },
+    {
+     "kind": "staffing",
+     "topic": "Jeremy Poulin",
+     "outcome": "answered",
+     "tool": "impact_if_moved",
+     "text": "Hey, Jeff. Um, say I wanna move, uh, J- Jeremy from one team to the other. How would, uh, how would it look? I wanna move him from, uh, I wanna move him from the Linux team to the authorization team.",
+     "t": 103
+    },
+    {
+     "kind": "other",
+     "topic": "No, I'm good",
+     "outcome": "no tool",
+     "tool": null,
+     "text": "No, I'm good. Thanks for talking to me, Jeff. Uh, yeah, I'm all right for now.",
+     "t": 178
+    }
+   ]
+  },
+  {
+   "id": "conv_1801m3hd1hsaep2rr70bme0vfj2g",
+   "startedAt": "2026-09-27T08:22",
+   "seconds": 4,
+   "access": "Unknown",
+   "user": null,
+   "queries": []
+  },
+  {
+   "id": "conv_0301m3hcyns9ffxb6m1sg04ypz1f",
+   "startedAt": "2026-09-27T08:20",
+   "seconds": 29,
+   "access": "Unknown",
+   "user": null,
+   "queries": [
+    {
+     "kind": "other",
+     "topic": "Hi, Jeff",
+     "outcome": "no tool",
+     "tool": null,
+     "text": "Hi, Jeff. I'm stuck on my work. Can you tell me what to do?",
+     "t": 8
+    }
+   ]
+  },
+  {
+   "id": "conv_3301m3hcym3te0zrnwnp373zk5d1",
+   "startedAt": "2026-09-27T08:20",
+   "seconds": 10,
+   "access": "Unknown",
+   "user": null,
+   "queries": []
+  }
+ ]
+}

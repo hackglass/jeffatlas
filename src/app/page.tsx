@@ -14,6 +14,7 @@ import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import JeffBlob, { type BlobMood } from "@/components/JeffBlob";
 import OrgGraph, { sectionShort, type Highlight, type Lens, type Pick } from "@/components/OrgGraph";
 import Whiteboard from "@/components/Whiteboard";
+import UsageSankey, { describeUsage, loadUsage, type Usage } from "@/components/UsageSankey";
 import { describeScene, quickScene, SceneSchema, type QuickBoard, type Scene } from "@/lib/board";
 import { ExpertCards, ImpactCards } from "@/components/PeopleCards";
 import * as history from "@/lib/history";
@@ -89,7 +90,12 @@ function Jeff() {
   // The whiteboard: what Jeff has sketched, and whether the graph or the board is up.
   const [board, setBoard] = useState<Scene | null>(null);
   const [boardBusy, setBoardBusy] = useState<string | null>(null);
-  const [view, setView] = useState<"graph" | "board">("graph");
+  const [view, setView] = useState<"graph" | "board" | "usage">("graph");
+  // How Jeff is being used: every question from the saved transcripts, as a Sankey.
+  const [usage, setUsage] = useState<Usage | null>(null);
+  const [usageFocus, setUsageFocus] = useState<string | null>(null);
+  const usageRef = useRef<Usage | null>(null);
+  useEffect(() => { usageRef.current = usage; }, [usage]);
   // The shared canvas: which lens is on, and what the human last clicked.
   const [lens, setLens] = useState<Lens>("people");
   const [selected, setSelected] = useState<Pick | null>(null);
@@ -97,6 +103,24 @@ function Jeff() {
   useEffect(() => { lensRef.current = lens; }, [lens]);
   // Remembered per browser. Read after mount (not in the initializer) so the
   // server and first client render agree.
+  // Who is talking. No login on the demo: the viewer types a name or email
+  // once, it is kept in this browser and sent to ElevenLabs as the session's
+  // user id, so every recorded conversation says who it was with.
+  const [user, setUser] = useState("");
+  const userRef = useRef("");
+  useEffect(() => { userRef.current = user; }, [user]);
+  useEffect(() => {
+    let u = "";
+    try { u = localStorage.getItem("jeff.user") ?? ""; } catch { /* no storage */ }
+    if (!u) return;
+    const t = setTimeout(() => setUser(u), 0);
+    return () => clearTimeout(t);
+  }, []);
+  const chooseUser = useCallback((u: string) => {
+    setUser(u);
+    try { localStorage.setItem("jeff.user", u); } catch { /* no storage */ }
+  }, []);
+
   const [access, setAccess] = useState<Access>("new");
   const accessRef = useRef<Access>(access);
   useEffect(() => { accessRef.current = access; }, [access]);
@@ -121,12 +145,18 @@ function Jeff() {
   useEffect(() => {
     loadPeople().then(setPeople).catch(() => setError("Couldn't load the people data."));
     loadGraph().then(setGraph).catch(() => { /* graph is decoration */ });
+    loadUsage().then(setUsage).catch(() => { /* no transcripts exported yet */ });
     fetch(`${BASE}/api/board`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })
       .then((r) => { brainRef.current = r.status === 400 ? "on" : "off"; })
       .catch(() => { brainRef.current = "off"; });
     const qs = new URLSearchParams(window.location.search);
     if (qs.get("canvas")) {
       const t = setTimeout(() => { setInstant(true); setCanvasOpen(true); if (qs.get("canvas") === "skills") setLens("skills"); }, 0);
+      return () => clearTimeout(t);
+    }
+    // ?view=usage opens the usage Sankey without a conversation.
+    if (qs.get("view") === "usage") {
+      const t = setTimeout(() => { setView("usage"); setCanvasOpen(true); }, 0);
       return () => clearTimeout(t);
     }
     // ?board=demo previews the whiteboard without a conversation.
@@ -300,6 +330,24 @@ function Jeff() {
       say("tool", "board_clear()");
       return "wiped";
     },
+
+    // ── Usage: what people ask Jeff ──
+    // The Sankey of every saved question (who asked → kind → topic → outcome)
+    // with a leaderboard of topics. Leadership-facing; a new hire just gets the tally.
+    show_usage: async ({ focus: want }: { focus?: string }) => {
+      const u = usageRef.current ?? await loadUsage().then((x) => { setUsage(x); return x; }).catch(() => null);
+      const f = want ? String(want).trim() : null;
+      setUsageFocus(f);
+      setView("usage");
+      setCanvasOpen(true);
+      say("tool", `show_usage(${f ? `"${f}"` : ""})`);
+      if (!u || !u.conversations.length) return "no usage data yet: nobody's transcripts have been exported";
+      if (accessRef.current === "new") {
+        const n = u.conversations.reduce((a, c) => a + c.queries.length, 0);
+        return `${u.conversations.length} conversations and ${n} questions so far; the breakdown is a manager-level view, keep it to that`;
+      }
+      return describeUsage(u, f ?? undefined);
+    },
   }), [say, showScene, focus, board]);
 
   // ── The human's hand on the canvas ──
@@ -374,7 +422,11 @@ function Jeff() {
       setError("Microphone unavailable. Check the browser's mic permission.");
       return;
     }
-    startSession({ agentId: AGENT_ID, connectionType: "webrtc", dynamicVariables: { access_level: ACCESS_LABEL[accessRef.current], access_scope: ACCESS_BLURB[accessRef.current] } });
+    const who = userRef.current.trim() || "anonymous";
+    startSession({
+      agentId: AGENT_ID, connectionType: "webrtc", userId: who,
+      dynamicVariables: { access_level: ACCESS_LABEL[accessRef.current], access_scope: ACCESS_BLURB[accessRef.current], user_name: who },
+    });
   }, [startSession]);
 
   // "Ask Jeff" on a picked node: a real user turn if we are talking, otherwise
@@ -437,6 +489,10 @@ function Jeff() {
             <span>{graph ? `${graph.nodes.filter((n) => n.type === "person").length} people · ${lens === "people" ? "5 sections" : `${graph.nodes.filter((n) => n.type === "skill").length} skill areas`}` : ""}</span>
           </div>
           <div className="jeff-panel-meta">
+            <label className="jeff-access" title="Who you are: recorded with the conversation so the transcripts say who asked">
+              <span>you are</span>
+              <input type="text" value={user} placeholder="name or email" onChange={(e) => chooseUser(e.target.value)} spellCheck={false} />
+            </label>
             <label className="jeff-access" title="Who is looking: gates what Jeff and the tools will share">
               <span>viewing as</span>
               <select value={access} onChange={(e) => chooseAccess(e.target.value as Access)}>
@@ -449,15 +505,18 @@ function Jeff() {
                 <button type="button" role="tab" aria-selected={lens === "skills"} className={lens === "skills" ? "on" : undefined} onClick={() => { setLens("skills"); tellJeffRef.current("The user switched the graph to the Skills lens (technical view from GitHub)."); }}>Skills</button>
               </div>
             )}
-            {(board || boardBusy) && (
+            {(board || boardBusy || view === "usage" || (usage && usage.conversations.length > 0)) && (
               <div className="jeff-view-switch" role="tablist" aria-label="Canvas view">
                 <button type="button" role="tab" aria-selected={view === "graph"} className={view === "graph" ? "on" : undefined} onClick={() => setView("graph")}>Graph</button>
-                <button type="button" role="tab" aria-selected={view === "board"} className={view === "board" ? "on" : undefined} onClick={() => setView("board")}>Board</button>
+                {(board || boardBusy) && <button type="button" role="tab" aria-selected={view === "board"} className={view === "board" ? "on" : undefined} onClick={() => setView("board")}>Board</button>}
+                {usage && usage.conversations.length > 0 && <button type="button" role="tab" aria-selected={view === "usage"} className={view === "usage" ? "on" : undefined} onClick={() => { setView("usage"); tellJeffRef.current("The user opened the Usage view: a Sankey of what people have asked you, by access level, kind, topic and outcome, with a leaderboard of topics."); }}>Usage</button>}
               </div>
             )}
           </div>
         </div>
-        {view === "board" && board ? (
+        {view === "usage" ? (
+          <UsageSankey usage={usage} focus={usageFocus} onFocus={(label) => { setUsageFocus(label); tellJeffRef.current(label ? `On the usage view the user clicked "${label}"; the flows through it are highlighted.` : "The user cleared the usage filter."); }} />
+        ) : view === "board" && board ? (
           <Whiteboard
             scene={board}
             onDone={() => tellJeffRef.current(`The whiteboard "${board.title}" is fully drawn.`)}
@@ -475,6 +534,7 @@ function Jeff() {
             <>
               <span>{histStats.sessions} saved {histStats.sessions === 1 ? "conversation" : "conversations"} · {histStats.turns} turns</span>
               <button type="button" onClick={() => history.downloadHistory()}>Download transcripts</button>
+              <a href={`${BASE}/xray`}>x-ray all conversations</a>
             </>
           ) : (
             <span>Conversations are saved in this browser as you talk.</span>
