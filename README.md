@@ -1,7 +1,17 @@
-# Jeff — the org chart that actually knows things
+# Jeff
 
-Hackathon entry for [Glasswing Test Flight](https://glasswing.vc/hackathon-2026/),
-a two-day AI hackathon. Live: https://hackglass.github.io/jeffatlas/
+<B>Jeff</B> — the org chart that actually knows things
+
+Built at Test Flight, the Glasswing Ventures hackathon, September 26 and 27, 2026.
+
+Team: 
+ - Yan (Stella) Si ([@sbel2](https://github.com/sbel2))
+ - Sai Nellutla ([@SaiNel7](https://github.com/SaiNel7))
+ - Hoang Dang ([@6namdang](https://github.com/6namdang))
+ - Steve Strassmann ([@straz](https://github.com/straz))
+
+
+## The problem
 
 Jeff is a voice you talk to about Red Hat's Boston office. Ask who actually has
 experience in something and he ranks people with the evidence (commits, repos,
@@ -10,6 +20,13 @@ you which systems would be left unowned, and who could backfill. Ask a technical
 question — how to configure SELinux, install an OpenShift Operator, get started
 with an Ansible playbook — and he answers from a curated slice of Red Hat's
 official docs, plus points you at the Boston person who knows that area.
+
+
+
+## Who pays
+
+The buyer, the budget it comes out of, and why they would sign.
+
 
 ## How it works
 
@@ -78,7 +95,13 @@ Add `?dev` to the main page's URL to show the team-only footer with the link.
   - `fetch_transcripts.py` — pulls conversation transcripts and classifies every question into `usage.json`
 - `data/` — `boston_people.csv`, `redhat.db`
 
-## Setup
+
+## What's real and what's mocked
+
+Be specific. Which integrations are live, which data is synthetic, what would break at real scale.
+
+
+## Running it
 
 1. **ElevenLabs API key** (one-time, only for creating the agent):
    elevenlabs.io → profile (bottom left) → *API Keys* → *Create API Key* with the
@@ -127,9 +150,8 @@ pip install -r ingest/requirements.txt
 python3 ingest/fetch_docs.py
 ```
 
-## Contributors
+Jeff is live at https://hackglass.github.io/jeffatlas/
 
- - Yan (Stella) Si
- - Sai Nellutla
- - Hoang Dang
- - Steve Strassmann
+## Brought in from before the weekend
+
+None.

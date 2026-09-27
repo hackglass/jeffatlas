@@ -30,12 +30,12 @@ jobs:
         working-directory: src
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: lts/*
           cache: npm
           cache-dependency-path: src/package-lock.json
 
@@ -44,10 +44,10 @@ jobs:
 
       - name: Setup Pages
         id: setup_pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Restore Next.js cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: src/.next/cache
           key: ${{ runner.os }}-nextjs-${{ hashFiles('src/package-lock.json') }}-${{ hashFiles('src/**/*.[jt]s', 'src/**/*.[jt]sx') }}
@@ -61,15 +61,17 @@ jobs:
       # NEXT_PUBLIC_POSTHOG_HOST) come from Infisical's /web folder, exported as env
       # for the steps below. Only /web: server keys never reach the static build.
       # Repo Variables INFISICAL_IDENTITY_ID and INFISICAL_PROJECT_SLUG point at it.
-      - name: Fetch build values from Infisical
-        uses: Infisical/secrets-action@v1.0.9
-        with:
-          method: oidc
-          identity-id: ${{ vars.INFISICAL_IDENTITY_ID }}
-          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
-          env-slug: prod
-          secret-path: /web
-          domain: https://app.infisical.com
+      # Off until the Infisical project slug and identity are sorted; the build
+      # reads the same three values from repo Variables below meanwhile.
+      # - name: Fetch build values from Infisical
+      #   uses: Infisical/secrets-action@v1.0.18
+      #   with:
+      #     method: oidc
+      #     identity-id: ${{ vars.INFISICAL_IDENTITY_ID }}
+      #     project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+      #     env-slug: prod
+      #     secret-path: /web
+      #     domain: https://app.infisical.com
 
       - name: Build with Next.js
         run: npm run build
@@ -78,9 +80,14 @@ jobs:
           STATIC_EXPORT: "1"
           # For project sites this is "/<repo>"; empty for user/org sites.
           PAGES_BASE_PATH: ${{ steps.setup_pages.outputs.base_path }}
+          # Interim, while the Infisical step is off: public values from repo Variables.
+          # Remove these three when it is back on.
+          NEXT_PUBLIC_ELEVENLABS_AGENT_ID: ${{ vars.NEXT_PUBLIC_ELEVENLABS_AGENT_ID }}
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ vars.NEXT_PUBLIC_POSTHOG_KEY }}
+          NEXT_PUBLIC_POSTHOG_HOST: ${{ vars.NEXT_PUBLIC_POSTHOG_HOST }}
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./src/out
 
@@ -93,4 +100,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

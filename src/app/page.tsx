@@ -16,7 +16,7 @@ import OrgGraph, { sectionShort, type Highlight, type Lens, type Pick } from "@/
 import Whiteboard from "@/components/Whiteboard";
 import UsageSankey, { describeUsage, loadUsage, type Usage } from "@/components/UsageSankey";
 import { describeScene, quickScene, SceneSchema, type QuickBoard, type Scene } from "@/lib/board";
-import { ExpertCards, ImpactCards, DocCards } from "@/components/PeopleCards";
+import { ExpertCards, ImpactCards, DocCards, PersonCard } from "@/components/PeopleCards";
 import * as history from "@/lib/history";
 import { analyticsOn, beginConversation, endConversation, identifyViewer, initAnalytics, track, trackTool, trackTurn } from "@/lib/analytics";
 import {
@@ -35,12 +35,12 @@ type Line = { role: "user" | "jeff" | "tool" };
 // and Jeff was silent on three openings in one round, so the opener is fixed
 // text in his voice; the page picks one at random and drops the name in.
 const GREETINGS = [
-  "Hey{name}. Jeff. Pull up a chair, what are you after?",
-  "Hey{name}, it's Jeff. What do you need?",
-  "{Name}, hey. Jeff here. Who are you trying to find?",
-  "Hey{name}. I'm Jeff, I know where the bodies are buried around here. What's up?",
-  "Hey{name}. Jeff. Ask me who to talk to, I'll point you.",
-  "Alright{name}, Jeff's here. What are you stuck on?",
+  "Hey{name}. Jeff. Pull up a chair—what are we untangling?",
+  "Hey{name}, it's Jeff. Give me the messy version.",
+  "{Name}, hey. Jeff here. Who—or what acronym—are we hunting?",
+  "Hey{name}. I'm Jeff. I know which org charts are still technically fiction. What's up?",
+  "Hey{name}. Jeff. Tell me where you're stuck; I probably know who has the scar tissue.",
+  "Alright{name}, Jeff's here. What's misbehaving?",
 ];
 function pickGreeting(who: string) {
   const real = who && !who.includes("@") && who.toLowerCase() !== "anonymous" ? who.split(/\s+/)[0] : "";
@@ -80,7 +80,7 @@ const DEMO_SCENE: Scene = {
   ],
 };
 type Panel = { kind: "experts"; ranked: ScoredPerson[] } | { kind: "impact"; report: ImpactReport }
-  | { kind: "docs"; passages: ScoredPassage[]; experts: ScoredPerson[] } | null;
+  | { kind: "docs"; passages: ScoredPassage[]; experts: ScoredPerson[] } | { kind: "person"; person: Person } | null;
 
 // Who is looking. There is no login on this demo, so the viewer picks a
 // level; a real deployment would take it from SSO claims. It gates what the
@@ -144,9 +144,6 @@ function Jeff() {
   const [transcript, setTranscript] = useState<DockTurn[]>([]);
   const [endedNote, setEndedNote] = useState<string | null>(null);
   const lastJeffLineRef = useRef<string | null>(null);
-  // Paused: the mic is off and Jeff has been told to sit tight. One tap
-  // resumes. (Mute and end used to be two gestures; feedback said make it one.)
-  const [paused, setPaused] = useState(false);
   // "Done" mutes the mic to hand Jeff the floor; cleared when he starts talking.
   const handoffRef = useRef(false);
   const transcriptRef = useRef<DockTurn[]>([]);
@@ -302,7 +299,7 @@ function Jeff() {
     setView("board");
     setCanvasOpen(true);
     say("tool", `${source} → "${scene.title}" (${scene.steps.length} steps)`);
-    tellJeffRef.current(describeScene(scene) + " Narrate it step by step; the screen advances on its own every couple of seconds.");
+    tellJeffRef.current(describeScene(scene) + " The screen advances on its own. Give only the main takeaway; explain a step only if the viewer asks.");
   }, [say]);
 
   // ── Client tools: what Jeff can look up ──────────────────────────────────
@@ -345,6 +342,7 @@ function Jeff() {
       const p = findPerson(ps, String(name ?? ""));
       say("tool", `lookup_person("${name}") → ${p ? p.name : "not found"}`);
       if (!p) return JSON.stringify({ result: "not found in the Boston data", name });
+      setPanel({ kind: "person", person: p });
       focus({ people: [p.name], title: p.name });
       // Full profiles (long bio, public links) are leadership-level; everyone else gets the card.
       return JSON.stringify(personSummary(p, accessRef.current === "leader"));
@@ -544,7 +542,7 @@ function Jeff() {
     onConnect: ({ conversationId }) => {
       beginConversation(conversationId);
       track("conversation_started", { access: accessRef.current, user: userRef.current.trim() || "anonymous", lens: lensRef.current, drawing_brain: brainRef.current });
-      setError(null); setTranscript([]); setEndedNote(null); setBoard(null); setView("graph"); setPaused(false); handoffRef.current = false; lastJeffLineRef.current = null;
+      setError(null); setTranscript([]); setEndedNote(null); setBoard(null); setView("graph"); handoffRef.current = false; lastJeffLineRef.current = null;
       const a = accessRef.current;
       sessionRef.current = history.startSession(ACCESS_LABEL[a]);
       setHistStats(history.historyStats());
@@ -584,7 +582,7 @@ function Jeff() {
     },
     onError: (msg) => { track("error", { where: "conversation", message: String(msg) }); setError(typeof msg === "string" ? msg : "Something went wrong with the connection."); },
   });
-  const { status, isSpeaking, isMuted, setMuted, startSession, endSession, sendUserMessage, sendContextualUpdate, getInputVolume, getOutputVolume } = conversation;
+  const { status, isSpeaking, isMuted, setMuted, startSession, endSession, sendUserMessage, sendUserActivity, sendContextualUpdate, getInputVolume, getOutputVolume } = conversation;
   const conversationRef = useRef<typeof conversation | null>(null);
   useEffect(() => { conversationRef.current = conversation; }, [conversation]);
   useEffect(() => {
@@ -629,11 +627,18 @@ function Jeff() {
     else { pendingAskRef.current = q; void start(); }
   }, [status, sendUserMessage, start, say]);
 
-  const mood: BlobMood = status === "connected" ? (paused ? "paused" : isSpeaking ? "speaking" : thinking ? "thinking" : "listening") : status === "connecting" ? "connecting" : "dormant";
+  const mood: BlobMood = status === "connected" ? (isSpeaking ? "speaking" : thinking ? "thinking" : "listening") : status === "connecting" ? "connecting" : "dormant";
 
-  // Cut Jeff off. The SDK has no interrupt call; an empty user turn is the
-  // cheapest thing that stops his audio and hands the floor back.
-  const interrupt = useCallback(() => { track("control", { action: "interrupt" }); try { sendUserMessage(""); } catch { /* not connected */ } }, [sendUserMessage]);
+  // User activity is the SDK's interruption signal. Unlike an empty user
+  // message, it stops the current response without inviting another one.
+  const interrupt = useCallback(() => {
+    track("control", { action: "interrupt" });
+    handoffRef.current = false;
+    setThinking(false);
+    if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
+    setMuted(false);
+    try { sendUserActivity(); } catch { /* not connected */ }
+  }, [sendUserActivity, setMuted]);
 
   // "I'm done": hand Jeff the floor now instead of waiting for him to decide
   // the pause was long enough. The mic goes quiet until he starts talking.
@@ -644,34 +649,22 @@ function Jeff() {
     think();
     try { sendUserMessage(""); } catch { /* not connected */ }
   }, [setMuted, sendUserMessage, think]);
-
-
-  const pause = useCallback(() => {
-    track("control", { action: "pause" });
-    handoffRef.current = false;
-    setPaused(true);
-    setMuted(true);
-    if (isSpeaking) { try { sendUserMessage(""); } catch { /* fine */ } }
-    tellJeffRef.current("The viewer paused the conversation. Say nothing until they come back.");
-  }, [setMuted, isSpeaking, sendUserMessage, setPaused]);
-  const resume = useCallback(() => {
-    track("control", { action: "resume" });
-    setPaused(false);
-    setMuted(false);
-    tellJeffRef.current("The viewer is back; pick up where you left off, in a few words.");
-  }, [setMuted, setPaused]);
-
-  // The blob is the one control: start when idle, cancel while connecting,
-  // cut in while Jeff talks, otherwise pause; tap again to resume.
+  // The blob controls turns: finish the person's turn while listening, or
+  // stop Jeff while he is responding. Hanging up is a separate visible action.
   const onTap = useCallback(() => {
     if (mood === "dormant") void start();
     else if (mood === "connecting") void endSession();
-    else if (mood === "paused") resume();
-    else if (mood === "speaking") interrupt();
-    else pause();
-  }, [mood, start, endSession, interrupt, pause, resume]);
+    else if (mood === "speaking" || mood === "thinking") interrupt();
+    else done();
+  }, [mood, start, endSession, interrupt, done]);
 
-  const stop = useCallback(() => { track("control", { action: "end" }); setPaused(false); void endSession(); }, [endSession, setPaused]);
+  const stop = useCallback(() => {
+    track("control", { action: "end" });
+    handoffRef.current = false;
+    setThinking(false);
+    setMuted(true);
+    void endSession();
+  }, [endSession, setMuted]);
 
   // Keyboard: Escape hangs up, Space cuts Jeff off or says "done" (unless typing in a field).
   useEffect(() => {
@@ -679,11 +672,11 @@ function Jeff() {
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       if (e.key === "Escape" && status === "connected") { e.preventDefault(); stop(); }
-      else if (e.key === " " && status === "connected" && !paused) { e.preventDefault(); if (isSpeaking) interrupt(); else done(); }
+      else if (e.key === " " && status === "connected") { e.preventDefault(); if (isSpeaking || thinking) interrupt(); else done(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [status, isSpeaking, paused, stop, interrupt, done]);
+  }, [status, isSpeaking, thinking, stop, interrupt, done]);
 
   const getLevel = useCallback(() => {
     try {
@@ -711,6 +704,7 @@ function Jeff() {
           mood={mood}
           getLevel={getLevel}
           onTap={onTap}
+          onEnd={stop}
           muted={isMuted}
           error={error}
           disabled={!people && mood === "dormant"}
@@ -771,6 +765,7 @@ function Jeff() {
         {panel?.kind === "experts" && <ExpertCards ranked={panel.ranked} />}
         {panel?.kind === "impact" && <ImpactCards report={panel.report} />}
         {panel?.kind === "docs" && <DocCards passages={panel.passages} experts={panel.experts} />}
+        {panel?.kind === "person" && <PersonCard person={panel.person} showEvidence={access !== "new"} showLinks={access === "leader"} />}
         {dev && <div className="jeff-history">
           {histStats && histStats.sessions > 0 ? (
             <>
