@@ -28,6 +28,10 @@ const SECTION_SHORT: Record<string, string> = {
   "Product, UX, docs, marketing, sales, GTM, ops": "Product & GTM",
   "AI / ML research, engineering, data science": "AI / ML",
   "Leadership": "Leadership",
+  "OpenShift & Kubernetes": "OpenShift & K8s",
+  "Linux & virtualization": "Linux & virt",
+  "Developer tools & runtimes": "Dev tools",
+  "SRE, QA & automation": "SRE & QA",
   "": "Community & alumni",
 };
 export const sectionShort = (s: string | undefined) => SECTION_SHORT[s ?? ""] ?? s ?? "Community & alumni";
@@ -169,7 +173,9 @@ export default function OrgGraph({ graph, people, highlight, lens = "people", se
       sims.set(n.id, { id: n.id, type: n.type, label: n.label, x, y, vx: 0, vy: 0, r, lit, dim, ax: n.type === "skill" ? ax : undefined, ay: n.type === "skill" ? ay : undefined });
     }
 
-    const hubGap = lens === "people" ? Math.min(w, h) * 0.45 : 150;
+    // Hubs keep this far apart; with more hubs on the ring, each gets less arc.
+    const hubTotal = nodes.filter((m) => m.type === "skill").length || 1;
+    const hubGap = lens === "people" ? Math.min(w, h) * Math.min(0.45, 2.2 / hubTotal) : 150;
     let raf = 0;
     let frames = 0;
     const step = () => {
@@ -179,8 +185,10 @@ export default function OrgGraph({ graph, people, highlight, lens = "people", se
       // toward the middle so stray dots do not pile up in the corners.
       for (const a of arr) {
         if (a.ax !== undefined && a.ay !== undefined) {
-          a.vx += (a.ax - a.x) * 0.06 * alpha;
-          a.vy += (a.ay - a.y) * 0.06 * alpha;
+          // Held firmly in the People lens: a big section's people would drag its hub off the ring.
+          const pull = lens === "people" ? 0.3 : 0.06;
+          a.vx += (a.ax - a.x) * pull * alpha;
+          a.vy += (a.ay - a.y) * pull * alpha;
         } else {
           a.vx += (w / 2 - a.x) * 0.0008 * alpha;
           a.vy += (h / 2 - a.y) * 0.0008 * alpha;

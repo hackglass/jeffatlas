@@ -75,7 +75,7 @@ TOOLS = [
     },
     {
         "name": "team_overview",
-        "description": "Summarize the Boston org: sections, headcounts, notable people, and the dominant skills in each. Filter to one section by its short name (Leadership, AI/ML, Platform, Product, Community & alumni) to get everyone in it by name and have them all highlighted on the graph automatically. If the reply says no section matches, do not describe the whole office; use one of the names it lists.",
+        "description": "Summarize the Boston org: sections, headcounts, notable people, and the dominant skills in each. Filter to one section by name or keyword (Leadership, AI / ML, OpenShift & Kubernetes, Linux & virtualization, Developer tools & runtimes, SRE, QA & automation, UX & design, Docs & learning, Product & programs, Sales & partners, Community & ops, Community & alumni; 'platform' covers the four engineering sections) to get everyone in it by name and have them all highlighted on the graph automatically. If the reply says no section matches, do not describe the whole office; use one of the names it lists.",
         "parameters": {
             "type": "object",
             "properties": {"section": {"type": "string", "description": "Optional section name or keyword to filter on."}},
@@ -99,7 +99,7 @@ TOOLS = [
     },
     {
         "name": "graph_lens",
-        "description": "Switch the org graph between the People lens (all 381 Boston people grouped by section: Leadership, AI/ML, Platform, Product & GTM, Community & alumni) and the Skills lens (the technical picture: skill areas and GitHub repos, only people with commits). Use People for org shape, leadership, and non-engineering questions; Skills for who-knows-what.",
+        "description": "Switch the org graph between the People lens (all 381 Boston people grouped into 11 sections plus Community & alumni: Leadership, AI / ML, OpenShift & Kubernetes, Linux & virtualization, Developer tools & runtimes, SRE, QA & automation, UX & design, Docs & learning, Product & programs, Sales & partners, Community & ops) and the Skills lens (the technical picture: skill areas and GitHub repos, only people with commits). Use People for org shape, leadership, and non-engineering questions; Skills for who-knows-what.",
         "parameters": {
             "type": "object",
             "properties": {"lens": {"type": "string", "enum": ["people", "skills"], "description": "Which lens to show."}},

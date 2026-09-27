@@ -193,16 +193,10 @@ function Jeff() {
   }, []);
   useEffect(() => { identifyViewer(user); }, [user]);
 
-  const [access, setAccess] = useState<Access>("new");
+  // No picker any more: Jeff sees everything (full profiles, impact analysis, usage).
+  const [access, setAccess] = useState<Access>("leader");
   const accessRef = useRef<Access>(access);
   useEffect(() => { accessRef.current = access; }, [access]);
-  useEffect(() => {
-    let a: Access | null = null;
-    try { a = localStorage.getItem("jeff.access") as Access | null; } catch { /* no storage */ }
-    if (!a || !(a in ACCESS_LABEL)) return;
-    const t = setTimeout(() => setAccess(a as Access), 0);
-    return () => clearTimeout(t);
-  }, []);
   const chooseAccess = useCallback((a: Access) => {
     setAccess(a);
     try { localStorage.setItem("jeff.access", a); } catch { /* no storage */ }
@@ -477,7 +471,7 @@ function Jeff() {
       tellJeffRef.current(`The user just clicked ${pick.label} on the org graph${who ? ` (${who})` : ""}. If it fits, mention them briefly or ask what they want to know; do not read out a profile unprompted.`);
     } else if (pick.id.startsWith("section:")) {
       setHighlight(null);
-      tellJeffRef.current(`The user just clicked the "${pick.label}" section hub on the org graph. They may want an overview of that group; team_overview("${pick.label}") answers it.`);
+      tellJeffRef.current(`The user just clicked the "${pick.label}" section hub on the org graph. They may want an overview of that group; team_overview("${pick.id.slice("section:".length)}") answers it.`);
     } else {
       setHighlight({ skills: [pick.label], people: [], title: pick.label });
       tellJeffRef.current(`The user just clicked the "${pick.label}" skill area on the org graph; the people in it are now on screen. find_experts("${pick.label}") ranks them if they ask.`);
@@ -664,7 +658,7 @@ function Jeff() {
         <div className="jeff-panel-head">
           <div>
             <h2>Red Hat Boston</h2>
-            <span>{graph ? `${graph.nodes.filter((n) => n.type === "person").length} people · ${lens === "people" ? "5 sections" : `${graph.nodes.filter((n) => n.type === "skill").length} skill areas`}` : ""}</span>
+            <span>{graph ? `${graph.nodes.filter((n) => n.type === "person").length} people · ${lens === "people" ? `${new Set(graph.nodes.filter((n) => n.type === "person").map((n) => n.section ?? "")).size} sections` : `${graph.nodes.filter((n) => n.type === "skill").length} skill areas`}` : ""}</span>
             {view === "graph" && (
               <div className="jeff-lens-switch" role="tablist" aria-label="Map view">
                 <button type="button" role="tab" aria-selected={lens === "people"} onClick={() => { track("lens", { lens: "people" }); setFind(""); setHighlight(null); setSelected(null); setLens("people"); tellJeffRef.current("The user switched the map to People: everyone grouped by section."); }}>People</button>

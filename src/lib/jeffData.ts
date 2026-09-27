@@ -241,7 +241,7 @@ export function personSummary(p: Person, full = false): Record<string, unknown> 
     top_repos: p.top_repos.slice(0, full ? 6 : 3).map((r) => `${r.repo} (${r.commits})`),
     languages: p.languages.length ? p.languages : undefined,
     bio: p.bio ? p.bio.slice(0, full ? 400 : 140) : undefined,
-    profile: full && p.profile ? p.profile.slice(0, 900) : undefined,
+    profile: full && p.profile ? p.profile : undefined,
     pinned_repos: full && p.pinned?.length ? p.pinned.map((r) => `${r.repo}${r.about ? `: ${r.about.slice(0, 80)}` : ""}`) : undefined,
     github_orgs: full && p.github_orgs?.length ? p.github_orgs : undefined,
     linkedin: full && p.linkedin ? p.linkedin : undefined,
@@ -255,6 +255,16 @@ const SECTION_ALIASES: Record<string, string[]> = {
   "Product, UX, docs, marketing, sales, GTM, ops": ["product", "gtm", "ux", "docs", "marketing", "sales", "ops", "productgtm"],
   "Leadership": ["leadership", "leaders", "leader", "execs", "executives", "management"],
   "Community & alumni": ["community", "alumni", "other", "unlabeled", "communityalumni"],
+  // The finer sections from ingest/sections.py; "platform" still finds the engineering side.
+  "OpenShift & Kubernetes": ["openshift", "kubernetes", "k8s", "cloud", "platform", "infra"],
+  "Linux & virtualization": ["linux", "kernel", "rhel", "virtualization", "virt", "kubevirt", "storage", "platform", "infra"],
+  "Developer tools & runtimes": ["devtools", "developertools", "runtimes", "java", "quarkus", "frontend", "security", "platform"],
+  "SRE, QA & automation": ["sre", "qa", "quality", "automation", "ansible", "devops", "reliability", "platform"],
+  "UX & design": ["ux", "design", "designers"],
+  "Docs & learning": ["docs", "documentation", "writers", "technicalwriting"],
+  "Product & programs": ["product", "pm", "programs", "productmanagement"],
+  "Sales & partners": ["sales", "partners", "gtm", "accounts", "consulting"],
+  "Community & ops": ["ops", "operations", "events", "talent", "advocates"],
 };
 const squash = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
 

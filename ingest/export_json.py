@@ -16,6 +16,7 @@ import sqlite3
 from collections import defaultdict
 from pathlib import Path
 
+from sections import refine
 from skills import repo_signals
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -67,16 +68,20 @@ def main():
                 commits = g["commits"]
             name = (row.get("name") or "").strip() or gh_login or login
             e = enrich.get(login, {}) if not (row.get("role") and row.get("section")) else {}
+            role = row.get("role") or e.get("role") or ""
+            bio = row.get("bio") or e.get("bio") or ""
+            broad = row.get("section") or e.get("section") or ""
+            section = refine(login, broad, role, bio, skills[0]["skill"] if skills else None)
             people.append({
                 "id": login or name,
                 "name": name,
                 "login": gh_login,
-                "role": row.get("role") or e.get("role") or "",
-                "section": row.get("section") or e.get("section") or "",
+                "role": role,
+                "section": section,
                 "affiliation": "red_hat" if row.get("section") else (e.get("affiliation") or "unknown"),
                 "company": (row.get("company") or e.get("company") or "").lstrip("@"),
                 "location": row.get("location") or "",
-                "bio": row.get("bio") or e.get("bio") or "",
+                "bio": bio,
                 "profile": row.get("profile") or "",
                 "linkedin": row.get("linkedin") or "",
                 "url": row.get("url") or "",
