@@ -16,7 +16,7 @@ import OrgGraph, { sectionShort, type Highlight, type Lens, type Pick } from "@/
 import Whiteboard from "@/components/Whiteboard";
 import UsageSankey, { describeUsage, loadUsage, type Usage } from "@/components/UsageSankey";
 import { describeScene, quickScene, SceneSchema, type QuickBoard, type Scene } from "@/lib/board";
-import { ExpertCards, ImpactCards } from "@/components/PeopleCards";
+import { ExpertCards, ImpactCards, PersonCard } from "@/components/PeopleCards";
 import * as history from "@/lib/history";
 import { analyticsOn, beginConversation, endConversation, identifyViewer, initAnalytics, track, trackTool, trackTurn } from "@/lib/analytics";
 import {
@@ -34,12 +34,12 @@ type Line = { role: "user" | "jeff" | "tool" };
 // and Jeff was silent on three openings in one round, so the opener is fixed
 // text in his voice; the page picks one at random and drops the name in.
 const GREETINGS = [
-  "Hey{name}. Jeff. Pull up a chair, what are you after?",
-  "Hey{name}, it's Jeff. What do you need?",
-  "{Name}, hey. Jeff here. Who are you trying to find?",
-  "Hey{name}. I'm Jeff, I know where the bodies are buried around here. What's up?",
-  "Hey{name}. Jeff. Ask me who to talk to, I'll point you.",
-  "Alright{name}, Jeff's here. What are you stuck on?",
+  "Hey{name}. Jeff. Pull up a chair—what are we untangling?",
+  "Hey{name}, it's Jeff. Give me the messy version.",
+  "{Name}, hey. Jeff here. Who—or what acronym—are we hunting?",
+  "Hey{name}. I'm Jeff. I know which org charts are still technically fiction. What's up?",
+  "Hey{name}. Jeff. Tell me where you're stuck; I probably know who has the scar tissue.",
+  "Alright{name}, Jeff's here. What's misbehaving?",
 ];
 function pickGreeting(who: string) {
   const real = who && !who.includes("@") && who.toLowerCase() !== "anonymous" ? who.split(/\s+/)[0] : "";
@@ -78,7 +78,7 @@ const DEMO_SCENE: Scene = {
     ] },
   ],
 };
-type Panel = { kind: "experts"; ranked: ScoredPerson[] } | { kind: "impact"; report: ImpactReport } | null;
+type Panel = { kind: "experts"; ranked: ScoredPerson[] } | { kind: "impact"; report: ImpactReport } | { kind: "person"; person: Person } | null;
 
 // Who is looking. There is no login on this demo, so the viewer picks a
 // level; a real deployment would take it from SSO claims. It gates what the
@@ -296,7 +296,7 @@ function Jeff() {
     setView("board");
     setCanvasOpen(true);
     say("tool", `${source} → "${scene.title}" (${scene.steps.length} steps)`);
-    tellJeffRef.current(describeScene(scene) + " Narrate it step by step; the screen advances on its own every couple of seconds.");
+    tellJeffRef.current(describeScene(scene) + " The screen advances on its own. Give only the main takeaway; explain a step only if the viewer asks.");
   }, [say]);
 
   // ── Client tools: what Jeff can look up ──────────────────────────────────
@@ -323,6 +323,7 @@ function Jeff() {
       const p = findPerson(ps, String(name ?? ""));
       say("tool", `lookup_person("${name}") → ${p ? p.name : "not found"}`);
       if (!p) return JSON.stringify({ result: "not found in the Boston data", name });
+      setPanel({ kind: "person", person: p });
       focus({ people: [p.name], title: p.name });
       // Full profiles (long bio, public links) are leadership-level; everyone else gets the card.
       return JSON.stringify(personSummary(p, accessRef.current === "leader"));
@@ -748,6 +749,7 @@ function Jeff() {
         </>)}
         {panel?.kind === "experts" && <ExpertCards ranked={panel.ranked} />}
         {panel?.kind === "impact" && <ImpactCards report={panel.report} />}
+        {panel?.kind === "person" && <PersonCard person={panel.person} showEvidence={access !== "new"} showLinks={access === "leader"} />}
         {dev && <div className="jeff-history">
           {histStats && histStats.sessions > 0 ? (
             <>

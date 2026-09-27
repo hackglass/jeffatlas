@@ -55,7 +55,7 @@ TOOLS = [
     },
     {
         "name": "lookup_person",
-        "description": "Get the full profile of one person by name: role, section, skills, top repositories, bio, public profile.",
+        "description": "Get one person by name and show their profile card on screen: role, section, strongest skills, repositories, and public links. Speak only the most relevant fact; the card carries the detail.",
         "parameters": {
             "type": "object",
             "properties": {"name": {"type": "string", "description": "The person's name (partial names are fine)."}},
@@ -109,7 +109,7 @@ TOOLS = [
     # ── The whiteboard ──
     {
         "name": "board_explain",
-        "description": "Sketch an explanation on the whiteboard with animation. Give a one-line brief of the picture you want (who, what, how it connects, in what order) and it is drawn step by step while you keep talking. Use it whenever a concept has parts: a dependency, a handover, a before/after, a risk map, a team shape. Returns immediately; the board will tell you when it is up so you can narrate it. Only use names and numbers that came from tools in this conversation.",
+        "description": "Sketch a relationship on the animated whiteboard. Use it for dependencies, handovers, before/after states, risk maps, and comparisons not already shown by an automatic card or graph. Returns immediately. Once drawn, state one takeaway instead of narrating every step. Only use names and numbers that came from tools in this conversation.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -121,7 +121,7 @@ TOOLS = [
     },
     {
         "name": "board_write",
-        "description": "Put a short list straight onto the whiteboard, one item at a time, with optional connections between items. Fast and simple: use it for options, names, steps, or a checklist you are talking through. Returns immediately.",
+        "description": "Put a compact set of options, names, steps, or a checklist onto the whiteboard, with optional connections. Use this instead of reading a list aloud, unless an automatic graph or card already shows the same information. Returns immediately.",
         "parameters": {
             "type": "object",
             "properties": {
