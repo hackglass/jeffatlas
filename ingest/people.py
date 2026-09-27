@@ -10,7 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-CSV_PATH = ROOT / "boston_people.csv"
+CSV_PATH = ROOT.parent / "data" / "boston_people.csv"
 HTML_PATH = ROOT / "people.html"
 HOST = "127.0.0.1"
 PORT = 8766

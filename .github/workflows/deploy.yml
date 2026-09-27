@@ -59,6 +59,8 @@ jobs:
         env:
           # For project sites this is "/<repo>"; empty for user/org sites.
           PAGES_BASE_PATH: ${{ steps.setup_pages.outputs.base_path }}
+          # Public ElevenLabs agent id (repo Settings -> Secrets and variables -> Actions -> Variables).
+          NEXT_PUBLIC_ELEVENLABS_AGENT_ID: ${{ vars.NEXT_PUBLIC_ELEVENLABS_AGENT_ID }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

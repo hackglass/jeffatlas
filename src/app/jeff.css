@@ -1,0 +1,399 @@
+/* jeff.css — Jeff's stage.
+   The blob is lifted from the Timeaudit / Situent voice dock
+   (19-voice-mode.css): same border-radius morph, same breathing halo, same
+   voice-level swell. Re-cut in green on a plain white page. */
+
+:root {
+  --jeff-ink: #14261c;
+  --jeff-muted: #5b6f63;
+  --jeff-faint: #a3b3aa;
+  --jeff-line: rgba(31, 95, 66, 0.14);
+  --jeff-green-1: #b9ecd0;
+  --jeff-green-2: #7fd6a4;
+  --jeff-green-3: #46b27c;
+  --jeff-green-4: #2c8a5f;
+  --jeff-green-5: #1f6446;
+  --jeff-accent: #2c8a5f;
+}
+
+html, body { background: #ffffff; color: var(--jeff-ink); }
+
+.jeff-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: #fff;
+  transition: grid-template-columns 320ms ease;
+}
+.jeff-page--collapsed { grid-template-columns: 1fr 0fr; }
+.jeff-page--collapsed .jeff-panel { overflow: hidden; padding-left: 0; padding-right: 0; }
+.jeff-page--collapsed .jeff-stage { border-right: 0; }
+
+@media (max-width: 860px) {
+  .jeff-page, .jeff-page--collapsed { grid-template-columns: 1fr; }
+  .jeff-page--collapsed .jeff-panel { display: none; }
+}
+
+/* ── Left: the voice stage + transcript ─────────────────────────────────── */
+
+.jeff-stage {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 28px 24px 20px;
+  border-right: 1px solid var(--jeff-line);
+}
+
+@media (max-width: 860px) { .jeff-stage { border-right: 0; min-height: auto; } }
+
+.jeff-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.jeff-brand h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+.jeff-brand span { font-size: 12.5px; color: var(--jeff-muted); }
+
+.voice-dock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 18px 8px 8px;
+  animation: voice-dock-in 180ms ease-out;
+}
+
+@keyframes voice-dock-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.voice-blob {
+  --voice-level: 0;
+  position: relative;
+  width: min(44vw, 34vh, 300px);
+  height: min(44vw, 34vh, 300px);
+  margin-bottom: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.voice-blob:disabled { cursor: default; }
+
+/* The wavering body: border-radius morph + voice-level swell. */
+.voice-blob-core {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: linear-gradient(
+    180deg,
+    rgba(185, 236, 208, 0.94) 0%,
+    rgba(127, 214, 164, 0.94) 30%,
+    rgba(70, 178, 124, 0.94) 58%,
+    rgba(44, 138, 95, 0.94) 82%,
+    rgba(31, 100, 70, 0.94) 100%
+  );
+  border-radius: 46% 54% 52% 48% / 50% 46% 54% 50%;
+  transform: scale(calc(1 + var(--voice-level) * 0.16));
+  transition: transform 90ms ease-out, background 240ms ease;
+  animation: voice-blob-waver 7s ease-in-out infinite;
+  will-change: transform, border-radius;
+}
+
+/* A soft breathing halo behind the body: presence, not chrome. */
+.voice-blob-halo {
+  position: absolute;
+  inset: -14%;
+  display: block;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(70, 178, 124, 0.24), rgba(70, 178, 124, 0) 68%);
+  transform: scale(calc(1 + var(--voice-level) * 0.3));
+  transition: transform 120ms ease-out;
+  animation: voice-halo-breathe 3.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes voice-blob-waver {
+  0%, 100% { border-radius: 46% 54% 52% 48% / 50% 46% 54% 50%; }
+  25%      { border-radius: 54% 46% 48% 52% / 46% 54% 48% 54%; }
+  50%      { border-radius: 50% 50% 54% 46% / 54% 48% 52% 46%; }
+  75%      { border-radius: 48% 52% 46% 54% / 48% 52% 46% 54%; }
+}
+
+@keyframes voice-halo-breathe {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+
+@keyframes voice-blob-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+
+/* Idle: quiet, waiting for the tap. */
+.voice-blob--idle .voice-blob-core { animation-duration: 9s; }
+
+/* Connecting: no mic yet, so the green drains to a pale mint and pulses. */
+.voice-blob--connecting .voice-blob-core {
+  background: radial-gradient(circle at 32% 28%, #e4f6ec, #b9ecd0 75%);
+  animation: voice-blob-waver 7s ease-in-out infinite, voice-blob-pulse 2.2s ease-in-out infinite;
+}
+.voice-blob--connecting .voice-blob-halo { background: radial-gradient(circle, rgba(185, 236, 208, 0.7), transparent 68%); }
+
+/* Listening: full green, swelling with the user's voice. */
+.voice-blob--listening .voice-blob-core { animation-duration: 5s; }
+
+/* Speaking: Jeff's own voice. Brighter, faster, and the tap cuts in. */
+.voice-blob--speaking .voice-blob-core {
+  background: radial-gradient(circle at 32% 28%, rgba(185, 236, 208, 0.98), rgba(44, 138, 95, 0.94) 75%);
+  animation: voice-blob-waver 3s ease-in-out infinite, voice-blob-pulse 1.4s ease-in-out infinite;
+}
+.voice-blob--speaking .voice-blob-halo { animation-duration: 1.4s; }
+
+.voice-blob:focus-visible .voice-blob-core {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--jeff-accent);
+}
+
+.voice-dock-word { font-size: 16px; font-weight: 500; color: var(--jeff-ink); }
+
+.voice-dock-helper {
+  font-size: 12.5px;
+  color: var(--jeff-muted);
+  max-width: 320px;
+  margin: 4px auto 0;
+  line-height: 1.45;
+}
+
+.voice-dock-error { color: #b4462f; }
+
+.voice-dock-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.voice-dock-quiet {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--jeff-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 12px;
+}
+.voice-dock-quiet:hover:not(:disabled) { color: var(--jeff-accent); }
+.voice-dock-quiet:disabled { opacity: 0.45; cursor: default; }
+
+/* ── Transcript ─────────────────────────────────────────────────────────── */
+
+.jeff-thread {
+  flex: 1;
+  min-height: 120px;
+  margin-top: 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.jeff-msg { font-size: 14px; line-height: 1.5; max-width: 92%; }
+.jeff-msg--user { align-self: flex-end; color: var(--jeff-muted); text-align: right; }
+.jeff-msg--jeff { align-self: flex-start; color: var(--jeff-ink); }
+.jeff-msg--tool {
+  align-self: flex-start;
+  font-size: 11.5px;
+  color: var(--jeff-faint);
+  font-family: var(--font-geist-mono, ui-monospace, monospace);
+}
+
+.jeff-empty {
+  margin-top: 16px;
+  color: var(--jeff-muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+.jeff-empty ul { margin: 8px 0 0; padding-left: 18px; }
+.jeff-empty li { margin: 3px 0; }
+
+/* Type mode: a plain field under the thread, same geometry as the dock. */
+.jeff-type {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 8px 8px 14px;
+  border: 1px solid var(--jeff-line);
+  border-radius: 16px;
+}
+.jeff-type:focus-within { border-color: rgba(44, 138, 95, 0.5); }
+.jeff-type input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 14.5px;
+  color: var(--jeff-ink);
+}
+.jeff-type button {
+  border: 0;
+  background: transparent;
+  color: var(--jeff-accent);
+  font-weight: 500;
+  font-size: 13.5px;
+  cursor: pointer;
+  padding: 0 10px;
+}
+.jeff-type button:disabled { color: var(--jeff-faint); cursor: default; }
+
+/* ── Right: the graph and the evidence ──────────────────────────────────── */
+
+.jeff-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 28px 28px 20px;
+  background: #fff;
+}
+
+@media (max-width: 860px) { .jeff-panel { min-height: auto; padding: 12px 20px 24px; } }
+
+.jeff-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding-right: 44px;
+}
+.jeff-panel-head h2 { font-size: 15px; font-weight: 600; }
+.jeff-panel-head .jeff-panel-meta { display: flex; align-items: baseline; gap: 12px; }
+.jeff-canvas-toggle {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 5;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--jeff-line);
+  background: #fff;
+  color: var(--jeff-green-4);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(31, 100, 70, 0.08);
+}
+.jeff-canvas-toggle:hover { background: var(--jeff-green-1); }
+.jeff-panel-head span { font-size: 12.5px; color: var(--jeff-muted); }
+
+.jeff-graph {
+  position: relative;
+  width: 100%;
+  height: min(52vh, 520px);
+  border: 1px solid var(--jeff-line);
+  border-radius: 18px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(185, 236, 208, 0.18), transparent 70%),
+    #fff;
+}
+.jeff-graph svg { width: 100%; height: 100%; display: block; }
+
+.jeff-graph-legend {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  display: flex;
+  gap: 14px;
+  font-size: 11.5px;
+  color: var(--jeff-muted);
+}
+.jeff-graph-legend i {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.jeff-graph-caption {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--jeff-green-5);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 4px 10px;
+  border-radius: 999px;
+  animation: voice-dock-in 220ms ease-out;
+}
+
+/* Cards */
+.jeff-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.jeff-card {
+  border: 1px solid var(--jeff-line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  animation: card-in 260ms ease-out both;
+}
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.jeff-card-rank { font-size: 11px; color: var(--jeff-faint); letter-spacing: 0.04em; }
+.jeff-card h3 { font-size: 14.5px; font-weight: 600; margin: 2px 0 1px; }
+.jeff-card-role { font-size: 12px; color: var(--jeff-muted); min-height: 16px; }
+.jeff-card ul { margin: 8px 0 0; padding: 0; list-style: none; }
+.jeff-card li { font-size: 12px; color: var(--jeff-ink); line-height: 1.4; padding-left: 12px; position: relative; }
+.jeff-card li::before { content: ""; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; border-radius: 50%; background: var(--jeff-green-3); }
+.jeff-card a { font-size: 11.5px; color: var(--jeff-accent); text-decoration: none; }
+.jeff-card a:hover { text-decoration: underline; }
+
+.jeff-risk { border-color: rgba(180, 70, 47, 0.35); }
+.jeff-risk--fine { border-color: var(--jeff-line); }
+.jeff-risk-status {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: #fff;
+  background: #b4462f;
+}
+.jeff-risk-status--thin { background: #c9892a; }
+.jeff-risk-status--fine { background: var(--jeff-green-3); }
+.jeff-risk-backfill { margin-top: 8px; font-size: 12px; color: var(--jeff-green-5); }
+
+.jeff-setup {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px dashed rgba(180, 70, 47, 0.4);
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--jeff-ink);
+}
+.jeff-setup code { font-family: var(--font-geist-mono, ui-monospace, monospace); font-size: 12px; background: #f3f7f4; padding: 1px 5px; border-radius: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-blob-core, .voice-blob-halo, .voice-dock, .jeff-card { animation: none; }
+}
