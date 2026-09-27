@@ -1,0 +1,2180 @@
+{
+ "AyushAmbastha": {
+  "role": "Security Engineer; works on console; at NVIDIA, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "NVIDIA",
+  "bio": "Security @ NVIDIA | USC Alumni\r\n",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "AyushAmbastha/The-Security-Interview-Guide",
+    "about": "The aim of this repository is to help students prepare for jobs in the Security Domain by consolidating useful resources and summarizing the most important concepts asked in interviews."
+   },
+   {
+    "repo": "AyushAmbastha/OpenSCAP-RuleTest",
+    "about": "This repository contains a script to check whether the rule ‘sshd_set_idle_timeout’ from scap-security-guide is correctly evaluated by the openscap scanner. The script doesn't do any remidiation. It prepares the environment by installing the packages and preparing the files, executes the test/evaluation functions, and cleans up after itself."
+   },
+   {
+    "repo": "AyushAmbastha/sigstore-the-hard-way",
+    "about": "The driver for this project is to get potential users, developers or collaborators familiar with the inner workings of sigstore's infrastructure."
+   },
+   {
+    "repo": "AyushAmbastha/edge-security-demo",
+    "about": "This repository contains the files and documentation to perform the joint Edge / AI, Security demo using Keylime developed within OCTO, Emerging Technologies @ Red Hat."
+   }
+  ],
+  "readme": " # Hi there , Welcome to my GitHub profile! ## I'm a Security Enthusiast currently working as a Security Engineer at NVIDIA! Certifications - 1. Red Hat Certified Specialist in Security: Linux 2. Red Hat Certified Engineer 3. Red Hat Certified System Administrator ## Random Facts about Me Cheering for the Los Angeles Lakers for the 2021-22 season! 🏀 LeBron fan 👑 #StriveForGreatness 🎮 My Top 5 Video Game Franchises of all Time - 1. God of War 2. Splinter Cell 3. Battlefield/Call of Duty 4. Prince of Persia 5. Pokemon ",
+  "website": ""
+ },
+ "abrooks": {
+  "role": "Contributor, works on bubblewrap",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [
+   "n01se",
+   "snh-clj"
+  ],
+  "pinned": [
+   {
+    "repo": "abrooks/frigit",
+    "about": "Clojure implementation of git DB reader"
+   },
+   {
+    "repo": "abrooks/clj-snakeskin-yaml",
+    "about": "A thin, idiomatic Clojure wrapper around snakeyaml-engine"
+   },
+   {
+    "repo": "abrooks/git-goodies",
+    "about": "A collection point for a number of git utilities, configuration components and tips"
+   },
+   {
+    "repo": "abrooks/git-overhere",
+    "about": ""
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "aaradhak": {
+  "role": "Quality Engineer; works on installer and cockpit-ostree",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Senior Software Quality Engineer",
+  "github_orgs": [
+   "coreos"
+  ],
+  "pinned": [
+   {
+    "repo": "aaradhak/fedora-coreos-config",
+    "about": "Base configuration for Fedora CoreOS"
+   },
+   {
+    "repo": "aaradhak/fedora-coreos-pipeline",
+    "about": "Build pipeline for Fedora CoreOS"
+   },
+   {
+    "repo": "aaradhak/os",
+    "about": ""
+   },
+   {
+    "repo": "aaradhak/coreos-assembler",
+    "about": "Tooling container to assemble CoreOS-like systems"
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "tkashem": {
+  "role": "Contributor, works on cluster-kube-apiserver-operator, operator-marketplace and operator-lifecycle-manager; at NVIDIA, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "NVIDIA",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "tkashem/external-watch",
+    "about": ""
+   },
+   {
+    "repo": "tkashem/graceful",
+    "about": ""
+   },
+   {
+    "repo": "tkashem/kubernetes",
+    "about": "Production-Grade Container Scheduling and Management"
+   },
+   {
+    "repo": "tkashem/perf-tests",
+    "about": "Performance tests and benchmarks"
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "AdamJ": {
+  "role": "Lead Designer; works on patternfly-org, kubevirt.github.io and patternfly; former Red Hat, now at SwitchbackInc",
+  "section": "",
+  "affiliation": "alumni",
+  "company": "SwitchbackInc",
+  "bio": "Lead Designer @ComponentAssemblySystems | previously @AWS @RedHatOfficial | @patternfly contributor | @Product-Designs ",
+  "github_orgs": [
+   "w3c",
+   "opensourcedesign",
+   "fabric8io",
+   "patternfly",
+   "redhat-developer",
+   "rh-uxd",
+   "redhat-rcue",
+   "openshiftio",
+   "solution-explorer",
+   "ComponentAssembly",
+   "ComponentAssemblySystems"
+  ],
+  "pinned": [
+   {
+    "repo": "AdamJ/AdamJ.github.io",
+    "about": "The repository for my personal website and portfolio."
+   },
+   {
+    "repo": "AdamJ/TimeTrackerPro",
+    "about": "A modern, feature-rich time tracking application built with React, TypeScript, and Tailwind CSS. Perfect for freelancers, consultants, and professionals who need to track time, manage projects, and generate invoices."
+   }
+  ],
+  "readme": "# Hello there! I'm a Product Designer who ships code—and understands the business side. With over 15 years designing enterprise applications at AWS, Red Hat, and high-growth B2B companies, I specialize in design systems and complex, data-intensive interfaces. I've shaped products used by millions of developers and contributed to some of the industry's most respected open-source design systems. --- ## Featured Projects ### AdamJ.github.io > A personal portfolio site showcasing my work as a Lead Product Designer and Product Manager. ### Timetraked > A modern, feature-rich time tracking applicati",
+  "website": "https://www.adamjolicoeur.com"
+ },
+ "adereis": {
+  "role": "Software Engineering Leader; works on console",
+  "section": "Leadership",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Software Engineering Leader. Interested in system software, science, AI, philosophy of mind, and open source.",
+  "github_orgs": [
+   "autotest"
+  ],
+  "pinned": [
+   {
+    "repo": "adereis/agent-toolbox",
+    "about": "Reusable tools, prompts, instructions, skills, and hooks for coding agents across harnesses."
+   },
+   {
+    "repo": "adereis/housebook",
+    "about": "A household ledger run by your AI coding agent: statements, receipts and tax forms in, an audited SQLite ledger out"
+   },
+   {
+    "repo": "adereis/team-feedback-tool",
+    "about": "Privacy-first team feedback tool for collecting peer feedback and generating performance reports"
+   },
+   {
+    "repo": "adereis/performance-rating-and-bonus",
+    "about": "Local, web-based tool for managers to conduct performance reviews and calculate team bonuses with algorithmic fairness"
+   }
+  ],
+  "readme": "",
+  "website": "https://ademar.org"
+ },
+ "akhil-rane": {
+  "role": "Engineer, works on hive, community-operators-prod and windows-machine-config-operator",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Distributed Systems Enthusiast @RedHatOfficial",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "akhil-rane/hive",
+    "about": "API driven OpenShift cluster provisioning and management"
+   },
+   {
+    "repo": "akhil-rane/cloud-credential-operator",
+    "about": "Manage cloud provider credentials as Kubernetes CRDs"
+   },
+   {
+    "repo": "AICoE/ludus",
+    "about": "A gamification framework for version control and project tracking tools"
+   },
+   {
+    "repo": "akhil-rane/windows-machine-config-operator",
+    "about": "Windows MCO for OpenShift that handles addition of Windows nodes to the cluster"
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "alexismonville": {
+  "role": "Contributor, works on kubevirt",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [
+   "open-organization"
+  ],
+  "pinned": [],
+  "readme": "",
+  "website": "http://alexis.monville.com"
+ },
+ "Erouan50": {
+  "role": "SRE; works on ansible-lint; at mirakl, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "mirakl",
+  "bio": "SRE at Mirakl Inc.",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "Erouan50/erouan50.github.io",
+    "about": "Personal site"
+   },
+   {
+    "repo": "Erouan50/ansible",
+    "about": "Ansible is a radically simple IT automation platform that makes your applications and systems easier to deploy. Avoid writing scripts or custom code to deploy and update your applications— automate in a language that approaches plain English, using SSH, with no agents to install on remote systems."
+   },
+   {
+    "repo": "Erouan50/ansible-lint",
+    "about": "Best practices checker for Ansible"
+   },
+   {
+    "repo": "Erouan50/integrations-core",
+    "about": "Core integrations of the datadog agent"
+   }
+  ],
+  "readme": "",
+  "website": "rouaze.org"
+ },
+ "arortiz-rh": {
+  "role": "Engineer, works on oci-delta and ramalama",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "",
+  "bio": "Just an associate SWE",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "Ben-Epstein": {
+  "role": "Founder; works on ramalama; at GrottoAI, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "GrottoAI",
+  "bio": "Founder, CTO, GrottoAI | Tech Lead LLM @EvolutionIQ  | Founding Engineer @rungalileo | OSS @arcee-ai",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "Ben-Epstein/prefect-modal",
+    "about": "A simple example of configuring prefect workflows on modal serverless compute"
+   },
+   {
+    "repo": "Ben-Epstein/solara-examples",
+    "about": "Some simple apps in solara"
+   },
+   {
+    "repo": "Ben-Epstein/spacy-to-hf",
+    "about": "A simple converter from SpaCy Entities (Spans) to Huggingface BILOU formatted data (tokens and ner_tags)"
+   },
+   {
+    "repo": "Ben-Epstein/prefect-quickstart",
+    "about": "A small repo to get started with a prefect deployment"
+   }
+  ],
+  "readme": "### 👋 Hey! I'm Ben I love building quickly, and love building in python. Focused on production NLP use-cases right now and always following the MLOps landscape * Living in Boston, let's grab a drink! * Leading an LLM team at EvolutionIQ focused on tackling big problems for injured workers. * Host of the mlops.community virtual meetups. Reach out on slack if you have cool stuff to show! * Had some fun building a spacy-spans to huggingface-tokens NER dataset converter. If you're doing NER work give it a try :) * Working on Domain Adapted Language Models. Check out DALM to train SOTA retrievers f",
+  "website": "https://www.linkedin.com/in/ben-epstein"
+ },
+ "bburt-rh": {
+  "role": "Principal Technical Writer; works on openshift-docs",
+  "section": "Product, UX, docs, marketing, sales, GTM, ops",
+  "affiliation": "red_hat",
+  "company": "redhat-documentation",
+  "bio": "Principal Technical Writer at Red Hat",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "redhat-documentation/supplementary-style-guide",
+    "about": "This project maintains the Red Hat supplementary style guide for product documentation that supplements the IBM Style guide"
+   },
+   {
+    "repo": "bburt-rh/automotive-dev-operator",
+    "about": ""
+   },
+   {
+    "repo": "bburt-rh/cursor-global-settings",
+    "about": "Global Cursor and Claude Code rules for Red Hat enterprise development — guardrails, tech stack preferences, and documentation formatting standards"
+   },
+   {
+    "repo": "bburt-rh/redhat-docs-agent-tools",
+    "about": "A collection of AI plugins, skills, and agent tools for Red Hat documentation workflows."
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "bmahabirbu": {
+  "role": "Engineer, works on ramalama and podman-desktop-extension-ai-lab",
+  "section": "AI / ML research, engineering, data science",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Always finishes code",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "bmahabirbu/kaiden",
+    "about": ""
+   },
+   {
+    "repo": "bmahabirbu/podman-desktop",
+    "about": "Podman Desktop is the best free and open source tool to work with Containers and Kubernetes for developers. Get an intuitive and user-friendly interface to effortlessly build, manage, and deploy containers and Kubernetes — all from your desktop."
+   },
+   {
+    "repo": "bmahabirbu/ramalama",
+    "about": "The goal of ramalama is to make working with AI boring."
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "btoll": {
+  "role": "Contributor, works on hive",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "derp",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "btoll/dotfiles",
+    "about": ""
+   },
+   {
+    "repo": "btoll/chroot",
+    "about": "Easily setup a chroot"
+   },
+   {
+    "repo": "btoll/socks5-client",
+    "about": ""
+   },
+   {
+    "repo": "btoll/stymie",
+    "about": "Cryptographically secure password manager"
+   }
+  ],
+  "readme": "",
+  "website": "https://benjamintoll.com"
+ },
+ "hellertime": {
+  "role": "Contributor, works on cephfs-hadoop; not Red Hat staff",
+  "section": "",
+  "affiliation": "external",
+  "company": "Ex DataDog",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "hellertime/time-recurrence",
+    "about": "Generate recurring dates."
+   },
+   {
+    "repo": "hellertime/leif",
+    "about": "Inverted Index Experiment"
+   },
+   {
+    "repo": "hellertime/fastmap",
+    "about": "Immutable key-value map. On disk data structure. Fast."
+   },
+   {
+    "repo": "hellertime/lambda.js",
+    "about": "Javascript Lambda Calculator"
+   }
+  ],
+  "readme": "",
+  "website": "https://www.hellertime.com"
+ },
+ "chrisricci": {
+  "role": "Contributor, works on agnosticd; at google, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "google",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "cjcocokrisp": {
+  "role": "Associate Software Engineer; works on gitops-operator",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "forward, relentlessly ",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "argoproj/argo-cd",
+    "about": "Declarative Continuous Deployment for Kubernetes"
+   },
+   {
+    "repo": "redhat-developer/gitops-operator",
+    "about": "An operator that gets you an ArgoCD for cluster configuration out-of-the-box on OpenShift along with the UI for visualizing environments."
+   },
+   {
+    "repo": "argoproj-labs/argocd-agent",
+    "about": "Redefining the multi cluster story of Argo CD"
+   },
+   {
+    "repo": "argoproj-labs/argocd-image-updater",
+    "about": "Automatic container image update for Argo CD"
+   }
+  ],
+  "readme": "Hi there, I'm Christopher! About Me - 🎩 Associate Software Engineer @ Red Hat working on OpenShift GitOps - ☁️ Interested in Containers, Cloud Native Infrastructure, Distributed Systems, and Networking - 🎮 JRPG & Fighting Game fanatic (Favorite Game: Trails into Reverie) - 🐧 I spend way too long customizing my Linux machines Technologies & Skills - **Programming & Scripting:** Golang, Python, C++, C, Javascript/Typescript, Bash, YAML, JSON - **Cloud Native & DevOps:** Kubernetes, Argo CD, Helm, Kustomize, Containerization, Bootc, AWS, Terraform - **Frameworks & Libraries:** React, Next.js, Tai",
+  "website": "https://www.cjcocokrisp.dev"
+ },
+ "danieloh30": {
+  "role": "Developer Advocate; works on agnosticd and quarkus-workshop-langchain4j; at IBM",
+  "section": "Product, UX, docs, marketing, sales, GTM, ops",
+  "affiliation": "ibm",
+  "company": "IBM",
+  "bio": "Java Champion, CNCF Ambassador & TAG DevEX Co-Chair, AAIF Ambassador, Microsoft MVP, Developer Advocate, Technical Marketing, Keynote Speaker, Published Author",
+  "github_orgs": [
+   "IBM",
+   "jbossdemocentral",
+   "RedHat-Middleware-Workshops",
+   "rh-mad-workshop",
+   "serverless-java-in-action",
+   "rh-java4ai-workshop"
+  ],
+  "pinned": [
+   {
+    "repo": "danieloh30/ansible2cookbook",
+    "about": ""
+   },
+   {
+    "repo": "danieloh30/quarkus-petclinic",
+    "about": ""
+   },
+   {
+    "repo": "danieloh30/quarkus-serverless-examples",
+    "about": ""
+   }
+  ],
+  "readme": " I'm a Java Champion and Senior Principal Developer Advocate at Red Hat, a well-known public speaker, open-source contributor, published author, and developer advocate. I'm more than 20 years of first-hand experience in solving real-world enterprise problems in production environments using cloud-native technologies such as Quarkus, Spring Boot, Node.js, and Kubernetes. I'm also responsible for Java Champion, Cloud Native Computing Foundation (CNCF) ambassador, App Development Working Group Co-Chair in CNCF TAG App Delivery, and DevOps Institute ambassador to evangelize developers and operator",
+  "website": "bit.ly/danielohtv"
+ },
+ "dtaylor113": {
+  "role": "Engineer, works on angular-patternfly, console and patternfly-org",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [
+   "patternfly",
+   "rh-uxd"
+  ],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "DirectedSoul1": {
+  "role": "Solutions Engineer; works on kubevirt.github.io",
+  "section": "Product, UX, docs, marketing, sales, GTM, ops",
+  "affiliation": "red_hat",
+  "company": "Red Hat Inc",
+  "bio": "Solutions Engineer , Openshift Team",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "dougsland": {
+  "role": "Engineer, works on qm, installer and ramalama",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Changing the world via open source!",
+  "github_orgs": [
+   "containers"
+  ],
+  "pinned": [
+   {
+    "repo": "containers/space-grade-linux",
+    "about": "Space Grade Linux is an advanced Linux-based operating system designed to meet the rigorous demands of aerospace, satellite, and other high-reliability environments."
+   },
+   {
+    "repo": "containers/qm",
+    "about": "QM is a containerized environment for running Functional Safety qm (Quality Management) software"
+   },
+   {
+    "repo": "eclipse-bluechi/bluechi",
+    "about": "Eclipse BlueChi is a systemd service controller intended for multi-node environments with a predefined number of nodes and with a focus on highly regulated ecosystems such as those requiring functional safety."
+   },
+   {
+    "repo": "autosd-vss-mw/vss-lib",
+    "about": "Vehicle Signal Specification Middleware based on COVESA Vehicle Signal Specification"
+   }
+  ],
+  "readme": "",
+  "website": "https://github.com/thekubeworld"
+ },
+ "edtbl76": {
+  "role": "Contributor, works on quarkus-quickstarts",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "https://emangini.com <-- You can find me here!",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": "emangini.com"
+ },
+ "ecda909": {
+  "role": "Site Reliability Engineer; works on helm-charts; at Blank Cut, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "Blank Cut",
+  "bio": "I'm a Site Reliability Engineer who loves building tools that help make systems more reliable.",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": "https://www.edermazariegos.com/"
+ },
+ "eshwarprasadS": {
+  "role": "Contributor, works on sdg_hub and eval",
+  "section": "AI / ML research, engineering, data science",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "Building ML and AI Systems for the good of the world (and for some curiosity ^^)",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "eshwarprasadS/Deep_RL_For_CNN",
+    "about": ""
+   },
+   {
+    "repo": "eshwarprasadS/Multi_Conditioned_Text_Generation",
+    "about": "Conditional Text Generation using GPT-2 with multiple conditioning channels : Titles, Verdicts and Anchors. Final Project for Applied NLP at USC."
+   },
+   {
+    "repo": "eshwarprasadS/LinearOptimization",
+    "about": "Some LP Exercises"
+   },
+   {
+    "repo": "Red-Hat-AI-Innovation-Team/sdg_hub",
+    "about": "Synthetic Data Generation Toolkit for LLMs"
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "flavio-fernandes": {
+  "role": "Contributor, works on ovn-kubernetes",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "flavio-fernandes/mqtt2kasa",
+    "about": "Python-based project that provides wrapper to python-kasa for MQTT access"
+   },
+   {
+    "repo": "flavio-fernandes/mqtt2cmd",
+    "about": "Command dispatcher based on mqtt topic/payloads"
+   },
+   {
+    "repo": "flavio-fernandes/mqtt2pins-wiznet5k",
+    "about": ""
+   },
+   {
+    "repo": "flavio-fernandes/mqtt2msg",
+    "about": "Python based project that aggregates MQTT topics to publish configured messages"
+   }
+  ],
+  "readme": "",
+  "website": "https://flaviof.com"
+ },
+ "fynnsu": {
+  "role": "Machine Learning Engineer; works on training",
+  "section": "AI / ML research, engineering, data science",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Machine Learning Engineer @ Red Hat",
+  "github_orgs": [
+   "PyMLTools"
+  ],
+  "pinned": [
+   {
+    "repo": "vllm-project/speculators",
+    "about": "A unified library for building, evaluating, and storing speculative decoding algorithms for LLM inference in vLLM"
+   },
+   {
+    "repo": "vllm-project/vllm",
+    "about": "A high-throughput and memory-efficient inference and serving engine for LLMs"
+   }
+  ],
+  "readme": "",
+  "website": "www.fynnschmitt-ulms.ca"
+ },
+ "gx-ai-architect": {
+  "role": "Engineer; works on its_hub and reward_hub",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Engineer & Scientist\r\n",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "hmoghani": {
+  "role": "Senior Software Engineer; works on agents",
+  "section": "AI / ML research, engineering, data science",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Senior Software Engineer\r\n@RedHatOfficial",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": "https://hamid.moghani.com/"
+ },
+ "haripate": {
+  "role": "Software Engineer; works on operator-pipelines",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "A Curious Software Engineer",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "Alphadelta14": {
+  "role": "Chief Architect; works on yaml-language-server; at MaterializeInc, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "MaterializeInc",
+  "bio": "Ex-Chief Architect, Materialize",
+  "github_orgs": [
+   "alphaserv-computing-solutions",
+   "MaterializeInc"
+  ],
+  "pinned": [
+   {
+    "repo": "Alphadelta14/plex-amv-scanner",
+    "about": "Anime Music Video Scanner for Plex"
+   },
+   {
+    "repo": "Alphadelta14/sphinx-markdown",
+    "about": "Markdown Handling for Sphinx"
+   },
+   {
+    "repo": "Alphadelta14/cpuhue",
+    "about": ""
+   },
+   {
+    "repo": "Alphadelta14/glibc",
+    "about": ""
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "SaiHimaja": {
+  "role": "Contributor, works on sdg_hub; student / early career",
+  "section": "",
+  "affiliation": "student",
+  "company": "",
+  "bio": "Grad Student @ Northeastern | Open to opportunities| Books & Coffee <3",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "SaiHimaja/rbac-user-management-system",
+    "about": ""
+   },
+   {
+    "repo": "cloudSpring2024-HimajaC/webapp",
+    "about": ""
+   },
+   {
+    "repo": "cloudSpring2024-HimajaC/serverless",
+    "about": ""
+   },
+   {
+    "repo": "cloudSpring2024-HimajaC/tf-gcp-infra",
+    "about": ""
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "hguerrero": {
+  "role": "Architect; works on agnosticd and quarkus-quickstarts; former Red Hat",
+  "section": "",
+  "affiliation": "alumni",
+  "company": "Solo.io | Ex Kong | Ex Red Hat | Arkingsoft",
+  "bio": "AI Architect / Developer Advocate | Agentic AI, APIs & Cloud Native | Open Source",
+  "github_orgs": [
+   "microcks"
+  ],
+  "pinned": [
+   {
+    "repo": "hguerrero/kong-event-gw-examples",
+    "about": "This repository contains hands-on examples and configuration snippets to help you get started with the Kong Native Event Proxy."
+   },
+   {
+    "repo": "hguerrero/kong-api-gw-examples",
+    "about": "Kong API Gateway Examples for HTTP APIs and event-driven architectures"
+   },
+   {
+    "repo": "hguerrero/kong-mcp-gateway-examples",
+    "about": "Kong Gateway + Model Context Protocol (MCP) integration examples. Convert REST APIs to AI-accessible tools, proxy MCP servers, and build intelligent agents."
+   },
+   {
+    "repo": "hguerrero/ai-voice-to-image-demo",
+    "about": "AI-powered image generator with voice input. Built with React, OpenAI DALL-E 3, and Whisper APIs."
+   }
+  ],
+  "readme": "Hi, I'm Hugo 👋 Senior AI Architect & Evangelist @ Solo.io Building the infrastructure and connectivity layer for the agentic era. --- ## 🤖 About Me I'm a **technology leader, architect, developer advocate, and open source contributor** focused on the infrastructure behind the agentic AI era. Today, I'm a **Senior AI Architect & Evangelist at Solo.io**, exploring how we build, connect, secure, observe, and govern AI agents in production. My work sits at the intersection of: - 🤖 **Agentic AI & AI infrastructure** - 🔌 **APIs, MCP & agent connectivity** - 🌐 **Cloud-native & distributed systems** -",
+  "website": "https://theagenticarch.com"
+ },
+ "Ibrahim-Haroon": {
+  "role": "Contributor, works on ogx-distribution; student / early career",
+  "section": "",
+  "affiliation": "student",
+  "company": "",
+  "bio": "CS @ UMass Lowell",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": "https://www.linkedin.com/in/ibrahimharoon/ "
+ },
+ "ishapuri": {
+  "role": "Contributor, works on its_hub; student / early career",
+  "section": "",
+  "affiliation": "student",
+  "company": "MIT, Harvard University",
+  "bio": "ishapuri.github.io",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "probabilistic-inference-scaling/probabilistic-inference-scaling.github.io",
+    "about": ""
+   },
+   {
+    "repo": "rl-calibration/rl-calibration.github.io",
+    "about": ""
+   }
+  ],
+  "readme": "",
+  "website": "ishapuri.github.io"
+ },
+ "JStickler": {
+  "role": "Technical Writer; works on openshift-docs; at Grafana Labs, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "Grafana Labs",
+  "bio": "Technical Writer.  \r\nMy main claim to open source fame is that I am the reason why, since 2019,  new GitHub repos include a \"documentation\" label by default.",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "JStickler/loki",
+    "about": "Like Prometheus, but for logs."
+   },
+   {
+    "repo": "JStickler/openshift-docs",
+    "about": "OpenShift Documentation"
+   },
+   {
+    "repo": "JStickler/doctoberfest",
+    "about": "templates for community documentation"
+   },
+   {
+    "repo": "JStickler/writers-toolkit",
+    "about": ""
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "jameslau": {
+  "role": "Front End Developer; works on patternfly",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "Front End Developer",
+  "github_orgs": [
+   "patternfly",
+   "syndesisio"
+  ],
+  "pinned": [
+   {
+    "repo": "jameslau/jameslau.com",
+    "about": "Repository for jameslau.com"
+   },
+   {
+    "repo": "jameslau/vue-sandbox",
+    "about": "Vue.js Sandbox (Master)"
+   },
+   {
+    "repo": "jameslau/javascript-sandbox",
+    "about": "JavaScript playground"
+   },
+   {
+    "repo": "jameslau/jekyll-site-personal",
+    "about": "Jekyll Site Repo"
+   }
+  ],
+  "readme": "",
+  "website": "https://jameslau.com/"
+ },
+ "jeffbyrnes": {
+  "role": "Ops engineering manager; works on awx; at athenahealth, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "athenahealth",
+  "bio": "🎶 🎸 bassist \r\n💻 ops engineering manager \r\n🍸 cocktail enthusiast \r\n🎮 video gamer \r\n👔 snappy dresser ",
+  "github_orgs": [
+   "athenahealth",
+   "allaboutjazz",
+   "somervilleyimby"
+  ],
+  "pinned": [],
+  "readme": "",
+  "website": "https://thejeffbyrnes.com/"
+ },
+ "astorije": {
+  "role": "Contributor, works on ansible and ansible-documentation; at Datadog, ex-@analogdevicesinc, ex-@CloudHealth by @vmware, ex-@w3c, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "Datadog, ex-@analogdevicesinc, ex-@CloudHealth by @vmware, ex-@w3c",
+  "bio": "",
+  "github_orgs": [
+   "w3c",
+   "chaijs",
+   "bostonscala",
+   "thelounge"
+  ],
+  "pinned": [
+   {
+    "repo": "thelounge/thelounge",
+    "about": "💬  ‎ Modern, responsive, cross-platform, self-hosted web IRC client"
+   },
+   {
+    "repo": "astorije/chai-immutable",
+    "about": "Chai assertions for Facebook's Immutable library for JavaScript collections"
+   },
+   {
+    "repo": "chaijs/chai",
+    "about": "BDD / TDD assertion framework for node.js and the browser that can be paired with any testing framework."
+   },
+   {
+    "repo": "astorije/ansible-thelounge",
+    "about": "Ansible role to install The Lounge, a self-hosted web IRC client"
+   }
+  ],
+  "readme": "",
+  "website": "https://jeremie.astori.fr"
+ },
+ "jianrongzhang89": {
+  "role": "Engineer, works on rhdh-operator",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "jrenee42": {
+  "role": "Contributor, works on odh-dashboard; at Aliro Quantum, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "Aliro Quantum",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "jimdaga": {
+  "role": "Principal SRE; works on hypershift",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Principal SRE at RedHat working on managed @openshift",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "jimdaga/family-pickem",
+    "about": ""
+   },
+   {
+    "repo": "jimdaga/llm-homebase",
+    "about": "A personal LiteLLM proxy gateway with QoS budget-aware model downgrading for local use"
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "jeking3": {
+  "role": "Contributor, works on ansible and ansible-documentation; at NVIDIA, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "NVIDIA",
+  "bio": "\"What I like is we're smart enough to invent AI, dumb enough to need it, and still so stupid we can't figure out if we did the right thing.\" - Jerry Seinfeld",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "boostorg/boost-ci",
+    "about": "Continuous Integration Toolkit for boostorg code repositories"
+   },
+   {
+    "repo": "jeking3/bdde",
+    "about": "Boost Docker Development Environment"
+   },
+   {
+    "repo": "boostorg/format",
+    "about": "Boost.org format module"
+   },
+   {
+    "repo": "apache/thrift",
+    "about": "Apache Thrift"
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "jimparis": {
+  "role": "Contributor, works on netavark",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "jhanyu2019": {
+  "role": "Contributor, works on training_hub",
+  "section": "AI / ML research, engineering, data science",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "Hi 👋, I'm Jinghan Yu A Full-Stack Developer passionate about building scalable and intelligent systems - 🔭 I’m currently building: **Multi-agent AI Systems** using **LangGraph & FastAPI** - 🌱 I'm diving deep into **Cloud Computing, Distributed Systems, and AI Integration** - ⚙️ Tools I'm exploring: **Kubernetes, Docker, Kafka** - 🤝 Open Source: Contributor to **Rocket.Chat** (GSoC 2025) - 🤖 **AI/ML Exploration**: - Currently integrating **GraphRAG** with Neo4j for smarter retrieval - Previously developed mini-projects in **Sentiment Analysis** (NLP on financial reports) and **Computer Vision**",
+  "website": ""
+ },
+ "phlogistonjohn": {
+  "role": "Contributor, works on ceph, go-ceph and ceph-csi",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [
+   "IBM"
+  ],
+  "pinned": [
+   {
+    "repo": "ceph/go-ceph",
+    "about": "Go bindings for Ceph :octopus: :octopus: :octopus:"
+   },
+   {
+    "repo": "samba-in-kubernetes/samba-operator",
+    "about": "An operator for a Samba as a service on PVCs in kubernetes"
+   },
+   {
+    "repo": "samba-in-kubernetes/samba-container",
+    "about": "Build Samba Container Images / Kubernetes & Container Runtime Example Files"
+   },
+   {
+    "repo": "samba-in-kubernetes/sambacc",
+    "about": "A library and CLI tools for managing Samba servers in containers."
+   }
+  ],
+  "readme": "",
+  "website": "http://asynchrono.us/"
+ },
+ "jcaianirh": {
+  "role": "Engineer, works on console, patternfly-react and angular-patternfly",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [
+   "openshift"
+  ],
+  "pinned": [
+   {
+    "repo": "jcaianirh/console",
+    "about": "Tectonic Console UI"
+   },
+   {
+    "repo": "openshift/console",
+    "about": "OpenShift Cluster Console UI"
+   },
+   {
+    "repo": "RedHatInsights/uhc-portal",
+    "about": "This project is the web portal for the OpenShift Cluster Manager suite of services, hosted at \"console.redhat.com/openshift\"."
+   },
+   {
+    "repo": "jcaianirh/patternfly-react",
+    "about": "A set of React components for the PatternFly project. "
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "jnewsome97": {
+  "role": "Engineer, works on agnosticd",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "OpenShiftDemos/openshift-ops-workshops",
+    "about": "Workshop materials for OpenShift admin training, covering Red Hat OpenShift Container Platform 4, Modern App Dev Roadshow's Ops Track, and Summit 2023 Hands-on with OCP Plus."
+   },
+   {
+    "repo": "OpenShiftDemos/openshift-gitops-workshop",
+    "about": "An introductory workshop covering OpenShift Gitops (based on ArgoCD)"
+   },
+   {
+    "repo": "RedHatWorkshops/windows-containers-quickstart",
+    "about": ""
+   },
+   {
+    "repo": "jnewsome97/windows-containers-quickstart",
+    "about": ""
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "jtriley": {
+  "role": "Contributor, works on ansible-podman-collections and ceph-ansible",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": "https://nerc.mghpcc.org"
+ },
+ "kamoltat": {
+  "role": "Software Engineer; works on ceph, teuthology and ceph.io; at IBM",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "ibm",
+  "company": "IBM",
+  "bio": "Software Engineer @ IBM\r\n",
+  "github_orgs": [
+   "ceph"
+  ],
+  "pinned": [
+   {
+    "repo": "kamoltat/ceph",
+    "about": "Ceph is a distributed object, block, and file storage platform "
+   },
+   {
+    "repo": "kamoltat/teuthology",
+    "about": "Ceph test suite"
+   },
+   {
+    "repo": "kamoltat/pulpito-ng",
+    "about": ""
+   },
+   {
+    "repo": "kamoltat/teuthology-api",
+    "about": "A REST API to execute teuthology commands."
+   }
+  ],
+  "readme": "",
+  "website": "https://www.linkedin.com/in/kamoltat-junior-sirivadhna-61958313b/"
+ },
+ "kenfinnigan": {
+  "role": "Engineer; works on quarkus, quarkusio.github.io and angular-patternfly; former Red Hat",
+  "section": "",
+  "affiliation": "alumni",
+  "company": "",
+  "bio": "Open source engineer, observability, @open-telemetry, author, amateur genealogist. Former @ Red Hat.",
+  "github_orgs": [
+   "seam",
+   "arquillian",
+   "portletbridge",
+   "forge",
+   "asciidoctor",
+   "liveoak-io",
+   "patternfly",
+   "wildfly-swarm",
+   "jboss-webide",
+   "microprofile",
+   "redhat-microservices",
+   "wildfly-swarm-openshiftio-boosters"
+  ],
+  "pinned": [
+   {
+    "repo": "open-telemetry/opentelemetry-java",
+    "about": "OpenTelemetry Java SDK"
+   },
+   {
+    "repo": "open-telemetry/opentelemetry-specification",
+    "about": "Specifications for OpenTelemetry"
+   },
+   {
+    "repo": "open-telemetry/opentelemetry-collector-contrib",
+    "about": "Contrib repository for the OpenTelemetry Collector"
+   },
+   {
+    "repo": "open-telemetry/opentelemetry-java-instrumentation",
+    "about": "OpenTelemetry auto-instrumentation and instrumentation libraries for Java"
+   }
+  ],
+  "readme": "",
+  "website": "https://www.kenfinnigan.me"
+ },
+ "KPostOffice": {
+  "role": "Engineer, works on distributed-workloads, ogx-distribution and odh-dashboard",
+  "section": "AI / ML research, engineering, data science",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [
+   "thoth-station"
+  ],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "katierik": {
+  "role": "UX Designer; works on patternfly-design-kit",
+  "section": "Product, UX, docs, marketing, sales, GTM, ops",
+  "affiliation": "red_hat",
+  "company": "RedHatOfficial",
+  "bio": "UX Designer @RedHat",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": "www.katieriker.com"
+ },
+ "krishagarwal278": {
+  "role": "Contributor, works on console",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "\r\n\r\n",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "perses/perses",
+    "about": "The CNCF sandbox for observability visualisation. Already supports Prometheus, Tempo, Loki and Pyroscope - more data sources to come!"
+   },
+   {
+    "repo": "krishagarwal278/console",
+    "about": "OpenShift Cluster Console UI"
+   },
+   {
+    "repo": "openshift/monitoring-plugin",
+    "about": "Monitoring plugin for OpenShift console"
+   },
+   {
+    "repo": "krishagarwal278/Pheko",
+    "about": "XC475"
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "kybaker": {
+  "role": "Engineer, works on patternfly-design and patternfly-org",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "patternfly/patternfly-3",
+    "about": "This repo contains the HTML, CSS, and JQuery for the PatternFly 3 project."
+   },
+   {
+    "repo": "patternfly/patternfly-org",
+    "about": "Home of patternfly.org"
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "malodie": {
+  "role": "SRE; works on molecule; at athenahealth, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "athenahealth",
+  "bio": "I write code sometimes and hope it's good.\r\n\r\nSRE by day, home automator by night.",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "malodie/daily-coding",
+    "about": ""
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "mansikulkarni96": {
+  "role": "Senior Software Engineer; works on windows-machine-config-operator, console and ovn-kubernetes",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Senior Software Engineer at Red Hat",
+  "github_orgs": [
+   "openshift"
+  ],
+  "pinned": [],
+  "readme": "# Hi, I am Mansi! ",
+  "website": ""
+ },
+ "markllama": {
+  "role": "Contributor, works on kubevirt.github.io and user-guide",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": "http://electron-swamp.blogspot.com"
+ },
+ "mcodd": {
+  "role": "Contributor, works on ansible and ansible-documentation",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [
+   "caredotcom"
+  ],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "mhenriks": {
+  "role": "Engineer, works on containerized-data-importer, kubevirt and project-infra",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [
+   "kubevirt"
+  ],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "damemi": {
+  "role": "Maintainer; works on cluster-kube-descheduler-operator, cluster-kube-apiserver-operator and certified-operators; at odigos-io, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "odigos-io",
+  "bio": "OpenTelemetry + Kubernetes maintainer\r\n\r\nIt's all fun and games until someone git blames.       \r\n\r\nhttp://archive.is/UsYVz",
+  "github_orgs": [
+   "kubernetes",
+   "kubernetes-sigs",
+   "open-telemetry",
+   "odigos-io"
+  ],
+  "pinned": [
+   {
+    "repo": "kubernetes/kubernetes",
+    "about": "Production-Grade Container Scheduling and Management"
+   },
+   {
+    "repo": "odigos-io/odigos",
+    "about": "Distributed tracing without code changes. 🚀 Instantly monitor any application using OpenTelemetry and eBPF"
+   },
+   {
+    "repo": "kubernetes-sigs/descheduler",
+    "about": "Descheduler for Kubernetes"
+   },
+   {
+    "repo": "open-telemetry/opentelemetry-go-instrumentation",
+    "about": "OpenTelemetry Auto Instrumentation using eBPF"
+   }
+  ],
+  "readme": " ",
+  "website": "http://mikeda.me"
+ },
+ "saifshaikh48": {
+  "role": "Contributor, works on windows-machine-config-operator; former Red Hat",
+  "section": "",
+  "affiliation": "alumni",
+  "company": "Red Hat --> Tesla",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "openshift/windows-machine-config-operator",
+    "about": "Windows MCO for OpenShift that handles addition of Windows nodes to the cluster"
+   },
+   {
+    "repo": "openshift/release",
+    "about": "Release tooling for OpenShift"
+   },
+   {
+    "repo": "openshift/enhancements",
+    "about": "Enhancements tracking repository for OKD"
+   },
+   {
+    "repo": "saifshaikh48/showdown",
+    "about": "A Pokemon Showdown Battle Bot written in Python"
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "mtchoum1": {
+  "role": "Engineer, works on notebooks and opendatahub-tests",
+  "section": "AI / ML research, engineering, data science",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Driven by curiosity, I constantly seek to push the boundaries of what's possible, exploring new technologies to create real-world solutions",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "uenishia26/PayUp",
+    "about": ""
+   },
+   {
+    "repo": "nickgalis/shell",
+    "about": ""
+   },
+   {
+    "repo": "mtchoum1/Juice-Power",
+    "about": "A Tower Defense Game with Juice"
+   },
+   {
+    "repo": "mtchoum1/elyra",
+    "about": "Elyra extends JupyterLab with an AI centric approach."
+   }
+  ],
+  "readme": "Moryan Tchoumi Leveraging a lifelong passion for gaming to solve real-world problems - 🔭 I’m currently working on NFL Predictor/Pick'Em - 🌱 I’m currently learning **Operating Systems** - ❤️ My favorite project is Pay Up - 🤝 Also check out Juice Power - 👨‍💻 All of my projects are available at https://github.com/mtchoum1 - 💬 Ask me about **Machine Learning** - 📫 How to reach me **tchoumi31mo@gmail.com** - 📄 Know about my experiences Resume Connect with me: Languages and Tools: ",
+  "website": ""
+ },
+ "nalind": {
+  "role": "Engineer, works on luksy, source-to-image and crun",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Fixing some bugs, writing other bugs.",
+  "github_orgs": [
+   "openshift",
+   "containers"
+  ],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "nananosirova": {
+  "role": "Engineer, works on odh-dashboard and opendatahub-operator",
+  "section": "AI / ML research, engineering, data science",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "nananosirova/odh-dashboard",
+    "about": "Dashboard for ODH"
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "nhoriguchi": {
+  "role": "Engineer, works on enhancements",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [
+   "nec-blockchain"
+  ],
+  "pinned": [
+   {
+    "repo": "nhoriguchi/linux",
+    "about": "Linux kernel source tree"
+   },
+   {
+    "repo": "nhoriguchi/mm_regression",
+    "about": "kernel (mostly about MM subsystem) testing tool"
+   },
+   {
+    "repo": "nhoriguchi/minbft",
+    "about": "Implementation of MinBFT consensus protocol."
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "nbottari9": {
+  "role": "Intern; works on kubernetes-mcp-server",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Honors Computer Science Student @ UMass Lowell. President of @UMLCloudComputing.\r\nIntern @ Red Hat\r\n",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "UMLCloudComputing/UniPath.io",
+    "about": "UniPath.io is a full-stack web application that allows users to create, plan, and share their class schedules for their entire degree program."
+   },
+   {
+    "repo": "UMLCloudComputing/immersion-dashboard",
+    "about": "Immersion Discord Bot frontend repository"
+   },
+   {
+    "repo": "nbottari9/comp4600_final",
+    "about": "Final project for Cloud Computing Class @ UML (COMP.4600)"
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "Parthivk100": {
+  "role": "Engineer, works on patternfly-react, chatbot and patternfly-org",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "RedHatOfficial",
+  "bio": "Senior in Data Science at Boston University.",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "prb112": {
+  "role": "Partner Engineer; works on release, secondary-scheduler-operator and console",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "IBMer and Red Hat Partner Engineer\r\n\r\n@IBM ",
+  "github_orgs": [
+   "IBM"
+  ],
+  "pinned": [
+   {
+    "repo": "IBM/power-device-plugin",
+    "about": "Power Device Plugin to add protected devices into a non-privileged container."
+   },
+   {
+    "repo": "LinuxForHealth/FHIR",
+    "about": "The LinuxForHealth FHIR® Server and related projects"
+   },
+   {
+    "repo": "openshift/release",
+    "about": "Release tooling for OpenShift"
+   },
+   {
+    "repo": "kubernetes-sigs/scheduler-plugins",
+    "about": "Repository for out-of-tree scheduler plugins based on scheduler framework."
+   }
+  ],
+  "readme": "Hi... Good day... and welcome 🔭 I’m a software engineer at IBM and a Red Hat Partner Engineer, building and maintaining OpenShift and layered components across multiple architectures — specifically IBM Power (ppc64le). I lead, plan, design, ship, and debug the OpenShift Container Platform on IBM Power and the layered offerings and operators, autoscaling, and install/CI tooling that make enterprise Kubernetes run in production, and I do it in the open. Alongside the engineering, I’m energetically focused on mentoring developers to find and reach their goals. ",
+  "website": "https://bastide.org"
+ },
+ "vathpela": {
+  "role": "Engineer, works on RedHatOfficial.github.io",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat, Inc.",
+  "bio": "",
+  "github_orgs": [
+   "UEFI",
+   "rhboot"
+  ],
+  "pinned": [
+   {
+    "repo": "rhboot/shim",
+    "about": "UEFI shim loader"
+   },
+   {
+    "repo": "rhboot/efibootmgr",
+    "about": "efibootmgr development tree"
+   },
+   {
+    "repo": "rhboot/efivar",
+    "about": "Tools and libraries to work with EFI variables"
+   },
+   {
+    "repo": "rhboot/pesign",
+    "about": "Linux tools for signed PE-COFF binaries"
+   }
+  ],
+  "readme": "",
+  "website": "https://blog.uncooperative.org"
+ },
+ "PratikMahajan": {
+  "role": "Contributor, works on cincinnati-graph-data and windows-machine-config-operator",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "PratikMahajan/cincinnati",
+    "about": ""
+   },
+   {
+    "repo": "PratikMahajan/dkregistry-rs",
+    "about": "A pure-Rust asynchronous library for Docker Registry API v2"
+   },
+   {
+    "repo": "PratikMahajan/Dynamic-Currency-Pricing-API",
+    "about": " Financial Transaction Matching & Currency Pricing API "
+   },
+   {
+    "repo": "PratikMahajan/AWS-to-AZURE-Infrastructure-Migration",
+    "about": "Migrating Infrastructure from AWS to Azure"
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "pratyushasharma": {
+  "role": "Contributor, works on orthogonal-subspace-learning; student / early career",
+  "section": "",
+  "affiliation": "student",
+  "company": "",
+  "bio": "MIT CSAIL",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "pathak22/hierarchical-imitation",
+    "about": "[NeurIPS 2019] Code for Hierarchical Third-Person Imitation Learning"
+   },
+   {
+    "repo": "pratyushasharma/laser",
+    "about": "The Truth Is In There: Improving Reasoning in Language Models with Layer-Selective Rank Reduction"
+   },
+   {
+    "repo": "pratyushasharma/sw-combinatoriality",
+    "about": "Dataset and Codebase for paper on \"Contextual and Combinatorial Structure in Sperm Whale Vocalisations\""
+   }
+  ],
+  "readme": "# Personal Website ",
+  "website": "https://pratyushasharma.github.io/"
+ },
+ "rafael-azevedo": {
+  "role": "Senior Software Engineer; works on hypershift",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Senior Software Engineer and Functional Team Lead at Red Hat on the Openshift SRE Platform Team",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": "rafaelazevedo.me"
+ },
+ "raghavendra-talur": {
+  "role": "Engineer, works on kubevirt",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [
+   "gluster",
+   "heketi",
+   "RamenDR"
+  ],
+  "pinned": [
+   {
+    "repo": "raghavendra-talur/aeromux",
+    "about": "A companion app for aerospace tiling window manager that gives a vertical tab view of the workspaces"
+   },
+   {
+    "repo": "TheEasyShift/easyshift",
+    "about": "An opinionated OpenShift installer for developers"
+   },
+   {
+    "repo": "RamenDR/ramen",
+    "about": ""
+   },
+   {
+    "repo": "raghavendra-talur/ramen-log-analyzer",
+    "about": "A tool to view ramen operator logs"
+   }
+  ],
+  "readme": "",
+  "website": "rtalur.com"
+ },
+ "robruma": {
+  "role": "Contributor, works on awx; student / early career",
+  "section": "",
+  "affiliation": "student",
+  "company": "Harvard University Information Technology",
+  "bio": "",
+  "github_orgs": [
+   "crimsonfu"
+  ],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "frozencemetery": {
+  "role": "Contributor, works on RedHatOfficial.github.io; not Red Hat staff",
+  "section": "",
+  "affiliation": "external",
+  "company": "a farm nearby",
+  "bio": "I grow vegetables, and am available for systems programming work that doesn't make the world worse.",
+  "github_orgs": [
+   "pythongssapi",
+   "latchset",
+   "gssapi"
+  ],
+  "pinned": [
+   {
+    "repo": "rhboot/shim",
+    "about": "UEFI shim loader"
+   },
+   {
+    "repo": "rhboot/grub2",
+    "about": "Ongoing downstream work on grub2, including Fedora and RHEL.  ***This is not upstream; please send code upstream first***"
+   },
+   {
+    "repo": "rhboot/efibootmgr",
+    "about": "efibootmgr development tree"
+   },
+   {
+    "repo": "rhboot/efivar",
+    "about": "Tools and libraries to work with EFI variables"
+   }
+  ],
+  "readme": "",
+  "website": "https://mivehind.net/about/"
+ },
+ "rsun19": {
+  "role": "Software developer; works on odh-dashboard and opendatahub-operator",
+  "section": "AI / ML research, engineering, data science",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "opendatahub-io/odh-dashboard",
+    "about": "Dashboard for RedHat OpenShift AI / ODH "
+   },
+   {
+    "repo": "kubeflow/hub",
+    "about": "Model Registry provides a single pane of glass for ML model developers to index and manage models, versions, and ML artifacts metadata. It fills a gap between model experimentation and production activities. It provides a central interface for all stakeholders in the MLOps lifecycle to collaborate on ML models."
+   },
+   {
+    "repo": "rsun19/transit-tracker",
+    "about": ""
+   },
+   {
+    "repo": "rsun19/rsun19.github.io",
+    "about": "Personal website."
+   }
+  ],
+  "readme": "### Hi there 👋 🧑‍🎓 I am ... - A software developer at Red Hat - LANGUAGES/FRAMEWORKS: Python, TypeScript, JavaScript, React, Java, Dart, Swift, C, Next.js, Express.js, Flutter, Flask, Django, SQL, JSON, JavaFX, HTML/CSS, Tailwind CSS, Patternfly, Mantine 📫 How to reach me: ... - Message me on LinkedIn: https://www.linkedin.com/in/rob-sun/ - Take a look at my portfolio website: https://robertssun.me - EMAIL: robertssun1234 (at) gmail (dot) com 😄 Pronouns: ... - he/him ",
+  "website": "https://robertssun.me"
+ },
+ "robinnarsinghranabhat": {
+  "role": "Engineer, works on agents",
+  "section": "AI / ML research, engineering, data science",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Solving challenging problems, one at a time.",
+  "github_orgs": [
+   "USD-AI-ResearchLab"
+  ],
+  "pinned": [
+   {
+    "repo": "robinnarsinghranabhat/pytorch-optimizations-notes",
+    "about": "Notes on Improving performance of pytorch programs"
+   },
+   {
+    "repo": "robinnarsinghranabhat/Improving-Robustness-of-Push-Pull-CNN",
+    "about": "PyTorch implementation of the PushPull layer for CNNs. "
+   },
+   {
+    "repo": "robinnarsinghranabhat/CS330-2021-Meta-Learning",
+    "about": "Assignment solution to Stanford's CS330-2021 Meta-learning MOOC"
+   },
+   {
+    "repo": "robinnarsinghranabhat/Podcast-Audio-Processing",
+    "about": "Experiment on ways to make listening podcast better"
+   }
+  ],
+  "readme": "- 👋 Hi, I’m @robinnarsinghranabhat - Recently, I am hooked into transcending into next level of software development (solo-ceo) by integrating AI tools in my workflow. My job has shifted from writing code to verifying outputs from AI, which is nice !! (I feel bad that it's a matter of who can afford tokens now.) - 👀 interested in understanding computer science from the ground up. - 🌱 currently learning about asynchronous/parallel computing and system design. - 💞️ looking to collaborate on efficient ML inference - 📫 How to reach me : robinnarsingha123@gmail.com ",
+  "website": ""
+ },
+ "rranabha": {
+  "role": "Engineer, works on agents",
+  "section": "AI / ML research, engineering, data science",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "thrasher-redhat": {
+  "role": "Engineer, works on cincinnati-graph-data, cluster-kube-descheduler-operator and windows-machine-config-operator",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "careyrp": {
+  "role": "Contributor, works on ansible-lint; at Bose, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "Bose",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "rdebeasi": {
+  "role": "Contributor, works on RedHatOfficial.github.io",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [
+   "unicef"
+  ],
+  "pinned": [
+   {
+    "repo": "openpracticelibrary/openpracticelibrary",
+    "about": "Practices and ideas that empower teams to collaborate and deliver iteratively"
+   },
+   {
+    "repo": "352Media/flexMenu",
+    "about": "FlexMenu lets you create menu bars that automatically collapse into a drop-down to fit the space available."
+   },
+   {
+    "repo": "rdebeasi/checked-polyfill",
+    "about": "Adds a .checked class that behaves like the :checked pseudo-class."
+   }
+  ],
+  "readme": "",
+  "website": "http://ryandebeasi.com"
+ },
+ "SamiSousa": {
+  "role": "Contributor, works on community-operators-prod",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "dataverse-broker/dataverse-broker",
+    "about": "Open Service Broker for Dataverse"
+   },
+   {
+    "repo": "SamiSousa/dinnr",
+    "about": "Find the perfect dinner match ;)"
+   },
+   {
+    "repo": "SamiSousa/SamiSousa.github.io",
+    "about": ""
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "serenamarie125": {
+  "role": "Contributor, works on patternfly-design, console and rhdh",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [
+   "patternfly"
+  ],
+  "pinned": [
+   {
+    "repo": "openshift/console",
+    "about": "OpenShift Cluster Console UI"
+   },
+   {
+    "repo": "redhat-developer/openshift-web-console-customizations",
+    "about": "A collection of customized templates for the OpenShift Web Console"
+   },
+   {
+    "repo": "janus-idp/backstage-plugins",
+    "about": "Plugins for Backstage: this repo is deprecated and archived. If you still depend on something from this repo, it's time to look for a replacement. "
+   },
+   {
+    "repo": "janus-idp/book",
+    "about": "Architecture documents"
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "smcgowan": {
+  "role": "Engineer, works on quarkus-http",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "JBoss by Red Hat",
+  "bio": "",
+  "github_orgs": [
+   "jboss"
+  ],
+  "pinned": [],
+  "readme": "",
+  "website": "http://community.jboss.org/blogs/donnamishelly"
+ },
+ "shivchander": {
+  "role": "Engineer, works on sdg_hub and its_hub",
+  "section": "AI / ML research, engineering, data science",
+  "affiliation": "red_hat",
+  "company": "Red Hat. IBM Research. MIT-IBM",
+  "bio": "Experiments with Machine Learning and Computational Intelligence and recently Language Models",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "Red-Hat-AI-Innovation-Team/sdg_hub",
+    "about": "Synthetic Data Generation Toolkit for LLMs"
+   },
+   {
+    "repo": "Red-Hat-AI-Innovation-Team/its_hub",
+    "about": "A Python library for inference-time scaling LLMs"
+   },
+   {
+    "repo": "shivchander/claude-feynman",
+    "about": "Research agent skills for Claude Code — adapted from Feynman"
+   },
+   {
+    "repo": "shivchander/verl-agent",
+    "about": "verl-agent is an extension of veRL, designed for training LLM/VLM agents via RL. verl-agent is also the official code for paper \"Group-in-Group Policy Optimization for LLM Agent Training\""
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "stacymcauliffe": {
+  "role": "Engineer, works on patternfly-org, patternfly-design and patternfly",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "stbenjam": {
+  "role": "Staff Engineer; works on release, installer and operator-framework-operator-controller",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": " ",
+  "github_orgs": [
+   "openshift",
+   "theforeman",
+   "CSCIE9X",
+   "metal3-io",
+   "openshift-metal3",
+   "openshift-eng"
+  ],
+  "pinned": [
+   {
+    "repo": "stbenjam/skillsaw",
+    "about": "Keep your skills sharp. Intelligence for agent context."
+   },
+   {
+    "repo": "stbenjam/skills",
+    "about": "Personal Skills"
+   },
+   {
+    "repo": "stbenjam/awesome-ai",
+    "about": "Random AI things"
+   },
+   {
+    "repo": "stbenjam/no-sprintf-host-port",
+    "about": "Go linter that checks for URL construction that won't work with IPv6"
+   }
+  ],
+  "readme": "Staff Engineer at Red Hat. I have worked on OpenShift, Kubernetes, Metal3 🤘, The Foreman, and various other things. For the last decade or so, I have also been a teaching assistant for CSCI E-92 (Operating Systems), CSCI E-93 (Computer Architecture), and CSCI E-95 (Compiler Design). I like camping, hiking, skiing, and playing with FPGA's. Here's a picture of Tilly, my faithful pair programmer See also: @not-stbenjam ",
+  "website": "http://bitbin.de/"
+ },
+ "SujanaN08": {
+  "role": "Engineer, works on installer",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "SUYASHKARMARKAR": {
+  "role": "Contributor, works on dpdk",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "suzannehillman": {
+  "role": "UX Designer; works on patternfly-design",
+  "section": "Product, UX, docs, marketing, sales, GTM, ops",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "UX Designer who recently completed a 12 week project with the Fedora Project. Looking for full-time work, preferably with an open-source company.",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": "https://suzannehillman.com"
+ },
+ "tarun-etikala": {
+  "role": "Engineer, works on odh-dashboard",
+  "section": "AI / ML research, engineering, data science",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "### Hi there 👋 Portfolio Website ",
+  "website": ""
+ },
+ "tiagobento": {
+  "role": "Engineer, works on patternfly-org; at IBM",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "ibm",
+  "company": "IBM @apache",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "apache/incubator-kie",
+    "about": "Apache KIE (Knowledge Is Everything) is the home of Drools, OptaPlanner, jBPM, and Kogito."
+   },
+   {
+    "repo": "apache/incubator-kie-tools",
+    "about": "Tools for KIE"
+   },
+   {
+    "repo": "IBM/bamoe",
+    "about": "IBM Business Automation Manager Open Editions (BAMOE)"
+   },
+   {
+    "repo": "tiagobento/kie-tools-healthcheck",
+    "about": ""
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "cogumbreiro": {
+  "role": "Contributor, works on downburst; student / early career",
+  "section": "",
+  "affiliation": "student",
+  "company": "UMass Boston",
+  "bio": "As a CS reseacher, my goal is to advance the foundations of parallel\r\nprogramming, by improving the quality assurance of languages and\r\nruntimes.",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "cogumbreiro/habanero-coq",
+    "about": "Coq formalization of the Habanero programming model."
+   },
+   {
+    "repo": "cogumbreiro/aniceto-coq",
+    "about": "Aniceto is a library that helps Coq development. It includes a libray of properties on graph theory."
+   },
+   {
+    "repo": "cogumbreiro/gorn-coq",
+    "about": "Deadlock avoidance on using futures in shared memory. The project includes the formalization of a trace language and results on a policy on safe joins (through a notion of known tasks) and we show that data-race-freedom implies deadlock freedom."
+   },
+   {
+    "repo": "cogumbreiro/brenner-coq",
+    "about": "Brenner is a calculus for reasoning about task parallelism and barrier synchronization. This calculus distils the semantics of phasers and unifies the synchronisation patterns of various abstractions."
+   }
+  ],
+  "readme": "",
+  "website": "http://cogumbreiro.github.io/"
+ },
+ "rh-tokeefe": {
+  "role": "Engineer, works on openshift-docs and red-hat-developers-documentation-rhdh",
+  "section": "Product, UX, docs, marketing, sales, GTM, ops",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [
+   "redhat-developer"
+  ],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "tiyiprh": {
+  "role": "UX Designer; works on ansible-ui and patternfly-org",
+  "section": "Product, UX, docs, marketing, sales, GTM, ops",
+  "affiliation": "red_hat",
+  "company": "",
+  "bio": "UX Designer @ Red Hat",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "dinhxuanvu": {
+  "role": "Software Engineer; works on operator-lifecycle-manager, operator-registry and api; at Stealth AI Startup, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "Stealth AI Startup",
+  "bio": "Software Engineer @ Stealth AI Startup\r\nPreviously @fl97inc (Lila Sciences) @openshift @operator-framework @kcp-dev",
+  "github_orgs": [
+   "openshift-hackathon",
+   "operator-framework"
+  ],
+  "pinned": [
+   {
+    "repo": "dinhxuanvu/kubernetes",
+    "about": "Container Cluster Manager from Google"
+   },
+   {
+    "repo": "dinhxuanvu/operator-lifecycle-manager",
+    "about": "A management framework for extending Kubernetes with Operators"
+   },
+   {
+    "repo": "NovaSky-AI/SkyRL",
+    "about": "SkyRL: A Modular Full-stack RL Library for LLMs"
+   },
+   {
+    "repo": "NVIDIA-NeMo/Megatron-Bridge",
+    "about": "Training library for Megatron-based models with bidirectional Hugging Face conversion capability"
+   }
+  ],
+  "readme": "",
+  "website": ""
+ },
+ "weihanglo": {
+  "role": "Maintainer; works on kubevirt; at rust-lang @rust-tw, not Red Hat",
+  "section": "",
+  "affiliation": "external",
+  "company": "rust-lang @rust-tw",
+  "bio": "📦 Cargo worker at home",
+  "github_orgs": [
+   "rust-lang",
+   "rust-tw",
+   "rust-lang-nursery"
+  ],
+  "pinned": [
+   {
+    "repo": "rust-lang/cargo",
+    "about": "The Rust package manager"
+   },
+   {
+    "repo": "rust-lang/rust",
+    "about": "Empowering everyone to build reliable and efficient software."
+   },
+   {
+    "repo": "rust-tw/book-tw",
+    "about": "Rust 程式設計語言（正體中文翻譯）"
+   },
+   {
+    "repo": "rust-tw/rfcs-tw",
+    "about": "Rust RFCs 正體中文翻譯"
+   }
+  ],
+  "readme": "# Hello there! [![][resume-badge]][resume] [![][telegram-badge]](https://t.me/weihanglo) [![][mastodon-badge]](https://hachyderm.io/@weihanglo) [![][twitter-badge]](https://twitter.com/weihanglo) [![][linkedin-badge]](https://www.linkedin.com/in/weihanglo) Hello! I am Weihang Lo, a Rustacean that believes open source and open community would make the world a better place. * Professional Rust developer 🦀. * Maintainer of [the Cargo project][cargo]. * Active member and organizer of [the Rust Taiwan community][rust-tw]. * Currently focus on build systems and tools development. You can contact me ",
+  "website": "https://weihanglo.tw"
+ },
+ "wwdillingham": {
+  "role": "Contributor, works on cbt",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": "http://www.wesdillingham.com"
+ },
+ "wtam2018": {
+  "role": "Engineer, works on gitops-operator",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "Yorisoft": {
+  "role": "Cloud Engineer; works on user-guide",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "DevOps & Cloud Engineer | prev. AWS | GSoC'25 Contributor @KDE | Intern'21 @athenahealth | Fellow'20 @Hack-Diversity\r\n",
+  "github_orgs": [],
+  "pinned": [
+   {
+    "repo": "Yorisoft/pokedex_miyoo",
+    "about": "A Pokedex app built from scratch for MiyooMini OnionOS"
+   },
+   {
+    "repo": "Yorisoft/puppet-purchase",
+    "about": "puppet-purchase is a bot that automates the process of purchasing an item from a few of the most popular online retailers. In attempt to combat scalping, I've created and and am sharing w. you all this puppet-purchase bot. "
+   },
+   {
+    "repo": "Yorisoft/HelloMiyoo",
+    "about": "Hello World program for running on miyoomini devices"
+   },
+   {
+    "repo": "Yorisoft/Black-Beard",
+    "about": "Android app designed to help bearded dragon owners care for their scaly companions with confidence."
+   }
+  ],
+  "readme": " Hello there !! Im Yelsin, a.k.a Yorisoft! 👋 --> ### What I do: - 🧑🏽‍💻 Currently contributing to FOSS over at KDE - 🏗️ Building a Pokedex - ✍🏽 My focus is DevOps, IaC, Free Open Source Software, automated CICD pipelines, designing Well Architected Cloud Infrastructure, and good ole programming. - 📫 How to reach me: YelsinSepulveda@gmail.com or open up an issue - ⚡ Fun fact: I'm learning Japanese! ゆうゆうはくしょ が いちばんすき！ ### Accomplishments: ![Static Badge ](https://community.kde.org/GSoC/2025/StatusReports/Yelsin_%27yorisoft%27_Sepulveda) ### Languages & Tools: Skills Description Systems & App Dev ",
+  "website": "https://blog.yorisoft.dev/"
+ },
+ "porscheyin": {
+  "role": "Contributor, works on cockpit",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "unknown",
+  "company": "",
+  "bio": "",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": ""
+ },
+ "zkayyali812": {
+  "role": "Software Engineer; works on eda-server, eda-server-operator and django-ansible-base",
+  "section": "Platform / infrastructure engineering, QA, SRE",
+  "affiliation": "red_hat",
+  "company": "Red Hat",
+  "bio": "Software Engineer @ Red Hat",
+  "github_orgs": [],
+  "pinned": [],
+  "readme": "",
+  "website": "https://rover.redhat.com/people/profile/zkayyali"
+ }
+}

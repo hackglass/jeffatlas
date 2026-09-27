@@ -145,17 +145,9 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .voice-blob--dormant .voice-blob-halo { opacity: 0.3; animation: none; }
 .voice-blob--dormant:hover:not(:disabled) .voice-blob-core { filter: brightness(1.04); }
 
-/* Thinking: Jeff has the floor but no words yet. A thin ring runs around the body. */
-.voice-blob--thinking .voice-blob-core { animation-duration: 4s; filter: brightness(1.04); }
-.voice-blob--thinking .voice-blob-halo {
-  background: conic-gradient(from 0deg, rgba(47, 179, 106, 0) 0%, rgba(47, 179, 106, 0.55) 30%, rgba(47, 179, 106, 0) 60%);
-  inset: -7%;
-  -webkit-mask: radial-gradient(circle, transparent 60%, #000 61%, #000 66%, transparent 67%);
-  mask: radial-gradient(circle, transparent 60%, #000 61%, #000 66%, transparent 67%);
-  animation: voice-ring-spin 1.6s linear infinite;
-  transform: none;
-}
-@keyframes voice-ring-spin { to { transform: rotate(360deg); } }
+/* Thinking: the same blob grows a little more intent, without turning into a spinner. */
+.voice-blob--thinking .voice-blob-core { animation-duration: 4s; }
+.voice-blob--thinking .voice-blob-halo { animation-duration: 2.4s; }
 
 /* Connecting: no mic yet, so the green drains to a pale mint and pulses. */
 .voice-blob--connecting .voice-blob-core { opacity: 0.55; }
@@ -164,9 +156,8 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 /* Listening: full green, swelling with the user's voice. */
 .voice-blob--listening .voice-blob-core { animation-duration: 5s; }
 
-/* Speaking: Jeff's own voice. Brighter, faster, and the tap cuts in. */
+/* Speaking: the same blob moves faster and the tap cuts in. */
 .voice-blob--speaking .voice-blob-core {
-  background: radial-gradient(circle at 32% 28%, #86dfab 0%, #2fb36a 50%, #1f8f52 100%);
   animation-duration: 5s;
 }
 .voice-blob--speaking .voice-blob-halo { animation-duration: 1.8s; }
@@ -196,21 +187,11 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 }
 .voice-dock-hint.is-error { color: #b42318; }
 
-/* Paused: the body goes quiet grey and still; a tap picks back up. */
-.voice-blob--paused .voice-blob-core { filter: saturate(0.2) brightness(1.08); animation-duration: 14s; }
+/* Paused: Jeff stays green and recognizable, but goes almost still. */
+.voice-blob--paused .voice-blob-core { animation-duration: 18s; }
 .voice-blob--paused .voice-blob-halo { opacity: 0.25; animation: none; }
 .voice-dock-word--paused { color: var(--jeff-muted); }
 .voice-blob { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-
-/* The one or two words beside the hint: "done" while talking, "end" while paused. */
-.voice-dock-actions { min-height: 30px; margin-top: 8px; display: flex; justify-content: center; }
-.voice-dock-action {
-  font: inherit; font-size: 12.5px; font-weight: 500;
-  padding: 5px 14px; border-radius: 999px;
-  border: 1px solid var(--jeff-line-strong); background: #fff; color: var(--jeff-ink);
-  cursor: pointer; animation: voice-dock-in 220ms ease;
-}
-.voice-dock-action:hover { border-color: var(--jeff-ink); }
 
 /* ── The turns: both sides, newest at the bottom ────────────────────────── */
 
@@ -356,6 +337,21 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 }
 .jeff-panel-head h2 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
 .jeff-panel-head .jeff-panel-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.jeff-lens-switch { display: flex; align-items: center; gap: 16px; margin-top: 6px; }
+.jeff-lens-switch button {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: var(--jeff-muted);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.jeff-lens-switch button:hover { color: var(--jeff-ink); }
+.jeff-lens-switch button[aria-selected="true"] { color: var(--jeff-ink); border-bottom-color: var(--jeff-ink); }
+.jeff-lens-switch button:focus-visible { outline: 2px solid var(--jeff-accent); outline-offset: 3px; }
 .jeff-access { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--jeff-muted); }
 .jeff-access select {
   font: inherit;
@@ -447,6 +443,81 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .jeff-graph-card-actions button.ghost { background: #fff; color: var(--jeff-ink); border-color: var(--jeff-line); }
 .jeff-graph-card-actions button:hover { filter: brightness(0.96); }
 
+/* Stacks the selection bar above the legend, bottom-left, without either
+   needing to know the other's height (no magic-number overlap fixes). */
+.jeff-graph-bottom {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: none;
+}
+.jeff-graph-bottom > * { pointer-events: auto; }
+
+.jeff-graph-selection {
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 7px 9px;
+  background: #fff;
+  border: 1px solid var(--jeff-line);
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(17, 24, 39, 0.06);
+  animation: voice-dock-in 160ms ease-out;
+}
+.jeff-graph-selection-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.jeff-graph-selection-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px 3px 10px;
+  border-radius: 999px;
+  background: var(--jeff-mist, #f3f6f4);
+  font-size: 12px;
+  color: var(--jeff-ink);
+}
+.jeff-graph-selection-chip button {
+  border: none;
+  background: none;
+  color: var(--jeff-muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px;
+}
+.jeff-graph-selection-chip button:hover { color: var(--jeff-ink); }
+.jeff-graph-selection-ask {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--jeff-green);
+  background: var(--jeff-green);
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.jeff-graph-selection-ask:hover { filter: brightness(0.96); }
+.jeff-graph-selection-clear {
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--jeff-line);
+  background: #fff;
+  color: var(--jeff-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.jeff-graph-selection-clear:hover { color: var(--jeff-ink); border-color: var(--jeff-line-strong); }
+
 .jeff-graph-reset {
   position: absolute;
   right: 12px;
@@ -463,13 +534,12 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .jeff-graph-reset:hover { color: var(--jeff-ink); }
 
 .jeff-graph-legend {
-  position: absolute;
-  left: 14px;
-  bottom: 12px;
   display: flex;
+  flex-wrap: wrap;
   gap: 14px;
   font-size: 11.5px;
   color: var(--jeff-muted);
+  padding-left: 2px;
 }
 .jeff-graph-legend i {
   display: inline-block;
@@ -709,6 +779,8 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .usage-empty code { background: var(--jeff-faint); padding: 2px 6px; border-radius: 6px; }
 .usage-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px; color: var(--jeff-muted); margin-bottom: 8px; flex-wrap: wrap; }
 .usage-head strong { color: var(--jeff-ink); font-weight: 600; }
+.usage-howto { flex-basis: 100%; margin: 2px 0 0; font-size: 12.5px; color: var(--jeff-muted); max-width: 720px; line-height: 1.45; }
+.usage-board-sub { font-size: 11.5px; color: var(--jeff-muted); margin: -4px 0 8px; line-height: 1.4; }
 .usage-tools { display: flex; gap: 6px; }
 .usage-tools button { font: inherit; font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--jeff-line); background: #fff; color: var(--jeff-ink); cursor: pointer; }
 .usage-tools button:hover, .usage-tools button[aria-pressed="true"] { border-color: var(--jeff-line-strong); background: var(--jeff-faint); }
@@ -716,8 +788,8 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 @media (max-width: 1100px) { .usage-body { grid-template-columns: 1fr; } }
 .usage-chart { position: relative; }
 .usage-chart svg { width: 100%; height: auto; display: block; }
-.usage-col { fill: var(--jeff-muted); }
-.usage-link { opacity: 0.42; transition: opacity 200ms ease; cursor: default; }
+.usage-col { fill: var(--jeff-ink); }
+.usage-link { opacity: 0.5; transition: opacity 200ms ease; cursor: default; }
 .usage-link:hover { opacity: 0.8; }
 .usage-link.dim { opacity: 0.06; }
 .usage-node { cursor: pointer; transition: opacity 200ms ease; }
@@ -746,6 +818,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 
 .jeff-access input { font: inherit; font-size: 12px; width: 130px; padding: 2px 6px; border: 1px solid var(--jeff-line); border-radius: 6px; background: #fff; color: var(--jeff-ink); }
 .jeff-access input:focus { outline: none; border-color: var(--jeff-line-strong); }
+.jeff-access-hint { font-style: normal; font-size: 11px; color: var(--jeff-muted); white-space: nowrap; }
 .jeff-history a { color: var(--jeff-ink); text-decoration: none; border-bottom: 1px solid var(--jeff-line-strong); }
 
 /* ── /xray: every conversation, opened up ─────────────────────────────── */

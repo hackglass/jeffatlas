@@ -71,12 +71,12 @@ export function describeUsage(u: Usage | null, focus?: string): string {
 
 // ── Layout ──────────────────────────────────────────────────────────────────
 
-const W = 1000, H = 560, PAD_TOP = 34, PAD_BOTTOM = 16, NODE_W = 14, GAP = 10, MAX_TOPICS = 9;
+const W = 1000, H = 560, PAD_TOP = 40, PAD_BOTTOM = 16, NODE_W = 16, GAP = 12, MAX_TOPICS = 7;
 const COLS = [
-  { key: "access", title: "Who asked", x: 0 },
-  { key: "kind", title: "Kind of question", x: 300 },
-  { key: "topic", title: "About", x: 600 },
-  { key: "outcome", title: "What happened", x: 986 - NODE_W },
+  { key: "access", title: "1 · Who asked", x: 0 },
+  { key: "kind", title: "2 · What kind of question", x: 300 },
+  { key: "topic", title: "3 · About what", x: 600 },
+  { key: "outcome", title: "4 · How it went", x: 986 - NODE_W },
 ] as const;
 type ColKey = (typeof COLS)[number]["key"];
 
@@ -208,6 +208,7 @@ export default function UsageSankey({ usage, focus, onFocus }: Props) {
         <div>
           <strong>{usage.conversations.length} conversations · {rows.length} questions</strong>
           <span> · from ElevenLabs transcripts, exported {usage.exportedAt.replace("T", " ")}</span>
+          <p className="usage-howto">Every question is one ribbon, read left to right: who asked it, what kind of question it was, what it was about, and whether Jeff could answer. Thicker means more questions. Click any bar to follow only the questions through it.</p>
         </div>
         <div className="usage-tools">
           {active && <button type="button" onClick={() => pick(null)}>clear filter</button>}
@@ -229,7 +230,7 @@ export default function UsageSankey({ usage, focus, onFocus }: Props) {
         <div className="usage-body">
           <div className="usage-chart" onMouseLeave={() => setHover(null)}>
             <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Sankey of questions asked to Jeff: who asked, kind, topic, outcome">
-              {COLS.map((c) => <text key={c.key} x={c.key === "outcome" ? c.x + NODE_W : c.x} y={18} fontSize={13} fontWeight={600} textAnchor={c.key === "outcome" ? "end" : "start"} className="usage-col">{c.title}</text>)}
+              {COLS.map((c) => <text key={c.key} x={c.key === "outcome" ? c.x + NODE_W : c.x} y={20} fontSize={14} fontWeight={600} textAnchor={c.key === "outcome" ? "end" : "start"} className="usage-col">{c.title}</text>)}
               {links.map((l, i) => {
                 const x0 = COLS[l.source.col].x + NODE_W, x1 = COLS[l.target.col].x;
                 return (
@@ -251,8 +252,8 @@ export default function UsageSankey({ usage, focus, onFocus }: Props) {
                     onMouseLeave={() => setHover(null)}>
                     <rect x={x - 6} y={n.y0 - 4} width={NODE_W + 12} height={n.y1 - n.y0 + 8} fill="transparent" />
                     <rect x={x} y={n.y0} width={NODE_W} height={Math.max(2, n.y1 - n.y0)} rx={3} fill={n.color} />
-                    <text x={tx} y={(n.y0 + n.y1) / 2} dominantBaseline="middle" textAnchor={right ? "end" : "start"} fontSize={12.5}>
-                      {n.label.length > 30 ? n.label.slice(0, 29) + "…" : n.label} <tspan className="usage-n">{n.value}</tspan>
+                    <text x={tx} y={(n.y0 + n.y1) / 2} dominantBaseline="middle" textAnchor={right ? "end" : "start"} fontSize={13.5}>
+                      {n.label.length > 28 ? n.label.slice(0, 27) + "…" : n.label} <tspan className="usage-n">{n.value === 1 ? "1 question" : `${n.value} questions`}</tspan>
                     </text>
                   </g>
                 );
@@ -262,6 +263,7 @@ export default function UsageSankey({ usage, focus, onFocus }: Props) {
           </div>
           <aside className="usage-board">
             <h3>Most asked about</h3>
+            <p className="usage-board-sub">Topics ranked by how many times they came up, and how many Jeff could answer.</p>
             <ol>
               {leaderboard.map(([t, e]) => (
                 <li key={t} className={active && active.node.label === t ? "on" : undefined} onClick={() => { const n = nodes.find((x) => x.label === t) ?? null; pick(n); }}>

@@ -28,9 +28,13 @@ const SECTION_SHORT: Record<string, string> = {
   "Product, UX, docs, marketing, sales, GTM, ops": "Product & GTM",
   "AI / ML research, engineering, data science": "AI / ML",
   "Leadership": "Leadership",
-  "": "Other",
+  "OpenShift & Kubernetes": "OpenShift & K8s",
+  "Linux & virtualization": "Linux & virt",
+  "Developer tools & runtimes": "Dev tools",
+  "SRE, QA & automation": "SRE & QA",
+  "": "Community & alumni",
 };
-export const sectionShort = (s: string | undefined) => SECTION_SHORT[s ?? ""] ?? s ?? "Other";
+export const sectionShort = (s: string | undefined) => SECTION_SHORT[s ?? ""] ?? s ?? "Community & alumni";
 
 type Sim = {
   id: string; type: GraphNode["type"]; label: string;
@@ -46,17 +50,20 @@ type View = { x: number; y: number; k: number };
 const COLORS = { person: "#9aa4ae", skill: "#3b4552", repo: "#c7ccd1", lit: "#2fb36a", ink: "#111827", line: "#cfd4d9" };
 const CLICK_SLOP = 4; // px of movement before a press becomes a drag
 
-export default function OrgGraph({ graph, people, highlight, lens = "people", selected, onPick, onAsk, onClear }: {
+export default function OrgGraph({ graph, people, highlight, lens = "people", selection = [], onToggle, onClearAll, onAsk, onClear }: {
   graph: Graph | null;
   /** For the person card's GitHub / LinkedIn links; the graph itself only carries name + section. */
   people?: Person[] | null;
   highlight: Highlight;
   lens?: Lens;
-  /** The node the human last clicked (kept by the parent so Jeff can be told). */
-  selected?: Pick | null;
-  onPick?: (pick: Pick | null) => void;
-  /** "Ask Jeff" from the selection card. */
-  onAsk?: (pick: Pick) => void;
+  /** What the human has clicked: at most one skill/section, or any number of people (see the parent's `toggle`). */
+  selection?: Pick[];
+  /** Fired on every tap of a non-repo node; the parent decides add / remove / replace. */
+  onToggle?: (pick: Pick) => void;
+  /** Background click / reset: drop the whole selection. */
+  onClearAll?: () => void;
+  /** "Ask Jeff" from a card or the group bar. */
+  onAsk?: (picks: Pick[]) => void;
   /** The × on the caption: drop the highlight. */
   onClear?: () => void;
 }) {
@@ -169,7 +176,9 @@ export default function OrgGraph({ graph, people, highlight, lens = "people", se
       sims.set(n.id, { id: n.id, type: n.type, label: n.label, x, y, vx: 0, vy: 0, r, lit, dim, ax: n.type === "skill" ? ax : undefined, ay: n.type === "skill" ? ay : undefined });
     }
 
-    const hubGap = lens === "people" ? Math.min(w, h) * 0.45 : 150;
+    // Hubs keep this far apart; with more hubs on the ring, each gets less arc.
+    const hubTotal = nodes.filter((m) => m.type === "skill").length || 1;
+    const hubGap = lens === "people" ? Math.min(w, h) * Math.min(0.45, 2.2 / hubTotal) : 150;
     let raf = 0;
     let frames = 0;
     const step = () => {
@@ -179,8 +188,10 @@ export default function OrgGraph({ graph, people, highlight, lens = "people", se
       // toward the middle so stray dots do not pile up in the corners.
       for (const a of arr) {
         if (a.ax !== undefined && a.ay !== undefined) {
-          a.vx += (a.ax - a.x) * 0.06 * alpha;
-          a.vy += (a.ay - a.y) * 0.06 * alpha;
+          // Held firmly in the People lens: a big section's people would drag its hub off the ring.
+          const pull = lens === "people" ? 0.3 : 0.06;
+          a.vx += (a.ax - a.x) * pull * alpha;
+          a.vy += (a.ay - a.y) * pull * alpha;
         } else {
           a.vx += (w / 2 - a.x) * 0.0008 * alpha;
           a.vy += (h / 2 - a.y) * 0.0008 * alpha;
@@ -242,6 +253,8 @@ export default function OrgGraph({ graph, people, highlight, lens = "people", se
   }, [nodes, edges, size, highlight, lens]);
 
   const byId = useMemo(() => new Map(sims.map((s) => [s.id, s])), [sims]);
+  const selectionIds = useMemo(() => new Set(selection.map((p) => p.id)), [selection]);
+  const peopleSelected = useMemo(() => selection.filter((p) => p.type === "person"), [selection]);
 
   // ── Pointer handling: click / drag a node, pan the background, wheel zoom ──
   // Pointer → graph coordinates. The viewBox matches the element size 1:1,
@@ -304,15 +317,15 @@ export default function OrgGraph({ graph, people, highlight, lens = "people", se
       const s = simRef.current.get(g.id);
       if (!s) return;
       if (!g.moved) {
-        // A tap: let it float again, and treat it as a pick.
+        // A tap: let it float again, and report it; the parent decides
+        // add / remove / replace based on what's already selected.
         s.fx = undefined; s.fy = undefined;
         if (s.type === "repo") return;
-        const already = selected?.id === s.id;
-        onPick?.(already ? null : { type: s.type, label: s.label, id: s.id });
+        onToggle?.({ type: s.type, label: s.label, id: s.id });
       }
       // A drop leaves it pinned where it landed (double-click unpins).
     } else if (!g.moved) {
-      onPick?.(null);
+      onClearAll?.();
       setHovered(null);
     }
   };
@@ -340,9 +353,11 @@ export default function OrgGraph({ graph, people, highlight, lens = "people", se
     return () => el.removeEventListener("wheel", block);
   }, []);
 
-  // ── Hover / selection card ──
+  // ── Hover card ──
+  // Hover-only: a click adds/removes a node from the selection (bottom bar,
+  // dashed ring) but does not pin the card open once the pointer leaves.
   const card = useMemo(() => {
-    const id = hovered ?? selected?.id ?? null;
+    const id = hovered;
     if (!id || !graph) return null;
     const s = byId.get(id);
     const n = graph.nodes.find((m) => m.id === id) ?? nodes.find((m) => m.id === id);
@@ -371,19 +386,21 @@ export default function OrgGraph({ graph, people, highlight, lens = "people", se
     // Screen position of the node.
     const sx = s.x * view.k + view.x, sy = s.y * view.k + view.y;
     const flip = sx > size.w * 0.62;
-    return { id, type: n.type, label: n.label, lines, github, linkedin, sx, sy, flip, pinned: s.fx !== undefined, isSelected: selected?.id === id };
-  }, [hovered, selected, graph, nodes, byId, view, size.w, people]);
+    return { id, type: n.type, label: n.label, lines, github, linkedin, sx, sy, flip, pinned: s.fx !== undefined, isSelected: selectionIds.has(id) };
+  }, [hovered, selectionIds, graph, nodes, byId, view, size.w, people]);
 
-  // Reset puts everything back: pan/zoom, pinned nodes, hover, and the highlight.
+  // Reset puts everything back: pan/zoom, pinned nodes, hover, the
+  // highlight and the selection.
   const resetAll = useCallback(() => {
     setView({ x: 0, y: 0, k: 1 });
     for (const s of simRef.current.values()) { s.fx = undefined; s.fy = undefined; }
     setHovered(null);
     onClear?.();
-  }, [onClear]);
+    onClearAll?.();
+  }, [onClear, onClearAll]);
   const zoomed = view.k !== 1 || view.x !== 0 || view.y !== 0;
   const pinnedCount = sims.filter((s) => s.fx !== undefined).length;
-  const dirty = zoomed || pinnedCount > 0 || !!highlight || !!selected;
+  const dirty = zoomed || pinnedCount > 0 || !!highlight || selection.length > 0;
 
   return (
     <div className={`jeff-graph${panning ? " jeff-graph--panning" : ""}`}>
@@ -405,11 +422,11 @@ export default function OrgGraph({ graph, people, highlight, lens = "people", se
             const s = byId.get(e.source), t = byId.get(e.target);
             if (!s || !t) return null;
             const lit = s.lit || t.lit;
-            const near = hovered !== null && (s.id === hovered || t.id === hovered) || (selected && (s.id === selected.id || t.id === selected.id));
+            const near = hovered !== null && (s.id === hovered || t.id === hovered) || selectionIds.has(s.id) || selectionIds.has(t.id);
             return <line key={i} x1={s.x} y1={s.y} x2={t.x} y2={t.y} stroke={near ? COLORS.ink : lit ? COLORS.lit : COLORS.line} strokeOpacity={near ? 0.6 : lit ? 0.8 : highlight ? 0.25 : lens === "people" ? 0.45 : 0.6} strokeWidth={near ? 1.4 : lit ? 1.6 : 1} />;
           })}
           {sims.map((n) => {
-            const isSel = selected?.id === n.id;
+            const isSel = selectionIds.has(n.id);
             const isHover = hovered === n.id;
             return (
               <g
@@ -450,6 +467,8 @@ export default function OrgGraph({ graph, people, highlight, lens = "people", se
           className={`jeff-graph-card${card.isSelected ? " jeff-graph-card--selected" : ""}`}
           style={{ left: card.flip ? undefined : card.sx + 18, right: card.flip ? size.w - card.sx + 18 : undefined, top: Math.max(8, Math.min(size.h - 120, card.sy - 16)) }}
           onPointerDown={(e) => e.stopPropagation()}
+          onPointerEnter={() => setHovered(card.id)}
+          onPointerLeave={() => setHovered((h) => (h === card.id ? null : h))}
         >
           <div className="jeff-graph-card-kind">{card.type === "skill" ? (card.id.startsWith("section:") ? "section" : "skill area") : "person"}{card.pinned ? " · pinned" : ""}</div>
           <strong>{card.type === "skill" ? shortSkill(card.label) : card.label}</strong>
@@ -460,16 +479,18 @@ export default function OrgGraph({ graph, people, highlight, lens = "people", se
               {card.linkedin && <a href={card.linkedin} target="_blank" rel="noreferrer" title="LinkedIn" aria-label="LinkedIn"><LinkedinIcon /></a>}
             </div>
           )}
-          {card.isSelected && onAsk && (
+          {/* People: the bottom bar is the one place to ask / clear, so it covers a single
+             pick too and this card doesn't need to duplicate those actions. */}
+          {card.isSelected && card.type !== "person" && onAsk && (
             <div className="jeff-graph-card-actions">
-              <button type="button" onClick={() => onAsk({ type: card.type as Pick["type"], label: card.label, id: card.id })}>Ask Jeff</button>
-              <button type="button" className="ghost" onClick={() => onPick?.(null)}>Clear</button>
+              <button type="button" onClick={() => onAsk([{ type: card.type as Pick["type"], label: card.label, id: card.id }])}>Ask Jeff</button>
+              <button type="button" className="ghost" onClick={() => onClearAll?.()}>Clear</button>
             </div>
           )}
         </div>
       )}
 
-      {highlight?.title && (
+      {!peopleSelected.length && highlight?.title && (
         <div className="jeff-graph-caption">
           {highlight.title}
           {onClear && <button type="button" aria-label="Clear highlight" title="Clear" onClick={onClear}>×</button>}
@@ -478,12 +499,29 @@ export default function OrgGraph({ graph, people, highlight, lens = "people", se
       {dirty && (
         <button type="button" className="jeff-graph-reset" onClick={resetAll} title="Reset the view, unpin nodes and clear the highlight">reset</button>
       )}
-      <div className="jeff-graph-legend">
-        <span><i style={{ background: "#fff", border: `1.5px solid ${COLORS.line}` }} />{lens === "people" ? "section" : "skill area"}</span>
-        <span><i style={{ background: COLORS.person }} />person</span>
-        {lens === "skills" && <span><i style={{ background: COLORS.repo }} />repo</span>}
-        <span><i style={{ background: COLORS.lit }} />in focus</span>
-        <span className="jeff-graph-hint">click to focus · drag to pin · wheel to zoom</span>
+
+      <div className="jeff-graph-bottom">
+        {peopleSelected.length > 0 && (
+          <div className="jeff-graph-selection">
+            <div className="jeff-graph-selection-chips">
+              {peopleSelected.map((p) => (
+                <span key={p.id} className="jeff-graph-selection-chip">
+                  {p.label}
+                  <button type="button" aria-label={`Remove ${p.label}`} onClick={() => onToggle?.(p)}>×</button>
+                </span>
+              ))}
+            </div>
+            {onAsk && <button type="button" className="jeff-graph-selection-ask" onClick={() => onAsk(peopleSelected)}>Ask Jeff</button>}
+            <button type="button" className="jeff-graph-selection-clear" onClick={() => onClearAll?.()}>Clear</button>
+          </div>
+        )}
+        <div className="jeff-graph-legend">
+          <span><i style={{ background: "#fff", border: `1.5px solid ${COLORS.line}` }} />{lens === "people" ? "section" : "skill area"}</span>
+          <span><i style={{ background: COLORS.person }} />person</span>
+          {lens === "skills" && <span><i style={{ background: COLORS.repo }} />repo</span>}
+          <span><i style={{ background: COLORS.lit }} />in focus</span>
+          <span className="jeff-graph-hint">click to select (people stack) · drag to pin · wheel to zoom</span>
+        </div>
       </div>
     </div>
   );
