@@ -20,7 +20,7 @@ import { ExpertCards, ImpactCards } from "@/components/PeopleCards";
 import * as history from "@/lib/history";
 import { analyticsOn, beginConversation, endConversation, identifyViewer, initAnalytics, track, trackTool, trackTurn } from "@/lib/analytics";
 import {
-  findPerson, impactOfMoving, loadGraph, loadPeople, personSummary, rankExperts, sectionOverview,
+  findPerson, impactOfMoving, loadGraph, loadPeople, personSummary, rankExperts, sectionMatches, sectionOverview,
   type Graph, type ImpactReport, type Person, type ScoredPerson,
 } from "@/lib/jeffData";
 
@@ -45,6 +45,13 @@ function pickGreeting(who: string) {
   const real = who && !who.includes("@") && who.toLowerCase() !== "anonymous" ? who.split(/\s+/)[0] : "";
   const g = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
   return g.replace("{name}", real ? ` ${real}` : "").replace("{Name}", real || "Hey");
+}
+
+function collapseExactEcho(text: string) {
+  const clean = text.trim();
+  if (clean.length % 2) return clean;
+  const half = clean.length / 2;
+  return clean.slice(0, half) === clean.slice(half) ? clean.slice(0, half) : clean;
 }
 
 // A sample sketch for ?board=demo: the shape of a staffing move.
@@ -133,6 +140,7 @@ function Jeff() {
   const [dev, setDev] = useState(false); // ?dev shows the team-only footer (saved history, x-ray link)
   const [transcript, setTranscript] = useState<DockTurn[]>([]);
   const [endedNote, setEndedNote] = useState<string | null>(null);
+  const lastJeffLineRef = useRef<string | null>(null);
   // Paused: the mic is off and Jeff has been told to sit tight. One tap
   // resumes. (Mute and end used to be two gestures; feedback said make it one.)
   const [paused, setPaused] = useState(false);
@@ -243,13 +251,16 @@ function Jeff() {
   const [histStats, setHistStats] = useState<{ sessions: number; turns: number } | null>(null);
   useEffect(() => { const t = setTimeout(() => setHistStats(history.historyStats()), 0); return () => clearTimeout(t); }, []);
   const say = useCallback((role: Line["role"], text: string) => {
-    console.log(`[jeff:${role}]`, text);
-    history.appendTurn(sessionRef.current, role, text);
-    if (!text.trim()) return;
+    const clean = collapseExactEcho(text);
+    if (!clean) return;
     // Tool lines are kept short on the dock: what Jeff looked up, not the result.
-    const shown = role === "tool" ? text.trim().split(" → ")[0] : text.trim();
+    const shown = role === "tool" ? clean.split(" → ")[0] : clean;
+    if (role === "jeff" && lastJeffLineRef.current === shown) return;
+    lastJeffLineRef.current = role === "jeff" ? shown : null;
+    console.log(`[jeff:${role}]`, clean);
+    history.appendTurn(sessionRef.current, role, clean);
     setTranscript((t) => [...t, { role, text: shown }]);
-    if (role !== "tool") trackTurn(role, text.trim());
+    if (role !== "tool") trackTurn(role, clean);
     if (role !== "jeff") think();
   }, [think]);
 
@@ -348,10 +359,15 @@ function Jeff() {
       // before Jeff talks and the whole group is visible, not a sample.
       const one = section && sections.length === 1 ? sections[0] : null;
       if (one) {
-        const names = ps.filter((p) => (p.section || "Unlabeled (GitHub only)") === one.section).map((p) => p.name);
+        const names = ps.filter((p) => (p.section || "Community & alumni") === one.section).map((p) => p.name);
         focus({ people: names, title: `${one.section} · ${names.length} people` }, "people");
       } else {
         setHighlight(null); setSelected(null); setLens("people"); setView("graph"); setCanvasOpen(true);
+      }
+      if (section && !sections.length) {
+        // An unknown name must not read as "the whole office": say so and list what exists.
+        const known = [...new Set(ps.map((p) => p.section || "Community & alumni"))];
+        return JSON.stringify({ result: `no section matches "${section}"`, sections_available: known, total_people: ps.length });
       }
       return JSON.stringify({ total_people: ps.length, sections, ...(one ? { on_screen: `all ${one.headcount} people in ${one.section} are highlighted on the graph now` } : {}) });
     },
@@ -359,8 +375,7 @@ function Jeff() {
       const ps = peopleRef.current ?? [];
       const resolved = (names ?? []).map((n) => findPerson(ps, n)?.name ?? n);
       if (section) {
-        const sec = String(section).toLowerCase();
-        for (const p of ps) if ((p.section || "").toLowerCase().includes(sec)) resolved.push(p.name);
+        for (const p of ps) if (sectionMatches(p.section || "Community & alumni", String(section))) resolved.push(p.name);
       }
       const l = wantLens === "people" || wantLens === "skills" ? wantLens : undefined;
       if (!resolved.length && !(skills ?? []).length) {
@@ -475,7 +490,7 @@ function Jeff() {
     onConnect: ({ conversationId }) => {
       beginConversation(conversationId);
       track("conversation_started", { access: accessRef.current, user: userRef.current.trim() || "anonymous", lens: lensRef.current, drawing_brain: brainRef.current });
-      setError(null); setTranscript([]); setEndedNote(null); setBoard(null); setView("graph"); setPaused(false); handoffRef.current = false;
+      setError(null); setTranscript([]); setEndedNote(null); setBoard(null); setView("graph"); setPaused(false); handoffRef.current = false; lastJeffLineRef.current = null;
       const a = accessRef.current;
       sessionRef.current = history.startSession(ACCESS_LABEL[a]);
       setHistStats(history.historyStats());
@@ -629,7 +644,9 @@ function Jeff() {
         {canvasOpen ? "›" : "‹"}
       </button>
       <section className="jeff-stage">
-        {mood === "dormant" && <div className="jeff-brand"><h1>Jeff</h1></div>}
+        {mood === "dormant" && !endedNote && transcript.length === 0 && (
+          <div className="jeff-brand"><h1>Jeff</h1></div>
+        )}
         <JeffBlob
           mood={mood}
           getLevel={getLevel}
@@ -648,6 +665,12 @@ function Jeff() {
           <div>
             <h2>Red Hat Boston</h2>
             <span>{graph ? `${graph.nodes.filter((n) => n.type === "person").length} people · ${lens === "people" ? "5 sections" : `${graph.nodes.filter((n) => n.type === "skill").length} skill areas`}` : ""}</span>
+            {view === "graph" && (
+              <div className="jeff-lens-switch" role="tablist" aria-label="Map view">
+                <button type="button" role="tab" aria-selected={lens === "people"} onClick={() => { track("lens", { lens: "people" }); setFind(""); setHighlight(null); setSelected(null); setLens("people"); tellJeffRef.current("The user switched the map to People: everyone grouped by section."); }}>People</button>
+                <button type="button" role="tab" aria-selected={lens === "skills"} onClick={() => { track("lens", { lens: "skills" }); setFind(""); setHighlight(null); setSelected(null); setLens("skills"); tellJeffRef.current("The user switched the map to Skills: the technical view from GitHub."); }}>Skills</button>
+              </div>
+            )}
           </div>
           <div className="jeff-panel-meta">
             <label className="jeff-access" title="Find people by name: matches light up on the map">

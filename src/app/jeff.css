@@ -337,6 +337,21 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 }
 .jeff-panel-head h2 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
 .jeff-panel-head .jeff-panel-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.jeff-lens-switch { display: flex; align-items: center; gap: 16px; margin-top: 6px; }
+.jeff-lens-switch button {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: var(--jeff-muted);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.jeff-lens-switch button:hover { color: var(--jeff-ink); }
+.jeff-lens-switch button[aria-selected="true"] { color: var(--jeff-ink); border-bottom-color: var(--jeff-ink); }
+.jeff-lens-switch button:focus-visible { outline: 2px solid var(--jeff-accent); outline-offset: 3px; }
 .jeff-access { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--jeff-muted); }
 .jeff-access select {
   font: inherit;

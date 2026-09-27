@@ -75,7 +75,7 @@ TOOLS = [
     },
     {
         "name": "team_overview",
-        "description": "Summarize the Boston org: sections, headcounts, notable people, and the dominant skills in each. Filter to one section (e.g. 'AI', 'Platform', 'Leadership', 'Product') to get everyone in it by name and have them all highlighted on the graph automatically.",
+        "description": "Summarize the Boston org: sections, headcounts, notable people, and the dominant skills in each. Filter to one section by its short name (Leadership, AI/ML, Platform, Product, Community & alumni) to get everyone in it by name and have them all highlighted on the graph automatically. If the reply says no section matches, do not describe the whole office; use one of the names it lists.",
         "parameters": {
             "type": "object",
             "properties": {"section": {"type": "string", "description": "Optional section name or keyword to filter on."}},

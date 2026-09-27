@@ -248,11 +248,32 @@ export function personSummary(p: Person, full = false): Record<string, unknown> 
   };
 }
 
+/** Short names the graph and Jeff use for the long section labels in the data. */
+const SECTION_ALIASES: Record<string, string[]> = {
+  "AI / ML research, engineering, data science": ["ai", "ml", "aiml", "research", "data science", "datascience"],
+  "Platform / infrastructure engineering, QA, SRE": ["platform", "infra", "infrastructure", "engineering", "qa", "sre", "platforminfra"],
+  "Product, UX, docs, marketing, sales, GTM, ops": ["product", "gtm", "ux", "docs", "marketing", "sales", "ops", "productgtm"],
+  "Leadership": ["leadership", "leaders", "leader", "execs", "executives", "management"],
+  "Community & alumni": ["community", "alumni", "other", "unlabeled", "communityalumni"],
+};
+const squash = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+/** Does a section label match what Jeff or the graph called it ("AI/ML", "Platform & infra", "leadership")? */
+export function sectionMatches(sectionLabel: string, query: string): boolean {
+  const q = squash(query);
+  if (!q) return true;
+  const label = squash(sectionLabel);
+  if (label.includes(q)) return true;
+  const aliases = (SECTION_ALIASES[sectionLabel] ?? []).map(squash);
+  // "AI/ML" squashes to "aiml"; "AI / ML group" still contains "ai" and "ml".
+  return aliases.some((a) => a === q || q.includes(a));
+}
+
 export function sectionOverview(people: Person[], section?: string) {
   const groups = new Map<string, Person[]>();
   for (const p of people) {
     const key = p.section || "Community & alumni";
-    if (section && !key.toLowerCase().includes(section.toLowerCase())) continue;
+    if (section && !sectionMatches(key, section)) continue;
     groups.set(key, [...(groups.get(key) ?? []), p]);
   }
   // Asking about one section gets everyone in it, not just a sample: people

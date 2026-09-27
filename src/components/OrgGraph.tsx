@@ -342,7 +342,10 @@ export default function OrgGraph({ graph, people, highlight, lens = "people", se
 
   // ── Hover / selection card ──
   const card = useMemo(() => {
-    const id = hovered ?? selected?.id ?? null;
+    // A selection pins the card: on the way from the node to its "Ask Jeff"
+    // button the cursor crosses other nodes, and a hover-following card would
+    // jump away (and lose its buttons) under the click.
+    const id = selected?.id ?? hovered ?? null;
     if (!id || !graph) return null;
     const s = byId.get(id);
     const n = graph.nodes.find((m) => m.id === id) ?? nodes.find((m) => m.id === id);
