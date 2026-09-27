@@ -18,14 +18,24 @@ browser ──WebRTC──▶ ElevenLabs Agent (speech-to-text + LLM + Roger's v
        answered locally from public/data/people.json + graph.json
 ```
 
-Everything runs in the page. There is no backend: the agent calls "client
-tools" that the browser answers from the exported data, and the org graph on
-the right animates whatever Jeff is talking about.
+Everything runs in the page. The agent calls "client tools" that the browser
+answers from the exported data, and the org graph on the right animates
+whatever Jeff is talking about.
+
+Jeff also has a whiteboard. `board_write` puts a list or a flow on it
+directly; `board_explain` sends a one-line brief to a second brain
+(`src/app/api/board/route.ts`, Claude via the Anthropic SDK) that designs an
+animated step-by-step sketch, which the board plays while Jeff narrates.
+That route needs a server, so it runs in `npm run dev` (or any Node host)
+but not on the static GitHub Pages build, where Jeff falls back to
+`board_write`. Preview the board without talking: `http://localhost:3000/?board=demo`.
 
 - `src/` — Next.js app (static export, deploys to GitHub Pages)
   - `app/page.tsx` — the page; wires the agent's client tools to the data
   - `components/JeffBlob.tsx` + `app/jeff.css` — the green blob (lifted from the Situent voice dock)
   - `components/OrgGraph.tsx` — animated skill/person graph
+  - `components/Whiteboard.tsx` + `lib/board.ts` — Jeff's animated sketchpad and its scene format
+  - `app/api/board/route.ts` — the drawing brain (needs `SCIFORIUM_API_KEY` or `ANTHROPIC_API_KEY`)
   - `lib/jeffData.ts` — ranking, person lookup, impact analysis
 - `ingest/` — data collection and agent setup
   - `collect.py`, `fetch_people.py`, `skills.py` — GitHub scrape and skill inference
@@ -55,11 +65,21 @@ the right animates whatever Jeff is talking about.
    NEXT_PUBLIC_ELEVENLABS_AGENT_ID=agent_...
    ```
    Re-run with `--update agent_...` after editing `jeff_prompt.md` or the tools.
-3. **Run it**:
+3. **Whiteboard brain** (optional): put a key in `src/.env.local`. Hackathon weekend, use the Sciforium team key (OpenAI-compatible; GLM 5.3 Flash works well):
+   ```
+   SCIFORIUM_API_KEY=...
+   SCIFORIUM_MODEL=<exact model string from compute setup>
+   ```
+   Or an Anthropic key (used when no Sciforium key is set):
+   ```
+   ANTHROPIC_API_KEY=...
+   ```
+   `BOARD_MODEL` overrides the Anthropic model (default `claude-opus-5`). Without either key, Jeff still draws with the quick `board_write` tool; only the animated `board_explain` sketches need a key. The GitHub Pages build has no server, so it never has the drawing brain.
+4. **Run it**:
    ```
    cd src && npm install && npm run dev
    ```
-4. **Deploy**: pushes to `main` build to GitHub Pages. Set the repo *Variable*
+5. **Deploy**: pushes to `main` build to GitHub Pages. Set the repo *Variable*
    `NEXT_PUBLIC_ELEVENLABS_AGENT_ID` (Settings → Secrets and variables → Actions → Variables).
 
 Regenerate the data after touching `data/`:

@@ -188,6 +188,20 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .voice-dock-quiet:hover:not(:disabled) { color: var(--jeff-accent); }
 .voice-dock-quiet:disabled { opacity: 0.45; cursor: default; }
 
+.voice-dock-transcript {
+  max-width: 420px;
+  max-height: 32vh;
+  overflow-y: auto;
+  margin-top: 14px;
+  padding: 0 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--jeff-ink);
+  text-align: center;
+}
+.voice-dock-transcript p { margin: 0 0 8px; opacity: 0.55; }
+.voice-dock-transcript p.is-latest { opacity: 1; }
+
 /* ── Transcript ─────────────────────────────────────────────────────────── */
 
 .jeff-thread {
@@ -390,3 +404,126 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 @media (prefers-reduced-motion: reduce) {
   .voice-blob-core, .voice-blob-halo, .voice-dock, .jeff-card { animation: none; }
 }
+
+/* ── Whiteboard: Jeff's sketchpad ──────────────────────────────────────── */
+
+.jeff-view-switch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--jeff-line);
+  border-radius: 999px;
+}
+.jeff-view-switch button {
+  border: 0;
+  background: transparent;
+  color: var(--jeff-muted);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.jeff-view-switch button.on { background: var(--jeff-accent); color: #fff; }
+
+.wb {
+  position: relative;
+  width: 100%;
+  height: min(52vh, 520px);
+  border: 1px solid var(--jeff-line);
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fff;
+  font-family: var(--font-sketch, "Comic Sans MS", "Segoe Print", cursive);
+  animation: voice-dock-in 220ms ease-out;
+}
+.wb svg { width: 100%; height: 100%; display: block; color: var(--jeff-ink); }
+
+.wb-el { transition: opacity 400ms ease; transform-box: fill-box; transform-origin: center; }
+.wb-dim { opacity: 0.35; }
+.wb-shape { fill: #fff; stroke: var(--jeff-ink); stroke-width: 2.2; filter: url(#wb-rough); }
+.wb-note .wb-shape { fill: #eaf7ee; stroke: var(--jeff-accent); }
+.wb-group .wb-shape { fill: rgba(47, 179, 106, 0.06); stroke: var(--jeff-accent); stroke-dasharray: 8 6; }
+.wb-group-title { fill: var(--jeff-accent); }
+.wb-person .wb-shape { fill: var(--jeff-accent); stroke: var(--jeff-ink); }
+.wb-initials { fill: #fff; }
+.wb text { fill: var(--jeff-ink); }
+.wb-label-text { fill: var(--jeff-ink); }
+.wb-arrow-text { fill: var(--jeff-muted); }
+.wb-line { fill: none; stroke: var(--jeff-ink); stroke-width: 2.4; stroke-linecap: round; }
+.wb-glyph { fill: none; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.wb-ok { stroke: var(--jeff-accent); }
+.wb-bad { stroke: #000; }
+
+.wb-strong .wb-shape { stroke-width: 3.4; }
+.wb-strong text { font-weight: 700; }
+.wb-muted { opacity: 0.6; }
+.wb-spot .wb-shape { stroke: var(--jeff-accent); stroke-width: 3.2; }
+.wb-spot.wb-person .wb-shape { stroke: #000; }
+.wb-spot text { fill: var(--jeff-ink); }
+
+/* Sketch-in: shapes pop and settle, arrows draw themselves. */
+.wb-in { animation: wb-pop 520ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.wb-in .wb-line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: wb-draw 700ms ease-out both; animation-delay: inherit; }
+.wb-in.wb-arrow { animation: wb-fade 300ms ease-out both; }
+.wb-in .wb-glyph { stroke-dasharray: 1; stroke-dashoffset: 1; animation: wb-draw 500ms ease-out both; animation-delay: inherit; }
+@keyframes wb-pop {
+  from { opacity: 0; transform: scale(0.85) rotate(-2deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes wb-draw { to { stroke-dashoffset: 0; } }
+@keyframes wb-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.wb-title {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--jeff-accent);
+  background: #fff;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.wb-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  max-width: 80%;
+  font-size: 15px;
+  color: var(--jeff-ink);
+  background: #fff;
+  border: 1px solid var(--jeff-line);
+  padding: 6px 14px;
+  border-radius: 999px;
+  animation: voice-dock-in 260ms ease-out;
+}
+.wb-steps { position: absolute; top: 18px; right: 52px; display: flex; gap: 5px; }
+.wb-steps i { width: 7px; height: 7px; border-radius: 50%; background: #dfe8e2; }
+.wb-steps i.on { background: var(--jeff-accent); }
+.wb-clear {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--jeff-muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+.wb-clear:hover { color: var(--jeff-accent); }
+.wb-busy {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12.5px;
+  color: var(--jeff-muted);
+  background: #fff;
+  padding: 4px 12px;
+  border-radius: 999px;
+  animation: voice-blob-pulse 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) { .wb-in, .wb-in .wb-line, .wb-in .wb-glyph { animation: none; stroke-dashoffset: 0; } }

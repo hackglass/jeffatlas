@@ -21,10 +21,20 @@ type Props = {
   helper?: string;
   error?: string | null;
   disabled?: boolean;
+  /** Small-print "Stop" under the blob; shown only when provided. */
+  onStop?: () => void;
+  /** What Jeff has said this conversation, printed under the blob. */
+  transcript?: string[];
 };
 
-export default function JeffBlob({ mood, getLevel, onTap, word, helper, error, disabled }: Props) {
+export default function JeffBlob({ mood, getLevel, onTap, word, helper, error, disabled, onStop, transcript }: Props) {
   const ref = useRef<HTMLButtonElement | null>(null);
+  const transcriptRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = transcriptRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [transcript]);
 
   useEffect(() => {
     const el = ref.current;
@@ -69,6 +79,18 @@ export default function JeffBlob({ mood, getLevel, onTap, word, helper, error, d
       ) : helper ? (
         <div className="voice-dock-helper">{helper}</div>
       ) : null}
+      {onStop && (
+        <div className="voice-dock-controls">
+          <button type="button" className="voice-dock-quiet" onClick={onStop}>Stop</button>
+        </div>
+      )}
+      {transcript && transcript.length > 0 && (
+        <div ref={transcriptRef} className="voice-dock-transcript" aria-live="polite">
+          {transcript.map((line, i) => (
+            <p key={i} className={i === transcript.length - 1 ? "is-latest" : undefined}>{line}</p>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

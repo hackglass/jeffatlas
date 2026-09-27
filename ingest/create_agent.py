@@ -4,6 +4,7 @@
     export ELEVENLABS_API_KEY=...            # or put it in src/.env.local
     python3 ingest/create_agent.py           # create -> prints the agent id
     python3 ingest/create_agent.py --update agent_xxx   # push prompt/tools/voice again
+    python3 ingest/create_agent.py --update agent_xxx --llm gemini-2.5-flash-lite   # a faster brain
 
     # Optional: run Jeff's brain on GLM instead of an ElevenLabs-hosted model
     python3 ingest/create_agent.py --glm-key "$GLM_API_KEY" [--glm-model glm-4.6]
@@ -94,7 +95,57 @@ TOOLS = [
             "required": ["people"],
         },
     },
+    # ── The whiteboard ──
+    {
+        "name": "board_explain",
+        "description": "Sketch an explanation on the whiteboard with animation. Give a one-line brief of the picture you want (who, what, how it connects, in what order) and it is drawn step by step while you keep talking. Use it whenever a concept has parts: a dependency, a handover, a before/after, a risk map, a team shape. Returns immediately; the board will tell you when it is up so you can narrate it. Only use names and numbers that came from tools in this conversation.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "brief": {"type": "string", "description": "What to draw, in one or two sentences, e.g. 'Cluster team: Bill and Priya own provisioning; if Priya moves, Marco backfills; arrow from Marco to provisioning; mark storage as risky.'"},
+                "facts": {"type": "string", "description": "Names, numbers and repos from earlier tool results that the drawing may use, comma separated."},
+            },
+            "required": ["brief"],
+        },
+    },
+    {
+        "name": "board_write",
+        "description": "Put a short list straight onto the whiteboard, one item at a time, with optional connections between items. Fast and simple: use it for options, names, steps, or a checklist you are talking through. Returns immediately.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string", "description": "Board title, a few words."},
+                "items": {
+                    "type": "array",
+                    "description": "Up to 12 items in the order you will say them.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "label": {"type": "string", "description": "One to four words."},
+                            "kind": {"type": "string", "enum": ["box", "note", "person", "label", "check", "cross"], "description": "box (default) for a thing, person for a named person, note for evidence or an aside, check/cross to mark good/risky."},
+                            "detail": {"type": "string", "description": "Optional second line, e.g. '~900 commits'."},
+                        },
+                        "required": ["label"],
+                    },
+                },
+                "connections": {
+                    "type": "array",
+                    "description": "Pairs of item labels to draw an arrow between, from first to second.",
+                    "items": {"type": "array", "description": "A pair: [from label, to label].", "items": {"type": "string", "description": "An item label exactly as given in items."}},
+                },
+            },
+            "required": ["title", "items"],
+        },
+    },
+    {
+        "name": "board_clear",
+        "description": "Wipe the whiteboard and go back to the org graph. Use when changing subject.",
+        "parameters": {"type": "object", "properties": {}, "required": []},
+    },
 ]
+
+# Tools that draw or highlight never block Jeff: he keeps talking while the screen catches up.
+FIRE_AND_FORGET = {"show_on_graph", "board_explain", "board_write", "board_clear"}
 
 
 def load_env_key() -> str:
@@ -130,8 +181,8 @@ def ensure_tools(key: str) -> list[str]:
                 for t in call(key, "GET", "/convai/tools").get("tools", [])}
     ids = []
     for tool in TOOLS:
-        cfg = {"type": "client", "expects_response": tool["name"] != "show_on_graph",
-               "response_timeout_secs": 20, **tool}
+        cfg = {"type": "client", "expects_response": tool["name"] not in FIRE_AND_FORGET,
+               "response_timeout_secs": 8, **tool}
         tid = existing.get(tool["name"])
         if tid:
             call(key, "PATCH", f"/convai/tools/{tid}", {"tool_config": cfg})
@@ -189,7 +240,25 @@ def main():
                 "similarity_boost": 0.75,
                 "speed": 1.05,
             },
-            "turn": {"turn_timeout": 10, "mode": "turn"},
+            # Same-room feel: jump in sooner when the user trails off, and if the
+            # brain takes more than a beat, say something natural while thinking
+            # instead of going silent.
+            "turn": {
+                "turn_timeout": 5,
+                "mode": "turn",
+                "turn_eagerness": "eager",
+                "soft_timeout_config": {
+                    "timeout_seconds": 1.2,
+                    "use_llm_generated_message": True,
+                    "llm_generated_message_prompt_override": (
+                        "Jeff is still thinking. Say one short natural aside in Jeff's voice that keeps the room warm while he looks something up: "
+                        "a half-sentence reaction to what was just asked, a 'hang on, let me pull that up', or a wry beat. Under ten words. No question."
+                    ),
+                    "randomize_fillers": True,
+                    "max_soft_timeouts_per_generation": 1,
+                    "disable_until_first_user_message": True,
+                },
+            },
             "conversation": {"max_duration_seconds": 1200, "client_events": [
                 "audio", "interruption", "user_transcript", "agent_response", "agent_response_correction",
                 "client_tool_call", "vad_score", "agent_tool_response",
