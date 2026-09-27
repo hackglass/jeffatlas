@@ -24,6 +24,11 @@ export type Person = {
   url: string;
   blog: string;
   sources: string;
+  /** red_hat | ibm | alumni | external | student | unknown (GitHub-only people are researched by ingest/enrich_github.py). */
+  affiliation?: string;
+  company?: string;
+  github_orgs?: string[];
+  pinned?: { repo: string; about: string }[];
   commits: number;
   skills: Skill[];
   languages: string[];
@@ -215,33 +220,80 @@ export function impactOfMoving(people: Person[], names: string[]): ImpactReport 
 
 // ── Compact serializers for the model ───────────────────────────────────────
 
+const AFFILIATION_TEXT: Record<string, string> = {
+  ibm: "at IBM (Red Hat's parent), not Red Hat staff",
+  alumni: "former Red Hat, now elsewhere",
+  external: "works at another company; contributes to Red Hat repos",
+  student: "student or early career; contributes to Red Hat repos",
+  unknown: "GitHub contributor in Boston; not confirmed Red Hat staff",
+};
+
 export function personSummary(p: Person, full = false): Record<string, unknown> {
   return {
     name: p.name,
     role: p.role || undefined,
-    section: p.section || undefined,
+    section: p.section || "Community & alumni (GitHub contributor, not confirmed Red Hat staff)",
+    affiliation: p.affiliation && p.affiliation !== "red_hat" ? AFFILIATION_TEXT[p.affiliation] ?? p.affiliation : undefined,
+    company: p.company && p.affiliation !== "red_hat" ? p.company : undefined,
     github: p.login || undefined,
     commits: p.commits || undefined,
     skills: p.skills.map((s) => s.skill),
     top_repos: p.top_repos.slice(0, full ? 6 : 3).map((r) => `${r.repo} (${r.commits})`),
     languages: p.languages.length ? p.languages : undefined,
     bio: p.bio ? p.bio.slice(0, full ? 400 : 140) : undefined,
-    profile: full && p.profile ? p.profile.slice(0, 900) : undefined,
+    profile: full && p.profile ? p.profile : undefined,
+    pinned_repos: full && p.pinned?.length ? p.pinned.map((r) => `${r.repo}${r.about ? `: ${r.about.slice(0, 80)}` : ""}`) : undefined,
+    github_orgs: full && p.github_orgs?.length ? p.github_orgs : undefined,
     linkedin: full && p.linkedin ? p.linkedin : undefined,
   };
+}
+
+/** Short names the graph and Jeff use for the long section labels in the data. */
+const SECTION_ALIASES: Record<string, string[]> = {
+  "AI / ML research, engineering, data science": ["ai", "ml", "aiml", "research", "data science", "datascience"],
+  "Platform / infrastructure engineering, QA, SRE": ["platform", "infra", "infrastructure", "engineering", "qa", "sre", "platforminfra"],
+  "Product, UX, docs, marketing, sales, GTM, ops": ["product", "gtm", "ux", "docs", "marketing", "sales", "ops", "productgtm"],
+  "Leadership": ["leadership", "leaders", "leader", "execs", "executives", "management"],
+  "Community & alumni": ["community", "alumni", "other", "unlabeled", "communityalumni"],
+  // The finer sections from ingest/sections.py; "platform" still finds the engineering side.
+  "OpenShift & Kubernetes": ["openshift", "kubernetes", "k8s", "cloud", "platform", "infra"],
+  "Linux & virtualization": ["linux", "kernel", "rhel", "virtualization", "virt", "kubevirt", "storage", "platform", "infra"],
+  "Developer tools & runtimes": ["devtools", "developertools", "runtimes", "java", "quarkus", "frontend", "security", "platform"],
+  "SRE, QA & automation": ["sre", "qa", "quality", "automation", "ansible", "devops", "reliability", "platform"],
+  "UX & design": ["ux", "design", "designers"],
+  "Docs & learning": ["docs", "documentation", "writers", "technicalwriting"],
+  "Product & programs": ["product", "pm", "programs", "productmanagement"],
+  "Sales & partners": ["sales", "partners", "gtm", "accounts", "consulting"],
+  "Community & ops": ["ops", "operations", "events", "talent", "advocates"],
+};
+const squash = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+/** Does a section label match what Jeff or the graph called it ("AI/ML", "Platform & infra", "leadership")? */
+export function sectionMatches(sectionLabel: string, query: string): boolean {
+  const q = squash(query);
+  if (!q) return true;
+  const label = squash(sectionLabel);
+  if (label.includes(q)) return true;
+  const aliases = (SECTION_ALIASES[sectionLabel] ?? []).map(squash);
+  // "AI/ML" squashes to "aiml"; "AI / ML group" still contains "ai" and "ml".
+  return aliases.some((a) => a === q || q.includes(a));
 }
 
 export function sectionOverview(people: Person[], section?: string) {
   const groups = new Map<string, Person[]>();
   for (const p of people) {
-    const key = p.section || "Unlabeled (GitHub only)";
-    if (section && !key.toLowerCase().includes(section.toLowerCase())) continue;
+    const key = p.section || "Community & alumni";
+    if (section && !sectionMatches(key, section)) continue;
     groups.set(key, [...(groups.get(key) ?? []), p]);
   }
+  // Asking about one section gets everyone in it, not just a sample: people
+  // noticed "a few missing" when Jeff could only name six of fifty-seven.
+  const full = !!section && groups.size <= 2;
   return [...groups.entries()].map(([name, ps]) => ({
     section: name,
     headcount: ps.length,
     notable: ps.slice(0, 6).map((p) => `${p.name}${p.role ? ` — ${p.role}` : ""}`),
+    ...(full ? { everyone: ps.map((p) => `${p.name}${p.role ? ` — ${p.role}` : ""}`) } : {}),
     top_skills: topSkills(ps, 4),
   }));
 }

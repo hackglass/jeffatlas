@@ -75,7 +75,7 @@ TOOLS = [
     },
     {
         "name": "team_overview",
-        "description": "Summarize the Boston org: sections, headcounts, notable people, and the dominant skills in each. Optionally filter to one section (e.g. 'AI', 'Platform', 'Leadership', 'Product').",
+        "description": "Summarize the Boston org: sections, headcounts, notable people, and the dominant skills in each. Filter to one section by name or keyword (Leadership, AI / ML, OpenShift & Kubernetes, Linux & virtualization, Developer tools & runtimes, SRE, QA & automation, UX & design, Docs & learning, Product & programs, Sales & partners, Community & ops, Community & alumni; 'platform' covers the four engineering sections) to get everyone in it by name and have them all highlighted on the graph automatically. If the reply says no section matches, do not describe the whole office; use one of the names it lists.",
         "parameters": {
             "type": "object",
             "properties": {"section": {"type": "string", "description": "Optional section name or keyword to filter on."}},
@@ -84,12 +84,13 @@ TOOLS = [
     },
     {
         "name": "show_on_graph",
-        "description": "Highlight people and/or skill areas on the org graph the user is looking at. Call this after find_experts or impact_if_moved so the screen matches what you are saying. With no people and no skills it clears the highlight. The graph picks the lens that can show the people (someone with no GitHub footprint only appears in the People lens). Returns nothing useful; do not wait on it for facts.",
+        "description": "Highlight people, a whole section, and/or skill areas on the org graph the user is looking at. Call it the moment a group or a set of people comes up, before or while you talk, so the screen moves with you. Pass section to light up everyone in a section (e.g. 'Leadership', all 57). With no people, section or skills it clears the highlight. The graph picks the lens that can show the people (someone with no GitHub footprint only appears in the People lens). Returns nothing useful; do not wait on it for facts.",
         "parameters": {
             "type": "object",
             "properties": {
                 "people": {"type": "array", "items": {"type": "string", "description": "A person's full name."}, "description": "Names of people to highlight."},
                 "skills": {"type": "array", "items": {"type": "string", "description": "A skill area name."}, "description": "Skill areas to highlight."},
+                "section": {"type": "string", "description": "A section name (Leadership, AI/ML, Platform, Product, Community & alumni): highlights everyone in it."},
                 "title": {"type": "string", "description": "A short caption for what is being shown, e.g. 'Cluster provisioning experts'."},
                 "lens": {"type": "string", "enum": ["people", "skills"], "description": "Optional: force the People lens (everyone by section) or the Skills lens (technical, GitHub-derived)."},
             },
@@ -98,7 +99,7 @@ TOOLS = [
     },
     {
         "name": "graph_lens",
-        "description": "Switch the org graph between the People lens (all 381 Boston people grouped by section: Leadership, AI/ML, Platform, Product & GTM, Other) and the Skills lens (the technical picture: skill areas and GitHub repos, only people with commits). Use People for org shape, leadership, and non-engineering questions; Skills for who-knows-what.",
+        "description": "Switch the org graph between the People lens (all 381 Boston people grouped into 11 sections plus Community & alumni: Leadership, AI / ML, OpenShift & Kubernetes, Linux & virtualization, Developer tools & runtimes, SRE, QA & automation, UX & design, Docs & learning, Product & programs, Sales & partners, Community & ops) and the Skills lens (the technical picture: skill areas and GitHub repos, only people with commits). Use People for org shape, leadership, and non-engineering questions; Skills for who-knows-what.",
         "parameters": {
             "type": "object",
             "properties": {"lens": {"type": "string", "enum": ["people", "skills"], "description": "Which lens to show."}},

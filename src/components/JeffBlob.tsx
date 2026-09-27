@@ -3,15 +3,15 @@
 /**
  * JeffBlob — the voice dock. The blob is Jeff and the one control.
  * One tap does the obvious thing for the state Jeff is in. A line under
- * the blob says what a tap will do, and two small words sit beside it:
- * "done" while you are talking, "end" while paused.
+ * the blob says what a tap will do. The blob is the only conversation
+ * control; its shape and color stay recognizably Jeff in every state.
  *
  *   dormant     tap → start
  *   connecting  tap → cancel
- *   listening   tap → pause          done → hand Jeff the floor now
+ *   listening   tap → pause
  *   thinking    tap → pause
  *   speaking    tap → cut in
- *   paused      tap → resume         end → hang up
+ *   paused      tap → resume
  */
 
 import { useEffect, useRef } from "react";
@@ -26,9 +26,6 @@ type Props = {
   getLevel: () => number;
   /** Tap on the blob: the natural next state (see the table above). */
   onTap: () => void;
-  /** "I'm done talking": hand Jeff the floor. */
-  onDone: () => void;
-  onEnd: () => void;
   muted: boolean;
   error?: string | null;
   disabled?: boolean;
@@ -38,7 +35,7 @@ type Props = {
   transcript?: DockTurn[];
 };
 
-export default function JeffBlob({ mood, getLevel, onTap, onDone, onEnd, muted, error, disabled, endedNote, transcript }: Props) {
+export default function JeffBlob({ mood, getLevel, onTap, muted, error, disabled, endedNote, transcript }: Props) {
   const ref = useRef<HTMLButtonElement | null>(null);
   const transcriptRef = useRef<HTMLDivElement | null>(null);
 
@@ -82,7 +79,7 @@ export default function JeffBlob({ mood, getLevel, onTap, onDone, onEnd, muted, 
   const hint =
     error ? error
     : mood === "connecting" ? "Tap to cancel"
-    : mood === "speaking" ? "Tap to cut in"
+    : mood === "speaking" ? "Tap to interrupt"
     : mood === "thinking" ? "Tap to pause"
     : mood === "paused" ? "Tap to pick back up"
     : mood === "listening" ? "Take your time · tap to pause"
@@ -113,10 +110,6 @@ export default function JeffBlob({ mood, getLevel, onTap, onDone, onEnd, muted, 
 
       {word && <div className={`voice-dock-word voice-dock-word--${mood}`} aria-live="polite">{word}</div>}
       <div className={`voice-dock-hint${error ? " is-error" : ""}`} role={error ? "alert" : undefined}>{hint}</div>
-      <div className="voice-dock-actions">
-        {mood === "listening" && !muted && <button type="button" className="voice-dock-action" onClick={onDone}>I&apos;m done, go ahead</button>}
-        {mood === "paused" && <button type="button" className="voice-dock-action" onClick={onEnd}>End conversation</button>}
-      </div>
 
       {hasTurns && (
         <div ref={transcriptRef} className="voice-dock-transcript" aria-live="polite">

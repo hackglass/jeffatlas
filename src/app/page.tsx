@@ -20,7 +20,7 @@ import { ExpertCards, ImpactCards } from "@/components/PeopleCards";
 import * as history from "@/lib/history";
 import { analyticsOn, beginConversation, endConversation, identifyViewer, initAnalytics, track, trackTool, trackTurn } from "@/lib/analytics";
 import {
-  findPerson, impactOfMoving, loadGraph, loadPeople, personSummary, rankExperts, sectionOverview,
+  findPerson, impactOfMoving, loadGraph, loadPeople, personSummary, rankExperts, sectionMatches, sectionOverview,
   type Graph, type ImpactReport, type Person, type ScoredPerson,
 } from "@/lib/jeffData";
 
@@ -45,6 +45,13 @@ function pickGreeting(who: string) {
   const real = who && !who.includes("@") && who.toLowerCase() !== "anonymous" ? who.split(/\s+/)[0] : "";
   const g = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
   return g.replace("{name}", real ? ` ${real}` : "").replace("{Name}", real || "Hey");
+}
+
+function collapseExactEcho(text: string) {
+  const clean = text.trim();
+  if (clean.length % 2) return clean;
+  const half = clean.length / 2;
+  return clean.slice(0, half) === clean.slice(half) ? clean.slice(0, half) : clean;
 }
 
 // A sample sketch for ?board=demo: the shape of a staffing move.
@@ -82,9 +89,15 @@ type Panel = { kind: "experts"; ranked: ScoredPerson[] } | { kind: "impact"; rep
 type Access = "new" | "manager" | "leader";
 const ACCESS_LABEL: Record<Access, string> = { new: "New hire", manager: "Manager", leader: "Senior leader" };
 const ACCESS_BLURB: Record<Access, string> = {
-  new: "directory level: who to ask and where they sit; no staffing or risk analysis",
-  manager: "manager level: who knows what, plus staffing impact and backfills",
-  leader: "leadership level: everything, including full profiles and public bios",
+  new: "directory level: who to ask (top 3 names) and where they sit; no staffing impact, no usage stats, no bios",
+  manager: "manager level: who knows what with evidence (up to 8 names), staffing impact and backfills; still no full profiles or usage stats",
+  leader: "leadership level: everything, including full profiles, public bios, links, and the usage view of what people ask Jeff",
+};
+/** What each level unlocks, shown under the picker so the difference is visible. */
+const ACCESS_HINT: Record<Access, string> = {
+  new: "who to ask · where they sit",
+  manager: "+ evidence · staffing impact · backfills",
+  leader: "+ full profiles · links · what people ask",
 };
 
 /** Wrap client tools so each call is logged with params, result and duration. */
@@ -127,6 +140,7 @@ function Jeff() {
   const [dev, setDev] = useState(false); // ?dev shows the team-only footer (saved history, x-ray link)
   const [transcript, setTranscript] = useState<DockTurn[]>([]);
   const [endedNote, setEndedNote] = useState<string | null>(null);
+  const lastJeffLineRef = useRef<string | null>(null);
   // Paused: the mic is off and Jeff has been told to sit tight. One tap
   // resumes. (Mute and end used to be two gestures; feedback said make it one.)
   const [paused, setPaused] = useState(false);
@@ -182,16 +196,10 @@ function Jeff() {
   }, []);
   useEffect(() => { identifyViewer(user); }, [user]);
 
-  const [access, setAccess] = useState<Access>("new");
+  // No picker any more: Jeff sees everything (full profiles, impact analysis, usage).
+  const [access, setAccess] = useState<Access>("leader");
   const accessRef = useRef<Access>(access);
   useEffect(() => { accessRef.current = access; }, [access]);
-  useEffect(() => {
-    let a: Access | null = null;
-    try { a = localStorage.getItem("jeff.access") as Access | null; } catch { /* no storage */ }
-    if (!a || !(a in ACCESS_LABEL)) return;
-    const t = setTimeout(() => setAccess(a as Access), 0);
-    return () => clearTimeout(t);
-  }, []);
   const chooseAccess = useCallback((a: Access) => {
     setAccess(a);
     try { localStorage.setItem("jeff.access", a); } catch { /* no storage */ }
@@ -240,13 +248,16 @@ function Jeff() {
   const [histStats, setHistStats] = useState<{ sessions: number; turns: number } | null>(null);
   useEffect(() => { const t = setTimeout(() => setHistStats(history.historyStats()), 0); return () => clearTimeout(t); }, []);
   const say = useCallback((role: Line["role"], text: string) => {
-    console.log(`[jeff:${role}]`, text);
-    history.appendTurn(sessionRef.current, role, text);
-    if (!text.trim()) return;
+    const clean = collapseExactEcho(text);
+    if (!clean) return;
     // Tool lines are kept short on the dock: what Jeff looked up, not the result.
-    const shown = role === "tool" ? text.trim().split(" → ")[0] : text.trim();
+    const shown = role === "tool" ? clean.split(" → ")[0] : clean;
+    if (role === "jeff" && lastJeffLineRef.current === shown) return;
+    lastJeffLineRef.current = role === "jeff" ? shown : null;
+    console.log(`[jeff:${role}]`, clean);
+    history.appendTurn(sessionRef.current, role, clean);
     setTranscript((t) => [...t, { role, text: shown }]);
-    if (role !== "tool") trackTurn(role, text.trim());
+    if (role !== "tool") trackTurn(role, clean);
     if (role !== "jeff") think();
   }, [think]);
 
@@ -271,8 +282,12 @@ function Jeff() {
   const findPeople = useCallback((q: string) => {
     setFind(q);
     const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    const hits = words.length ? (peopleRef.current ?? []).filter((p) => words.every((w) => p.name.toLowerCase().includes(w))).map((p) => p.name) : [];
-    if (hits.length) focus({ people: hits, title: q.trim() }, "people");
+    const all = words.length ? (peopleRef.current ?? []).filter((p) => words.every((w) => p.name.toLowerCase().includes(w))) : [];
+    // Stay on the lens the user is on. Skills only shows people with GitHub
+    // work, so match those there; if none match, fall back to People.
+    const onSkills = lensRef.current === "skills" ? all.filter((p) => p.commits > 0) : [];
+    const hits = onSkills.length ? onSkills : all;
+    if (hits.length) focus({ people: hits.map((p) => p.name), title: q.trim() }, onSkills.length ? "skills" : "people");
     else setHighlight(null);
   }, [focus]);
 
@@ -339,17 +354,30 @@ function Jeff() {
     team_overview: async ({ section }: { section?: string }) => {
       const ps = peopleRef.current ?? await loadPeople();
       say("tool", `team_overview(${section ? `"${section}"` : ""})`);
-      setHighlight(null);
-      setSelection([]);
+      const sections = sectionOverview(ps, section);
       setPanel(null);
-      setLens("people");
-      setView("graph");
-      setCanvasOpen(true);
-      return JSON.stringify({ total_people: ps.length, sections: sectionOverview(ps, section) });
+      // One section asked for: light up everyone in it, so the screen moves
+      // before Jeff talks and the whole group is visible, not a sample.
+      const one = section && sections.length === 1 ? sections[0] : null;
+      if (one) {
+        const names = ps.filter((p) => (p.section || "Community & alumni") === one.section).map((p) => p.name);
+        focus({ people: names, title: `${one.section} · ${names.length} people` }, "people");
+      } else {
+        setHighlight(null); setSelection([]); setLens("people"); setView("graph"); setCanvasOpen(true);
+      }
+      if (section && !sections.length) {
+        // An unknown name must not read as "the whole office": say so and list what exists.
+        const known = [...new Set(ps.map((p) => p.section || "Community & alumni"))];
+        return JSON.stringify({ result: `no section matches "${section}"`, sections_available: known, total_people: ps.length });
+      }
+      return JSON.stringify({ total_people: ps.length, sections, ...(one ? { on_screen: `all ${one.headcount} people in ${one.section} are highlighted on the graph now` } : {}) });
     },
-    show_on_graph: ({ people: names, skills, title, lens: wantLens }: { people?: string[]; skills?: string[]; title?: string; lens?: string }) => {
+    show_on_graph: ({ people: names, skills, section, title, lens: wantLens }: { people?: string[]; skills?: string[]; section?: string; title?: string; lens?: string }) => {
       const ps = peopleRef.current ?? [];
       const resolved = (names ?? []).map((n) => findPerson(ps, n)?.name ?? n);
+      if (section) {
+        for (const p of ps) if (sectionMatches(p.section || "Community & alumni", String(section))) resolved.push(p.name);
+      }
       const l = wantLens === "people" || wantLens === "skills" ? wantLens : undefined;
       if (!resolved.length && !(skills ?? []).length) {
         setHighlight(null); setSelection([]); setView("graph"); setCanvasOpen(true);
@@ -424,9 +452,9 @@ function Jeff() {
       setCanvasOpen(true);
       say("tool", `show_usage(${f ? `"${f}"` : ""})`);
       if (!u || !u.conversations.length) return "no usage data yet: nobody's transcripts have been exported";
-      if (accessRef.current === "new") {
+      if (accessRef.current !== "leader") {
         const n = u.conversations.reduce((a, c) => a + c.queries.length, 0);
-        return `${u.conversations.length} conversations and ${n} questions so far; the breakdown is a manager-level view, keep it to that`;
+        return `${u.conversations.length} conversations and ${n} questions so far; the breakdown is a senior-leader view, keep it to the tally`;
       }
       return describeUsage(u, f ?? undefined);
     },
@@ -444,8 +472,12 @@ function Jeff() {
       // A lone skill or section hub.
       const pick = sel[0];
       if (pick.id.startsWith("section:")) {
+        // The hub's label is a short display name (e.g. "OpenShift & K8s");
+        // team_overview needs the raw section string to match, since a
+        // short label doesn't always substring-match the full one.
+        const raw = pick.id.slice("section:".length);
         setHighlight(null);
-        tellJeffRef.current(`The user just clicked the "${pick.label}" section hub on the org graph. They may want an overview of that group; team_overview("${pick.label}") answers it.`);
+        tellJeffRef.current(`The user just clicked the "${pick.label}" section hub on the org graph. They may want an overview of that group; team_overview("${raw}") answers it.`);
       } else {
         setHighlight({ skills: [pick.label], people: [], title: pick.label });
         tellJeffRef.current(`The user just clicked the "${pick.label}" skill area on the org graph; the people in it are now on screen. find_experts("${pick.label}") ranks them if they ask.`);
@@ -490,7 +522,7 @@ function Jeff() {
     onConnect: ({ conversationId }) => {
       beginConversation(conversationId);
       track("conversation_started", { access: accessRef.current, user: userRef.current.trim() || "anonymous", lens: lensRef.current, drawing_brain: brainRef.current });
-      setError(null); setTranscript([]); setEndedNote(null); setBoard(null); setView("graph"); setPaused(false); handoffRef.current = false;
+      setError(null); setTranscript([]); setEndedNote(null); setBoard(null); setView("graph"); setPaused(false); handoffRef.current = false; lastJeffLineRef.current = null;
       const a = accessRef.current;
       sessionRef.current = history.startSession(ACCESS_LABEL[a]);
       setHistStats(history.historyStats());
@@ -650,13 +682,13 @@ function Jeff() {
         {canvasOpen ? "›" : "‹"}
       </button>
       <section className="jeff-stage">
-        <div className="jeff-brand"><h1>Jeff</h1></div>
+        {mood === "dormant" && !endedNote && transcript.length === 0 && (
+          <div className="jeff-brand"><h1>Jeff</h1></div>
+        )}
         <JeffBlob
           mood={mood}
           getLevel={getLevel}
           onTap={onTap}
-          onDone={done}
-          onEnd={stop}
           muted={isMuted}
           error={error}
           disabled={!people && mood === "dormant"}
@@ -670,12 +702,25 @@ function Jeff() {
         <div className="jeff-panel-head">
           <div>
             <h2>Red Hat Boston</h2>
-            <span>{graph ? `${graph.nodes.filter((n) => n.type === "person").length} people · ${lens === "people" ? "5 sections" : `${graph.nodes.filter((n) => n.type === "skill").length} skill areas`}` : ""}</span>
+            <span>{graph ? `${graph.nodes.filter((n) => n.type === "person").length} people · ${lens === "people" ? `${new Set(graph.nodes.filter((n) => n.type === "person").map((n) => n.section ?? "")).size} sections` : `${graph.nodes.filter((n) => n.type === "skill").length} skill areas`}` : ""}</span>
+            {view === "graph" && (
+              <div className="jeff-lens-switch" role="tablist" aria-label="Map view">
+                <button type="button" role="tab" aria-selected={lens === "people"} onClick={() => { track("lens", { lens: "people" }); setFind(""); setHighlight(null); setSelection([]); setLens("people"); tellJeffRef.current("The user switched the map to People: everyone grouped by section."); }}>People</button>
+                <button type="button" role="tab" aria-selected={lens === "skills"} onClick={() => { track("lens", { lens: "skills" }); setFind(""); setHighlight(null); setSelection([]); setLens("skills"); tellJeffRef.current("The user switched the map to Skills: the technical view from GitHub."); }}>Skills</button>
+              </div>
+            )}
           </div>
           <div className="jeff-panel-meta">
             <label className="jeff-access" title="Find people by name: matches light up on the map">
               <span>search</span>
               <input type="search" value={find} placeholder="find a person" onChange={(e) => findPeople(e.target.value)} spellCheck={false} />
+            </label>
+            <label className="jeff-access" title="Who is looking: gates what Jeff and the tools will share">
+              <span>viewing as</span>
+              <select value={access} onChange={(e) => chooseAccess(e.target.value as Access)}>
+                {(Object.keys(ACCESS_LABEL) as Access[]).map((a) => <option key={a} value={a}>{ACCESS_LABEL[a]}</option>)}
+              </select>
+              <em className="jeff-access-hint">{ACCESS_HINT[access]}</em>
             </label>
           </div>
         </div>
@@ -693,10 +738,10 @@ function Jeff() {
         ) : view === "board" && boardBusy ? (
           <div className="wb"><div className="wb-busy">sketching “{boardBusy}”…</div></div>
         ) : (<>
-          {(board || (access !== "new" && usage && usage.conversations.length > 0)) && (
+          {(board || (access === "leader" && usage && usage.conversations.length > 0)) && (
             <div className="jeff-back-row">
               {board && <button type="button" className="jeff-back" onClick={() => { track("view", { view: "board" }); setView("board"); }}>whiteboard</button>}
-              {access !== "new" && usage && usage.conversations.length > 0 && <button type="button" className="jeff-back" onClick={() => { track("view", { view: "usage" }); setView("usage"); tellJeffRef.current("The user opened the Usage view: a Sankey of what people have asked you, by access level, kind, topic and outcome, with a leaderboard of topics."); }}>what people ask</button>}
+              {access === "leader" && usage && usage.conversations.length > 0 && <button type="button" className="jeff-back" onClick={() => { track("view", { view: "usage" }); setView("usage"); tellJeffRef.current("The user opened the Usage view: a Sankey of what people have asked you, by access level, kind, topic and outcome, with a leaderboard of topics."); }}>what people ask</button>}
             </div>
           )}
           <OrgGraph graph={graph} people={people} highlight={highlight} lens={lens} selection={selection} onToggle={toggle} onClearAll={onClearAll} onAsk={onAsk} onClear={() => { track("control", { action: "clear_graph" }); setHighlight(null); setSelection([]); }} />
