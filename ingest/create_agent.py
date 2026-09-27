@@ -33,10 +33,11 @@ VOICE_ID = "CwhRBWXzGAHq8TQ4Fs17"
 DEFAULT_LLM = "gemini-2.5-flash"
 GLM_URL = "https://open.bigmodel.cn/api/paas/v4"
 
-# Plain hello. Humor is part of Jeff's personality in the prompt, not a scripted opener.
-# No canned opener: the page sends a hidden kickoff turn on connect and Jeff
-# greets in his own words each time (see jeff_prompt.md, "Opening").
-FIRST_MESSAGE = ""
+# Jeff speaks the moment the line opens. A hidden kickoff turn proved
+# unreliable (three silent openings in one feedback round), so the opener is a
+# first_message the page fills in: it picks one of several lines in Jeff's
+# voice per session and passes it as the {{greeting}} dynamic variable.
+FIRST_MESSAGE = "{{greeting}}"
 
 # Client tools: the browser answers these (see src/lib/jeffTools.ts).
 TOOLS = [
@@ -156,18 +157,6 @@ TOOLS = [
         },
     },
     {
-        "name": "record_feedback",
-        "description": "File what the person just said about Jeff himself: a suggestion, a feature or tool they want, a bug on the screen, a complaint, or praise. Goes to the team that builds Jeff. Call it whenever someone gives you feedback, then thank them in one breath and carry on.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "note": {"type": "string", "description": "The feedback in their words, one to three sentences, specific enough to act on."},
-                "kind": {"type": "string", "description": "One of: suggestion, bug, complaint, praise."},
-            },
-            "required": ["note"],
-        },
-    },
-    {
         "name": "board_clear",
         "description": "Wipe the whiteboard and go back to the org graph. Use when changing subject.",
         "parameters": {"type": "object", "properties": {}, "required": []},
@@ -270,13 +259,14 @@ def main():
                 "similarity_boost": 0.75,
                 "speed": 1.05,
             },
-            # Same-room feel: jump in sooner when the user trails off, and if the
-            # brain takes more than a beat, say something natural while thinking
-            # instead of going silent.
+            # Let people think. Feedback round 2026-09-27: Jeff cut in on "um"
+            # and on pauses mid-thought. Patient turn-taking, and a long quiet
+            # before he prompts. If the brain takes more than a beat, he says
+            # something natural while thinking instead of going silent.
             "turn": {
-                "turn_timeout": 5,
+                "turn_timeout": 12,
                 "mode": "turn",
-                "turn_eagerness": "eager",
+                "turn_eagerness": "patient",
                 "soft_timeout_config": {
                     "timeout_seconds": 1.2,
                     "use_llm_generated_message": True,

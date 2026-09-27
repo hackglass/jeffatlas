@@ -105,9 +105,9 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   display: block;
   background: radial-gradient(circle at 32% 28%, #6fd39a 0%, #2fb36a 48%, #1f8f52 100%);
   border-radius: 46% 54% 52% 48% / 50% 46% 54% 50%;
-  transform: scale(calc(1 + var(--voice-level) * 0.16));
-  transition: transform 90ms ease-out, background 240ms ease;
-  animation: voice-blob-waver 7s ease-in-out infinite;
+  transform: scale(calc(1 + var(--voice-level) * 0.14));
+  transition: transform 120ms ease-out, background 400ms ease, filter 400ms ease, opacity 400ms ease;
+  animation: voice-blob-waver 9s ease-in-out infinite;
   will-change: transform, border-radius;
 }
 
@@ -125,10 +125,9 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 }
 
 @keyframes voice-blob-waver {
-  0%, 100% { border-radius: 46% 54% 52% 48% / 50% 46% 54% 50%; }
-  25%      { border-radius: 54% 46% 48% 52% / 46% 54% 48% 54%; }
-  50%      { border-radius: 50% 50% 54% 46% / 54% 48% 52% 46%; }
-  75%      { border-radius: 48% 52% 46% 54% / 48% 52% 46% 54%; }
+  0%, 100% { border-radius: 47% 53% 51% 49% / 50% 47% 53% 50%; }
+  33%      { border-radius: 52% 48% 49% 51% / 48% 52% 49% 52%; }
+  66%      { border-radius: 50% 50% 52% 48% / 52% 49% 51% 48%; }
 }
 
 @keyframes voice-halo-breathe {
@@ -136,9 +135,9 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   50%      { opacity: 1; }
 }
 
-@keyframes voice-blob-pulse {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.05); }
+@keyframes voice-halo-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
 }
 
 /* Dormant: no call. Full green, just slower and without the breathing halo. */
@@ -159,11 +158,8 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 @keyframes voice-ring-spin { to { transform: rotate(360deg); } }
 
 /* Connecting: no mic yet, so the green drains to a pale mint and pulses. */
-.voice-blob--connecting .voice-blob-core {
-  background: radial-gradient(circle at 32% 28%, #6fd39a 0%, #2fb36a 48%, #1f8f52 100%); opacity: 0.55;
-  animation: voice-blob-waver 7s ease-in-out infinite, voice-blob-pulse 2.2s ease-in-out infinite;
-}
-.voice-blob--connecting .voice-blob-halo { background: radial-gradient(circle, rgba(47, 179, 106, 0.5), transparent 68%); }
+.voice-blob--connecting .voice-blob-core { opacity: 0.55; }
+.voice-blob--connecting .voice-blob-halo { background: radial-gradient(circle, rgba(47, 179, 106, 0.5), transparent 68%); animation: voice-halo-pulse 2.2s ease-in-out infinite; }
 
 /* Listening: full green, swelling with the user's voice. */
 .voice-blob--listening .voice-blob-core { animation-duration: 5s; }
@@ -171,9 +167,9 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 /* Speaking: Jeff's own voice. Brighter, faster, and the tap cuts in. */
 .voice-blob--speaking .voice-blob-core {
   background: radial-gradient(circle at 32% 28%, #86dfab 0%, #2fb36a 50%, #1f8f52 100%);
-  animation: voice-blob-waver 3s ease-in-out infinite, voice-blob-pulse 1.4s ease-in-out infinite;
+  animation-duration: 5s;
 }
-.voice-blob--speaking .voice-blob-halo { animation-duration: 1.4s; }
+.voice-blob--speaking .voice-blob-halo { animation-duration: 1.8s; }
 
 .voice-blob:focus-visible .voice-blob-core {
   box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--jeff-accent);
@@ -200,13 +196,21 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 }
 .voice-dock-hint.is-error { color: #b42318; }
 
-/* Muted: the body goes quiet grey; a tap unmutes. */
-.voice-blob--muted .voice-blob-core { filter: saturate(0.25) brightness(1.08); animation-duration: 12s; }
-.voice-blob--muted .voice-blob-halo { opacity: 0.35; }
-
-/* Holding to end: the blob sinks while the timer runs. */
-.voice-blob.is-holding { transform: scale(0.94); transition: transform 600ms ease; }
+/* Paused: the body goes quiet grey and still; a tap picks back up. */
+.voice-blob--paused .voice-blob-core { filter: saturate(0.2) brightness(1.08); animation-duration: 14s; }
+.voice-blob--paused .voice-blob-halo { opacity: 0.25; animation: none; }
+.voice-dock-word--paused { color: var(--jeff-muted); }
 .voice-blob { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
+/* The one or two words beside the hint: "done" while talking, "end" while paused. */
+.voice-dock-actions { min-height: 30px; margin-top: 8px; display: flex; justify-content: center; }
+.voice-dock-action {
+  font: inherit; font-size: 12.5px; font-weight: 500;
+  padding: 5px 14px; border-radius: 999px;
+  border: 1px solid var(--jeff-line-strong); background: #fff; color: var(--jeff-ink);
+  cursor: pointer; animation: voice-dock-in 220ms ease;
+}
+.voice-dock-action:hover { border-color: var(--jeff-ink); }
 
 /* ── The turns: both sides, newest at the bottom ────────────────────────── */
 
@@ -584,24 +588,14 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 
 /* ── Whiteboard: Jeff's sketchpad ──────────────────────────────────────── */
 
-.jeff-view-switch {
-  display: inline-flex;
-  gap: 2px;
-  padding: 2px;
-  border: 1px solid var(--jeff-line);
-  border-radius: 999px;
+/* Quiet text links on the canvas: back to the map, or to what Jeff drew. */
+.jeff-back-row { display: flex; gap: 14px; justify-content: flex-end; margin-bottom: -22px; position: relative; z-index: 2; }
+.jeff-back {
+  font: inherit; font-size: 12px; color: var(--jeff-muted);
+  background: transparent; border: 0; padding: 0; cursor: pointer;
+  border-bottom: 1px solid var(--jeff-line-strong);
 }
-.jeff-view-switch button {
-  border: 0;
-  background: transparent;
-  color: var(--jeff-muted);
-  font-size: 12px;
-  font-weight: 500;
-  padding: 3px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-}
-.jeff-view-switch button.on { background: var(--jeff-ink); color: #fff; }
+.jeff-back:hover { color: var(--jeff-ink); border-color: var(--jeff-ink); }
 
 .wb {
   position: relative;
@@ -701,7 +695,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   background: #fff;
   padding: 4px 12px;
   border-radius: 999px;
-  animation: voice-blob-pulse 1.4s ease-in-out infinite;
+  animation: voice-halo-pulse 1.4s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) { .wb-in, .wb-in .wb-line, .wb-in .wb-glyph { animation: none; stroke-dashoffset: 0; } }
 
