@@ -34,18 +34,22 @@ type Line = { role: "user" | "jeff" | "tool" };
 // first_message is "{{greeting}}"). A hidden "greet them" turn used to do this
 // and Jeff was silent on three openings in one round, so the opener is fixed
 // text in his voice; the page picks one at random and drops the name in.
-const GREETINGS = [
-  "Hey{name}. Jeff. Pull up a chair—what are we untangling?",
-  "Hey{name}, it's Jeff. Give me the messy version.",
-  "{Name}, hey. Jeff here. Who—or what acronym—are we hunting?",
-  "Hey{name}. I'm Jeff. I know which org charts are still technically fiction. What's up?",
-  "Hey{name}. Jeff. Tell me where you're stuck; I probably know who has the scar tissue.",
-  "Alright{name}, Jeff's here. What's misbehaving?",
+// Each greeting is a function of the first name, if any — the "with name" and
+// "no name" phrasing are genuinely different sentences, not one template with
+// a blank spliced in. A blind {name} substitution left "Hey. Jeff." on an
+// anonymous session, which reads like Jeff is addressing someone named Jeff.
+const GREETINGS: ((name: string) => string)[] = [
+  (n) => (n ? `Hey ${n}. Jeff here—pull up a chair, what are we untangling?` : "Hey, I'm Jeff—pull up a chair, what are we untangling?"),
+  (n) => (n ? `Hey ${n}, it's Jeff. Give me the messy version.` : "Hey there, it's Jeff. Give me the messy version."),
+  (n) => (n ? `${n}, hey. Jeff here. Who—or what acronym—are we hunting?` : "Hey, Jeff here. Who—or what acronym—are we hunting?"),
+  (n) => (n ? `Hey ${n}. I'm Jeff. I know which org charts are still technically fiction. What's up?` : "Hey there. I'm Jeff. I know which org charts are still technically fiction. What's up?"),
+  (n) => (n ? `Hey ${n}. I'm Jeff. Tell me where you're stuck; I probably know who has the scar tissue.` : "Hey, I'm Jeff. Tell me where you're stuck; I probably know who has the scar tissue."),
+  (n) => (n ? `Alright ${n}, Jeff's here. What's misbehaving?` : "Alright, Jeff's here. What's misbehaving?"),
 ];
 function pickGreeting(who: string) {
   const real = who && !who.includes("@") && who.toLowerCase() !== "anonymous" ? who.split(/\s+/)[0] : "";
   const g = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
-  return g.replace("{name}", real ? ` ${real}` : "").replace("{Name}", real || "Hey");
+  return g(real);
 }
 
 function collapseExactEcho(text: string) {
