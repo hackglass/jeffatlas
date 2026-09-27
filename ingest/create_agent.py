@@ -32,11 +32,9 @@ VOICE_ID = "CwhRBWXzGAHq8TQ4Fs17"
 DEFAULT_LLM = "gemini-2.5-flash"
 GLM_URL = "https://open.bigmodel.cn/api/paas/v4"
 
-# {{opening_joke}} is a dynamic variable the page fills from src/lib/jokes.ts,
-# so every conversation opens on a different Red Hat joke.
+# Plain hello. Humor is part of Jeff's personality in the prompt, not a scripted opener.
 FIRST_MESSAGE = (
-    "{{opening_joke}} "
-    "Anyway. I'm Jeff, the org chart that actually knows who does what around Boston. "
+    "Hey, I'm Jeff, the org chart that actually knows who does what around Boston. "
     "Who are you trying to find, or what are you trying to figure out?"
 )
 
@@ -183,11 +181,6 @@ def main():
                 "first_message": FIRST_MESSAGE,
                 "language": "en",
                 "prompt": prompt_cfg,
-                # Fallback if the page ever fails to send a joke: the server
-                # rejects the whole session on a missing variable otherwise.
-                "dynamic_variables": {"dynamic_variable_placeholders": {
-                    "opening_joke": "Why does Red Hat never lose an argument? Because they always have the last patch.",
-                }},
             },
             "tts": {
                 "voice_id": VOICE_ID,

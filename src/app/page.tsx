@@ -14,7 +14,6 @@ import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import JeffBlob, { type BlobMood } from "@/components/JeffBlob";
 import OrgGraph, { type Highlight } from "@/components/OrgGraph";
 import { ExpertCards, ImpactCards } from "@/components/PeopleCards";
-import { pickJoke } from "@/lib/jokes";
 import {
   findPerson, impactOfMoving, loadGraph, loadPeople, personSummary, rankExperts, sectionOverview,
   type Graph, type ImpactReport, type Person, type ScoredPerson,
@@ -137,7 +136,7 @@ function Jeff() {
       setError("Microphone unavailable. Check the browser's mic permission.");
       return;
     }
-    startSession({ agentId: AGENT_ID, connectionType: "webrtc", dynamicVariables: { opening_joke: pickJoke() } });
+    startSession({ agentId: AGENT_ID, connectionType: "webrtc" });
   }, [startSession]);
 
   const mood: BlobMood = status === "connected" ? (isSpeaking ? "speaking" : "listening") : status === "connecting" ? "connecting" : "idle";
