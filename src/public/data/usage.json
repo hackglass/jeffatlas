@@ -1,7 +1,41 @@
 {
- "exportedAt": "2026-09-27T10:51",
+ "exportedAt": "2026-09-27T11:00",
  "source": "elevenlabs",
  "conversations": [
+  {
+   "id": "conv_5201m3hnmfhje45a83w64nqpwnwg",
+   "startedAt": "2026-09-27T10:52",
+   "seconds": 45,
+   "access": "Senior leader",
+   "user": "anonymous",
+   "queries": [
+    {
+     "kind": "topic",
+     "topic": "Red Hat AI, AI/ML",
+     "outcome": "answered",
+     "tool": "find_experts",
+     "text": "Show me who the AI people are, uh, on Red Hat.",
+     "t": 0
+    },
+    {
+     "kind": "topic",
+     "topic": "search",
+     "outcome": "answered",
+     "tool": "find_experts",
+     "text": "And, like, does all the search live. Yeah, I know that guy, Nathan Weinberg. Mm-hmm.",
+     "t": 9
+    },
+    {
+     "kind": "other",
+     "topic": "I'm not sure this is",
+     "outcome": "cut off",
+     "tool": null,
+     "text": "I'm not sure this is... Yeah, this, uh, the animation is so weird.",
+     "t": 39
+    }
+   ],
+   "feedback": []
+  },
   {
    "id": "conv_3701m3hnfzjvevnath1rj5qnez4x",
    "startedAt": "2026-09-27T10:49",

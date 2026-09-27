@@ -3,8 +3,6 @@
     python3 ingest/fetch_transcripts.py        (reads src/.env.local)
 
 Writes
-  ingest/transcripts/<conversation_id>.json   raw transcript, cached
-  ingest/transcripts/transcripts.md           readable, newest first
   src/public/data/usage.json                  one row per question, classified,
                                               which the Usage Sankey on the canvas reads
 
@@ -14,7 +12,7 @@ A "query" is one user turn. Each is classified by what Jeff did with it:
   outcome  answered | nothing found | declined | no tool | cut off
 plus the viewer's access level for the conversation. Filler turns ("...",
 "Mm-hmm") are dropped. The classifier is heuristic; edit RULES below when a
-new pattern shows up in transcripts.md.
+new pattern shows up in the output.
 """
 import json, os, re, urllib.request, datetime as dt, pathlib
 
@@ -23,7 +21,6 @@ for line in (ROOT / "src/.env.local").read_text().splitlines():
     if "=" in line and not line.startswith("#"):
         k, v = line.split("=", 1); os.environ.setdefault(k.strip(), v.strip())
 KEY, AGENT = os.environ["ELEVENLABS_API_KEY"], os.environ["NEXT_PUBLIC_ELEVENLABS_AGENT_ID"]
-OUT = ROOT / "ingest/transcripts"; OUT.mkdir(exist_ok=True)
 USAGE = ROOT / "src/public/data/usage.json"
 
 TOOL_KIND = {"find_experts": "topic", "lookup_person": "person", "impact_if_moved": "staffing", "team_overview": "team", "record_feedback": "feedback"}
@@ -111,14 +108,11 @@ def queries_of(conv, transcript):
 
 def main():
     convs = get(f"/convai/conversations?agent_id={AGENT}&page_size=100")["conversations"]
-    md = ["# Jeff transcripts\n"]
     usage = []
     for c in convs:
         cid = c["conversation_id"]
         if not c.get("message_count"): continue
-        f = OUT / f"{cid}.json"
-        d = json.loads(f.read_text()) if f.exists() else get(f"/convai/conversations/{cid}")
-        f.write_text(json.dumps(d, indent=1))
+        d = get(f"/convai/conversations/{cid}")
         tr = d.get("transcript", [])
         started = dt.datetime.fromtimestamp(c["start_time_unix_secs"])
         access = access_of(tr)
@@ -128,24 +122,7 @@ def main():
         fb = feedback_of(tr)
         usage.append({"id": cid, "startedAt": started.isoformat(timespec="minutes"), "seconds": c.get("call_duration_secs"),
                       "access": access, "user": user, "queries": qs, "feedback": fb})
-        md.append(f"\n## {started:%Y-%m-%d %H:%M} · {c.get('call_duration_secs')}s · {user or 'anonymous'} · {access} · {cid}\n")
-        for t in tr:
-            who = "USER" if t["role"] == "user" else "JEFF"
-            if t.get("message"): md.append(f"- **{who}**: {t['message']}")
-            for tc in t.get("tool_calls") or []:
-                md.append(f"  - tool → {tc.get('tool_name')}({tc.get('params_as_json', '')})")
-            for r in t.get("tool_results") or []:
-                md.append(f"  - result ← {r.get('tool_name')} {str(r.get('result_value', ''))[:200]}")
-    # Feedback first: the part of the record the team acts on.
-    fb_lines = ["# Jeff transcripts\n", "## Feedback for the team\n"]
-    n_fb = 0
-    for u in usage:
-        for f in u["feedback"]:
-            n_fb += 1
-            fb_lines.append(f"- **{f['kind']}** ({u['startedAt']}, {u['user'] or 'anonymous'}, {u['access']}): {f['note']}")
-    if not n_fb: fb_lines.append("- none filed yet (Jeff files record_feedback when someone gives him a suggestion, bug, complaint or praise)")
-    (OUT / "transcripts.md").write_text("\n".join(fb_lines + md[1:]))
-    (OUT / "feedback.md").write_text("\n".join(fb_lines[1:]) + "\n")
+    n_fb = sum(len(u["feedback"]) for u in usage)
     USAGE.write_text(json.dumps({"exportedAt": dt.datetime.now().isoformat(timespec="minutes"), "source": "elevenlabs",
                                  "conversations": usage}, indent=1))
     n = sum(len(u["queries"]) for u in usage)

@@ -1,31 +1,35 @@
 "use client";
 
 /**
- * JeffBlob — the voice dock. The blob is Jeff: it swells with whoever is
- * talking (the mic while listening, Jeff's output while speaking). A tap on
- * it starts the conversation, or cuts Jeff off while he is talking; it never
- * ends the call. The status line under it always names the state, and the
- * controls row makes mute / interrupt / end explicit buttons, so nothing
- * destructive hides behind a tap.
+ * JeffBlob — the voice dock. The blob is Jeff and the one control.
+ * One tap does the obvious thing for the state Jeff is in. A line under
+ * the blob says what a tap will do, and two small words sit beside it:
+ * "done" while you are talking, "end" while paused.
+ *
+ *   dormant     tap → start
+ *   connecting  tap → cancel
+ *   listening   tap → pause          done → hand Jeff the floor now
+ *   thinking    tap → pause
+ *   speaking    tap → cut in
+ *   paused      tap → resume         end → hang up
  */
 
 import { useEffect, useRef } from "react";
 
-/** dormant: no call. thinking: the person has finished and Jeff has not started talking yet. */
-export type BlobMood = "dormant" | "connecting" | "listening" | "thinking" | "speaking";
+/** dormant: no call. thinking: the person has finished and Jeff has not started talking yet. paused: mic off, Jeff waiting. */
+export type BlobMood = "dormant" | "connecting" | "listening" | "thinking" | "speaking" | "paused";
 export type DockTurn = { role: "user" | "jeff" | "tool"; text: string };
 
 type Props = {
   mood: BlobMood;
   /** Returns the current 0..1 level to animate with (called every frame). */
   getLevel: () => number;
-  /** Tap on the blob: start when idle, interrupt when Jeff is speaking. */
+  /** Tap on the blob: the natural next state (see the table above). */
   onTap: () => void;
-  onStart: () => void;
+  /** "I'm done talking": hand Jeff the floor. */
+  onDone: () => void;
   onEnd: () => void;
-  onInterrupt: () => void;
   muted: boolean;
-  onToggleMute: () => void;
   error?: string | null;
   disabled?: boolean;
   /** Why the last conversation ended, shown once the dock is idle again. */
@@ -34,7 +38,7 @@ type Props = {
   transcript?: DockTurn[];
 };
 
-export default function JeffBlob({ mood, getLevel, onTap, onStart, onEnd, onInterrupt, muted, onToggleMute, error, disabled, endedNote, transcript }: Props) {
+export default function JeffBlob({ mood, getLevel, onTap, onDone, onEnd, muted, error, disabled, endedNote, transcript }: Props) {
   const ref = useRef<HTMLButtonElement | null>(null);
   const transcriptRef = useRef<HTMLDivElement | null>(null);
 
@@ -46,7 +50,7 @@ export default function JeffBlob({ mood, getLevel, onTap, onStart, onEnd, onInte
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (mood === "dormant" || mood === "connecting" || mood === "thinking" || (mood === "listening" && muted)) {
+    if (mood === "dormant" || mood === "connecting" || mood === "thinking" || mood === "paused" || (mood === "listening" && muted)) {
       el.style.setProperty("--voice-level", "0");
       return;
     }
@@ -65,84 +69,53 @@ export default function JeffBlob({ mood, getLevel, onTap, onStart, onEnd, onInte
     };
   }, [mood, muted, getLevel]);
 
-  const live = mood === "listening" || mood === "thinking" || mood === "speaking";
   const hasTurns = !!transcript && transcript.length > 0;
 
-  // The one line that names the state.
-  const status =
-    mood === "connecting" ? "Connecting…"
+  // The word names the state; the one hint line says what a tap will do.
+  const word =
+    mood === "connecting" ? "Connecting"
     : mood === "speaking" ? "Jeff is talking"
-    : mood === "thinking" ? "Jeff is thinking"
-    : mood === "listening" ? (muted ? "Mic muted" : "Listening")
-    : endedNote ? endedNote
-    : hasTurns ? "Conversation ended"
-    : "Tap Jeff to start talking";
+    : mood === "thinking" ? "Thinking"
+    : mood === "paused" ? "Paused"
+    : mood === "listening" ? (muted ? "One sec" : "Listening")
+    : endedNote ?? (hasTurns ? "Ended" : "");
   const hint =
-    mood === "speaking" ? "tap the blob to cut in"
-    : mood === "thinking" ? "hang on"
-    : mood === "listening" ? (muted ? "unmute to be heard" : "just talk; Jeff hears you")
-    : mood === "connecting" ? "asking for the mic"
-    : null;
+    error ? error
+    : mood === "connecting" ? "Tap to cancel"
+    : mood === "speaking" ? "Tap to cut in"
+    : mood === "thinking" ? "Tap to pause"
+    : mood === "paused" ? "Tap to pick back up"
+    : mood === "listening" ? "Take your time · tap to pause"
+    : hasTurns ? "Tap to talk again"
+    : "Tap to talk";
 
-  const tapLabel = mood === "dormant" ? "Start talking to Jeff" : mood === "speaking" ? "Interrupt Jeff" : "Jeff is listening";
+  const label =
+    mood === "dormant" ? "Start talking to Jeff"
+    : mood === "connecting" ? "Cancel"
+    : mood === "speaking" ? "Interrupt Jeff"
+    : mood === "paused" ? "Resume"
+    : "Pause";
 
   return (
     <div className="voice-dock">
       <button
         ref={ref}
         type="button"
-        className={`voice-blob voice-blob--${mood}${muted && live ? " voice-blob--muted" : ""}`}
+        className={`voice-blob voice-blob--${mood}`}
         onClick={onTap}
-        disabled={disabled || mood === "connecting" || mood === "thinking" || (mood === "listening" && !muted)}
-        aria-label={tapLabel}
-        title={tapLabel}
+        disabled={disabled}
+        aria-label={label}
+        title={label}
       >
         <span className="voice-blob-core" aria-hidden="true" />
         <span className="voice-blob-halo" aria-hidden="true" />
       </button>
 
-      <div className={`voice-dock-status voice-dock-status--${mood}${muted && live ? " is-muted" : ""}`} aria-live="polite">
-        <span className="voice-dock-dot" aria-hidden="true" />
-        <span className="voice-dock-word">{status}</span>
-        {hint && <span className="voice-dock-hint">{hint}</span>}
-      </div>
-
-      {error && <div className="voice-dock-helper voice-dock-error" role="alert">{error}</div>}
-
-      <div className="voice-dock-controls">
-        {mood === "dormant" && (
-          <button type="button" className="voice-btn voice-btn--primary" onClick={onStart} disabled={disabled}>
-            {hasTurns ? "Talk again" : "Talk to Jeff"}
-          </button>
-        )}
-        {mood === "connecting" && (
-          <button type="button" className="voice-btn voice-btn--ghost" onClick={onEnd}>Cancel</button>
-        )}
-        {live && (
-          <>
-            <button
-              type="button"
-              className={`voice-btn voice-btn--ghost${muted ? " is-on" : ""}`}
-              onClick={onToggleMute}
-              aria-pressed={muted}
-              title={muted ? "Unmute your mic" : "Mute your mic"}
-            >
-              {muted ? "Unmute" : "Mute"}
-            </button>
-            <button
-              type="button"
-              className="voice-btn voice-btn--ghost"
-              onClick={onInterrupt}
-              disabled={mood !== "speaking"}
-              title="Cut Jeff off"
-            >
-              Interrupt
-            </button>
-            <button type="button" className="voice-btn voice-btn--end" onClick={onEnd} title="Hang up">
-              End
-            </button>
-          </>
-        )}
+      {word && <div className={`voice-dock-word voice-dock-word--${mood}`} aria-live="polite">{word}</div>}
+      <div className={`voice-dock-hint${error ? " is-error" : ""}`} role={error ? "alert" : undefined}>{hint}</div>
+      <div className="voice-dock-actions">
+        {mood === "listening" && !muted && <button type="button" className="voice-dock-action" onClick={onDone}>I&apos;m done, go ahead</button>}
+        {mood === "paused" && <button type="button" className="voice-dock-action" onClick={onEnd}>End conversation</button>}
       </div>
 
       {hasTurns && (
