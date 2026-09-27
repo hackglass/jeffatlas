@@ -546,6 +546,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .jeff-graph-reset:hover { color: var(--jeff-ink); }
 
 .jeff-graph-legend {
+  pointer-events: none; /* labels only: clicks and drags reach the nodes underneath */
   display: flex;
   flex-wrap: wrap;
   gap: 14px;

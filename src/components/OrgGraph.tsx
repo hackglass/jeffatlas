@@ -226,7 +226,9 @@ export default function OrgGraph({ graph, people, highlight, lens = "people", se
         a.vx *= 0.82; a.vy *= 0.82;
         const pad = a.type === "skill" ? 52 : a.r + 6; // room for hub labels
         a.x = Math.max(pad, Math.min(w - pad, a.x + a.vx));
-        a.y = Math.max(a.r + 6, Math.min(h - a.r - 6, a.y + a.vy));
+        // Hubs stay clear of the top and bottom strips, where the caption,
+        // "what people ask", the legend and reset sit on top of the canvas.
+        a.y = a.type === "skill" ? Math.max(44, Math.min(h - 80, a.y + a.vy)) : Math.max(a.r + 6, Math.min(h - a.r - 6, a.y + a.vy));
       }
       frames++;
       return arr;
