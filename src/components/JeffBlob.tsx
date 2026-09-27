@@ -63,7 +63,7 @@ export default function JeffBlob({ mood, getLevel, onTap, word, helper, error, d
         <span className="voice-blob-core" aria-hidden="true" />
         <span className="voice-blob-halo" aria-hidden="true" />
       </button>
-      <div className="voice-dock-word" aria-live="polite">{word}</div>
+      {word && <div className="voice-dock-word" aria-live="polite">{word}</div>}
       {error ? (
         <div className="voice-dock-helper voice-dock-error">{error}</div>
       ) : helper ? (

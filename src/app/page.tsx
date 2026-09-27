@@ -14,6 +14,7 @@ import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import JeffBlob, { type BlobMood } from "@/components/JeffBlob";
 import OrgGraph, { type Highlight } from "@/components/OrgGraph";
 import { ExpertCards, ImpactCards } from "@/components/PeopleCards";
+import { pickJoke } from "@/lib/jokes";
 import {
   findPerson, impactOfMoving, loadGraph, loadPeople, personSummary, rankExperts, sectionOverview,
   type Graph, type ImpactReport, type Person, type ScoredPerson,
@@ -21,7 +22,7 @@ import {
 
 const AGENT_ID = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID ?? "";
 
-type Line = { id: number; role: "user" | "jeff" | "tool"; text: string };
+type Line = { role: "user" | "jeff" | "tool" };
 type Panel = { kind: "experts"; ranked: ScoredPerson[] } | { kind: "impact"; report: ImpactReport } | null;
 
 export default function Home() {
@@ -35,15 +36,10 @@ export default function Home() {
 function Jeff() {
   const [people, setPeople] = useState<Person[] | null>(null);
   const [graph, setGraph] = useState<Graph | null>(null);
-  const [lines, setLines] = useState<Line[]>([]);
   const [panel, setPanel] = useState<Panel>(null);
   const [highlight, setHighlight] = useState<Highlight>(null);
   const [error, setError] = useState<string | null>(null);
-  const [typing, setTyping] = useState(false);
-  const [draft, setDraft] = useState("");
-  const [canvasOpen, setCanvasOpen] = useState(true);
-  const nextId = useRef(1);
-  const threadRef = useRef<HTMLDivElement | null>(null);
+  const [canvasOpen, setCanvasOpen] = useState(false);
 
   useEffect(() => {
     loadPeople().then(setPeople).catch(() => setError("Couldn't load the people data."));
@@ -53,9 +49,8 @@ function Jeff() {
   const peopleRef = useRef<Person[] | null>(null);
   useEffect(() => { peopleRef.current = people; }, [people]);
 
-  const say = useCallback((role: Line["role"], text: string) => {
-    setLines((ls) => [...ls, { id: nextId.current++, role, text }]);
-  }, []);
+  // Tool calls and turns are logged to the console only: the surface stays clean.
+  const say = useCallback((role: Line["role"], text: string) => { console.log(`[jeff:${role}]`, text); }, []);
 
   // ── Client tools: what Jeff can look up ──────────────────────────────────
   const clientTools = useMemo(() => ({
@@ -131,6 +126,7 @@ function Jeff() {
     onError: (msg) => setError(typeof msg === "string" ? msg : "Something went wrong with the connection."),
   });
   const { status, isSpeaking, startSession, endSession, sendUserMessage, getInputVolume, getOutputVolume } = conversation;
+  void status;
 
   const start = useCallback(async () => {
     if (!AGENT_ID) { setError("No agent configured yet. See the setup note on the right."); return; }
@@ -141,7 +137,7 @@ function Jeff() {
       setError("Microphone unavailable. Check the browser's mic permission.");
       return;
     }
-    startSession({ agentId: AGENT_ID, connectionType: "webrtc" });
+    startSession({ agentId: AGENT_ID, connectionType: "webrtc", dynamicVariables: { opening_joke: pickJoke() } });
   }, [startSession]);
 
   const mood: BlobMood = status === "connected" ? (isSpeaking ? "speaking" : "listening") : status === "connecting" ? "connecting" : "idle";
@@ -158,21 +154,6 @@ function Jeff() {
     } catch { return 0; }
   }, [mood, getInputVolume, getOutputVolume]);
 
-  const word = mood === "idle" ? "Tap to talk to Jeff" : mood === "connecting" ? "Connecting" : mood === "speaking" ? "Jeff" : "Listening";
-  const helper = mood === "idle" ? (people ? `${people.length} Red Hat Boston people loaded` : "Loading the office…") : mood === "listening" ? "Tap to hang up" : mood === "speaking" ? "Tap to cut in" : "";
-
-  useEffect(() => {
-    threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
-  }, [lines]);
-
-  const submitTyped = (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = draft.trim();
-    if (!text) return;
-    if (status !== "connected") { setError("Start the conversation first, then you can type too."); return; }
-    sendUserMessage(text);
-    setDraft("");
-  };
 
   return (
     <main className={`jeff-page${canvasOpen ? "" : " jeff-page--collapsed"}`}>
@@ -186,44 +167,8 @@ function Jeff() {
         {canvasOpen ? "›" : "‹"}
       </button>
       <section className="jeff-stage">
-        <div className="jeff-brand">
-          <h1>Jeff</h1>
-          <span>the org chart that actually knows things</span>
-        </div>
-
-        <JeffBlob mood={mood} getLevel={getLevel} onTap={onTap} word={word} helper={helper} error={error} disabled={!people && mood === "idle"} />
-
-        <div className="voice-dock-controls">
-          <button type="button" className="voice-dock-quiet" onClick={() => setTyping((t) => !t)}>
-            {typing ? "Hide typing" : "Type instead"}
-          </button>
-          {status === "connected" && (
-            <button type="button" className="voice-dock-quiet" onClick={endSession}>End</button>
-          )}
-        </div>
-
-        <div className="jeff-thread" ref={threadRef}>
-          {lines.length === 0 ? (
-            <div className="jeff-empty">
-              Try asking:
-              <ul>
-                <li>“Who has the deepest experience in cluster provisioning?”</li>
-                <li>“What breaks if I move Bill Burke and John Mulligan to a new project?”</li>
-                <li>“Who should I ask about vLLM in Boston?”</li>
-                <li>“Give me the shape of the AI org.”</li>
-              </ul>
-            </div>
-          ) : lines.map((l) => (
-            <div key={l.id} className={`jeff-msg jeff-msg--${l.role}`}>{l.text}</div>
-          ))}
-        </div>
-
-        {typing && (
-          <form className="jeff-type" onSubmit={submitTyped}>
-            <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Message Jeff…" aria-label="Message Jeff" />
-            <button type="submit" disabled={!draft.trim()}>Send</button>
-          </form>
-        )}
+        <div className="jeff-brand"><h1>Jeff</h1></div>
+        <JeffBlob mood={mood} getLevel={getLevel} onTap={onTap} word="" helper="" error={error} disabled={!people && mood === "idle"} />
       </section>
 
       <section className="jeff-panel" aria-hidden={!canvasOpen}>

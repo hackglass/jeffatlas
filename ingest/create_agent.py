@@ -32,8 +32,11 @@ VOICE_ID = "CwhRBWXzGAHq8TQ4Fs17"
 DEFAULT_LLM = "gemini-2.5-flash"
 GLM_URL = "https://open.bigmodel.cn/api/paas/v4"
 
+# {{opening_joke}} is a dynamic variable the page fills from src/lib/jokes.ts,
+# so every conversation opens on a different Red Hat joke.
 FIRST_MESSAGE = (
-    "Hey, I'm Jeff. I'm the org chart that actually knows who does what around Boston. "
+    "{{opening_joke}} "
+    "Anyway. I'm Jeff, the org chart that actually knows who does what around Boston. "
     "Who are you trying to find, or what are you trying to figure out?"
 )
 
