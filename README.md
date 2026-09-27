@@ -13,5 +13,5 @@ Visit it here: https://hackglass.github.io/jeffatlas/
 
  - Yan (Stella) Si
  - Sai Nellutla
- - Hoang
+ - Hoang Dang
  - Steve Strassmann
