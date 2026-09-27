@@ -17,6 +17,7 @@ import Whiteboard from "@/components/Whiteboard";
 import UsageSankey, { describeUsage, loadUsage, type Usage } from "@/components/UsageSankey";
 import { describeScene, quickScene, SceneSchema, type QuickBoard, type Scene } from "@/lib/board";
 import { ExpertCards, ImpactCards, DocCards, PersonCard } from "@/components/PeopleCards";
+import { SlackDraftCard } from "@/components/SlackDraft";
 import * as history from "@/lib/history";
 import { analyticsOn, beginConversation, endConversation, identifyViewer, initAnalytics, track, trackTool, trackTurn } from "@/lib/analytics";
 import {
@@ -84,7 +85,8 @@ const DEMO_SCENE: Scene = {
   ],
 };
 type Panel = { kind: "experts"; ranked: ScoredPerson[] } | { kind: "impact"; report: ImpactReport }
-  | { kind: "docs"; passages: ScoredPassage[]; experts: ScoredPerson[] } | { kind: "person"; person: Person } | null;
+  | { kind: "docs"; passages: ScoredPassage[]; experts: ScoredPerson[] } | { kind: "person"; person: Person }
+  | { kind: "slack"; toName: string; message: string; autoCopied: boolean } | null;
 
 // Who is looking. There is no login on this demo, so the viewer picks a
 // level; a real deployment would take it from SSO claims. It gates what the
@@ -350,6 +352,30 @@ function Jeff() {
       focus({ people: [p.name], title: p.name });
       // Full profiles (long bio, public links) are leadership-level; everyone else gets the card.
       return JSON.stringify(personSummary(p, accessRef.current === "leader"));
+    },
+    // No real Slack integration: this writes what Jeff drafted to the screen
+    // and the clipboard so the user can paste and send it themselves.
+    draft_slack_message: async ({ to, message }: { to: string; message: string }) => {
+      const ps = peopleRef.current ?? await loadPeople();
+      const p = findPerson(ps, String(to ?? ""));
+      const toName = p?.name ?? String(to ?? "").trim();
+      const text = String(message ?? "").trim();
+      if (!toName || !text) return JSON.stringify({ result: "need both a recipient and message text" });
+      let autoCopied = false;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          autoCopied = true;
+        }
+      } catch { /* the Copy button on the card covers this */ }
+      say("tool", `draft_slack_message("${toName}") → ${autoCopied ? "drafted, copied" : "drafted"}`);
+      setPanel({ kind: "slack", toName, message: text, autoCopied });
+      setCanvasOpen(true);
+      if (p) focus({ people: [p.name], title: `Slack draft: ${p.name}` });
+      return JSON.stringify({
+        result: autoCopied ? "drafted and copied to the clipboard" : "drafted and on screen; clipboard auto-copy was blocked by the browser, there's a Copy button on the card",
+        to: toName,
+      });
     },
     impact_if_moved: async ({ names }: { names: string[] | string }) => {
       const ps = peopleRef.current ?? await loadPeople();
@@ -770,6 +796,7 @@ function Jeff() {
         {panel?.kind === "impact" && <ImpactCards report={panel.report} />}
         {panel?.kind === "docs" && <DocCards passages={panel.passages} experts={panel.experts} />}
         {panel?.kind === "person" && <PersonCard person={panel.person} showEvidence={access !== "new"} showLinks={access === "leader"} />}
+        {panel?.kind === "slack" && <SlackDraftCard toName={panel.toName} message={panel.message} autoCopied={panel.autoCopied} />}
         {dev && <div className="jeff-history">
           {histStats && histStats.sessions > 0 ? (
             <>

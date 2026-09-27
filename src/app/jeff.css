@@ -625,6 +625,18 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .jeff-card a { font-size: 11.5px; color: var(--jeff-accent); text-decoration: none; }
 .jeff-card a:hover { text-decoration: underline; }
 
+.jeff-slack-message {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  background: var(--jeff-faint);
+  border: 1px solid var(--jeff-line);
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--jeff-ink);
+  white-space: pre-wrap;
+}
+
 .jeff-risk { border-color: var(--jeff-ink); }
 .jeff-risk--fine { border-color: var(--jeff-line); }
 .jeff-risk-status {

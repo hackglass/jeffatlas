@@ -76,6 +76,18 @@ TOOLS = [
         },
     },
     {
+        "name": "draft_slack_message",
+        "description": "Draft a Slack message to someone and put it on screen with a Copy button (best-effort auto-copy to the clipboard too). There is no real Slack integration — this never sends anything — so always tell the user it's a draft to paste and send themselves, never that you sent or messaged anyone. Call it when they ask you to draft, write, or put together a Slack message, DM, or note (e.g. 'draft them a message to grab coffee Tuesday'). Write the actual message yourself in the message param: casual Slack tone, one to three short sentences, no email-style greeting or signoff, and include the specific ask they gave you (what, when).",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "to": {"type": "string", "description": "The recipient's name."},
+                "message": {"type": "string", "description": "The full drafted Slack message text, written on the user's behalf."},
+            },
+            "required": ["to", "message"],
+        },
+    },
+    {
         "name": "impact_if_moved",
         "description": "Analyze what breaks if these people are moved off their current work: which skill areas and repositories would be left unowned or as a single point of failure, who remains, and a suggested backfill for each risky area. ALWAYS call this before endorsing a staffing move.",
         "parameters": {
