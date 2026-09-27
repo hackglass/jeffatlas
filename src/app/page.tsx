@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ConversationProvider, useConversation } from "@elevenlabs/react";
-import JeffBlob, { type BlobMood } from "@/components/JeffBlob";
+import JeffBlob, { type BlobMood, type DockTurn } from "@/components/JeffBlob";
 import OrgGraph, { sectionShort, type Highlight, type Lens, type Pick } from "@/components/OrgGraph";
 import Whiteboard from "@/components/Whiteboard";
 import UsageSankey, { describeUsage, loadUsage, type Usage } from "@/components/UsageSankey";
@@ -86,7 +86,17 @@ function Jeff() {
   const [error, setError] = useState<string | null>(null);
   const [canvasOpen, setCanvasOpen] = useState(false);
   const [instant, setInstant] = useState(false); // open without the slide animation (?canvas=)
-  const [transcript, setTranscript] = useState<string[]>([]);
+  const [transcript, setTranscript] = useState<DockTurn[]>([]);
+  const [endedNote, setEndedNote] = useState<string | null>(null);
+  // Thinking: the person's words have landed (or a tool ran) and Jeff has not
+  // started talking yet. Cleared when his audio starts, or after a safety timeout.
+  const [thinking, setThinking] = useState(false);
+  const thinkingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const think = useCallback(() => {
+    setThinking(true);
+    if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
+    thinkingTimer.current = setTimeout(() => setThinking(false), 15000);
+  }, []);
   // The whiteboard: what Jeff has sketched, and whether the graph or the board is up.
   const [board, setBoard] = useState<Scene | null>(null);
   const [boardBusy, setBoardBusy] = useState<string | null>(null);
@@ -178,8 +188,12 @@ function Jeff() {
   const say = useCallback((role: Line["role"], text: string) => {
     console.log(`[jeff:${role}]`, text);
     history.appendTurn(sessionRef.current, role, text);
-    if (role === "jeff" && text.trim()) setTranscript((t) => [...t, text.trim()]);
-  }, []);
+    if (!text.trim()) return;
+    // Tool lines are kept short on the dock: what Jeff looked up, not the result.
+    const shown = role === "tool" ? text.trim().split(" → ")[0] : text.trim();
+    setTranscript((t) => [...t, { role, text: shown }]);
+    if (role !== "jeff") think();
+  }, [think]);
 
   const highlightRef = useRef<Highlight>(null);
   useEffect(() => { highlightRef.current = highlight; }, [highlight]);
@@ -380,7 +394,7 @@ function Jeff() {
   const conversation = useConversation({
     clientTools,
     onConnect: () => {
-      setError(null); setTranscript([]); setBoard(null); setView("graph");
+      setError(null); setTranscript([]); setEndedNote(null); setBoard(null); setView("graph");
       const a = accessRef.current;
       sessionRef.current = history.startSession(ACCESS_LABEL[a]);
       setHistStats(history.historyStats());
@@ -391,19 +405,28 @@ function Jeff() {
         setTimeout(() => tellJeffRef.current("Note: the drawing brain (board_explain) is offline in this build. Draw with board_write instead; it works fine."), 800);
       }
     },
+    onModeChange: ({ mode }) => {
+      if (mode !== "speaking") return;
+      setThinking(false);
+      if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
+    },
     onMessage: ({ message, role }) => {
       const r = String(role);
       if (r === "user") say("user", message);
       else if (message) say("jeff", message);
     },
-    onDisconnect: () => {
+    onDisconnect: (details) => {
       history.endSession(sessionRef.current);
       sessionRef.current = null;
       setHistStats(history.historyStats());
+      // Say why the line went quiet: hanging up looks different from Jeff timing out.
+      const reason = (details as { reason?: string; message?: string } | undefined)?.reason;
+      setThinking(false);
+      setEndedNote(reason === "user" ? "Conversation ended" : reason === "agent" ? "Jeff ended the conversation" : reason === "error" ? "The connection dropped" : "Conversation ended");
     },
     onError: (msg) => setError(typeof msg === "string" ? msg : "Something went wrong with the connection."),
   });
-  const { status, isSpeaking, startSession, endSession, sendUserMessage, sendContextualUpdate, getInputVolume, getOutputVolume } = conversation;
+  const { status, isSpeaking, isMuted, setMuted, startSession, endSession, sendUserMessage, sendContextualUpdate, getInputVolume, getOutputVolume } = conversation;
   const conversationRef = useRef<typeof conversation | null>(null);
   useEffect(() => { conversationRef.current = conversation; }, [conversation]);
   useEffect(() => {
@@ -438,15 +461,33 @@ function Jeff() {
     else { pendingAskRef.current = q; void start(); }
   }, [status, sendUserMessage, start, say]);
 
-  const mood: BlobMood = status === "connected" ? (isSpeaking ? "speaking" : "listening") : status === "connecting" ? "connecting" : "idle";
+  const mood: BlobMood = status === "connected" ? (isSpeaking ? "speaking" : thinking ? "thinking" : "listening") : status === "connecting" ? "connecting" : "dormant";
 
+  // Cut Jeff off. The SDK has no interrupt call; an empty user turn is the
+  // cheapest thing that stops his audio and hands the floor back.
+  const interrupt = useCallback(() => { try { sendUserMessage(""); } catch { /* not connected */ } }, [sendUserMessage]);
+  const toggleMute = useCallback(() => { setMuted(!isMuted); }, [isMuted, setMuted]);
+
+  // The blob itself: start when idle, cut in while Jeff talks, unmute if muted. Never ends the call.
   const onTap = useCallback(() => {
-    if (mood === "idle") void start();
-    else if (mood === "speaking") sendUserMessage(""); // an empty user turn is the cheapest interrupt the SDK offers
-    else endSession();
-  }, [mood, start, sendUserMessage, endSession]);
+    if (mood === "dormant") void start();
+    else if (mood === "speaking") interrupt();
+    else if (mood === "listening" && isMuted) setMuted(false);
+  }, [mood, start, interrupt, isMuted, setMuted]);
 
   const stop = useCallback(() => { void endSession(); }, [endSession]);
+
+  // Keyboard: Escape hangs up, Space cuts Jeff off (unless typing in a field).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (e.key === "Escape" && status === "connected") { e.preventDefault(); void endSession(); }
+      else if (e.key === " " && status === "connected" && isSpeaking) { e.preventDefault(); interrupt(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [status, isSpeaking, endSession, interrupt]);
 
   const getLevel = useCallback(() => {
     try {
@@ -472,11 +513,14 @@ function Jeff() {
           mood={mood}
           getLevel={getLevel}
           onTap={onTap}
-          word=""
-          helper=""
+          onStart={() => void start()}
+          onEnd={stop}
+          onInterrupt={interrupt}
+          muted={isMuted}
+          onToggleMute={toggleMute}
           error={error}
-          disabled={!people && mood === "idle"}
-          onStop={mood === "idle" ? undefined : stop}
+          disabled={!people && mood === "dormant"}
+          endedNote={endedNote}
           transcript={transcript}
         />
       </section>

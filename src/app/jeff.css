@@ -32,7 +32,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .jeff-page--instant { transition: none; }
 .jeff-page--collapsed .jeff-panel { overflow: hidden; padding-left: 0; padding-right: 0; }
 .jeff-page--collapsed .jeff-stage { border-right: 0; }
-.jeff-page:not(.jeff-page--collapsed) .voice-blob { width: min(58vmin, 34vw, 460px); height: min(58vmin, 34vw, 460px); }
+.jeff-page:not(.jeff-page--collapsed) .voice-blob { width: min(46vmin, 28vw, 380px); height: min(46vmin, 28vw, 380px); }
 
 @media (max-width: 860px) {
   .jeff-page, .jeff-page--collapsed { grid-template-columns: 1fr; }
@@ -86,8 +86,8 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .voice-blob {
   --voice-level: 0;
   position: relative;
-  width: min(58vmin, 520px);
-  height: min(58vmin, 520px);
+  width: min(46vmin, 420px);
+  height: min(46vmin, 420px);
   margin: 0;
   padding: 0;
   border: 0;
@@ -141,8 +141,22 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   50%      { transform: scale(1.05); }
 }
 
-/* Idle: quiet, waiting for the tap. */
-.voice-blob--idle .voice-blob-core { animation-duration: 9s; }
+/* Dormant: no call. The green goes to sleep: desaturated, slow, no breath. */
+.voice-blob--dormant .voice-blob-core { filter: saturate(0.35) brightness(1.1); animation-duration: 12s; }
+.voice-blob--dormant .voice-blob-halo { opacity: 0.3; animation: none; }
+.voice-blob--dormant:hover:not(:disabled) .voice-blob-core { filter: saturate(0.8) brightness(1.04); }
+
+/* Thinking: Jeff has the floor but no words yet. A thin ring runs around the body. */
+.voice-blob--thinking .voice-blob-core { animation-duration: 4s; filter: brightness(1.04); }
+.voice-blob--thinking .voice-blob-halo {
+  background: conic-gradient(from 0deg, rgba(47, 179, 106, 0) 0%, rgba(47, 179, 106, 0.55) 30%, rgba(47, 179, 106, 0) 60%);
+  inset: -7%;
+  -webkit-mask: radial-gradient(circle, transparent 60%, #000 61%, #000 66%, transparent 67%);
+  mask: radial-gradient(circle, transparent 60%, #000 61%, #000 66%, transparent 67%);
+  animation: voice-ring-spin 1.6s linear infinite;
+  transform: none;
+}
+@keyframes voice-ring-spin { to { transform: rotate(360deg); } }
 
 /* Connecting: no mic yet, so the green drains to a pale mint and pulses. */
 .voice-blob--connecting .voice-blob-core {
@@ -165,7 +179,40 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--jeff-accent);
 }
 
-.voice-dock-word { font-size: 16px; font-weight: 500; color: var(--jeff-ink); }
+/* ── Status line: the one place the state is named ─────────────────────── */
+
+.voice-dock-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  min-height: 24px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--jeff-ink);
+}
+.voice-dock-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--jeff-line-strong);
+  flex: none;
+}
+.voice-dock-status--dormant .voice-dock-dot { background: var(--jeff-line-strong); }
+.voice-dock-status--connecting .voice-dock-dot { background: var(--jeff-green-3); animation: voice-dot-blink 1s ease-in-out infinite; }
+.voice-dock-status--listening .voice-dock-dot { background: var(--jeff-green); box-shadow: 0 0 0 4px var(--jeff-green-1); }
+.voice-dock-status--thinking .voice-dock-dot { background: var(--jeff-green-3); animation: voice-dot-blink 1.2s ease-in-out infinite; }
+.voice-dock-status--speaking .voice-dock-dot { background: var(--jeff-green-5); animation: voice-dot-blink 0.7s ease-in-out infinite; }
+.voice-dock-status.is-muted .voice-dock-dot { background: #d1d5db; box-shadow: none; animation: none; }
+.voice-dock-status.is-muted .voice-dock-word { color: var(--jeff-muted); }
+.voice-dock-hint { font-size: 12.5px; font-weight: 400; color: var(--jeff-muted); }
+.voice-dock-hint::before { content: "·"; margin-right: 8px; color: var(--jeff-line-strong); }
+
+@keyframes voice-dot-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* Muted: the body goes quiet grey; a tap unmutes. */
+.voice-blob--muted .voice-blob-core { filter: saturate(0.25) brightness(1.08); animation-duration: 12s; }
+.voice-blob--muted .voice-blob-halo { opacity: 0.35; }
+.voice-blob--listening:disabled { cursor: default; }
 
 .voice-dock-helper {
   font-size: 12.5px;
@@ -175,44 +222,103 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   line-height: 1.45;
 }
 
-.voice-dock-error { color: #000; }
+.voice-dock-error { color: #b42318; }
+
+/* ── Controls: start / mute / interrupt / end, always explicit ──────────── */
 
 .voice-dock-controls {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 8px;
+  gap: 8px;
+  margin-top: 12px;
+  min-height: 40px;
 }
 
-.voice-dock-quiet {
-  min-height: 40px;
-  padding: 0 12px;
-  border: 0;
-  background: transparent;
-  color: var(--jeff-muted);
-  font-size: 13px;
+.voice-btn {
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--jeff-line-strong);
+  background: #fff;
+  color: var(--jeff-ink);
+  font-size: 13.5px;
   font-weight: 500;
   cursor: pointer;
-  border-radius: 12px;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease, opacity 120ms ease;
 }
-.voice-dock-quiet:hover:not(:disabled) { color: var(--jeff-accent); }
-.voice-dock-quiet:disabled { opacity: 0.45; cursor: default; }
+.voice-btn:disabled { opacity: 0.4; cursor: default; }
+.voice-btn:focus-visible { outline: 2px solid var(--jeff-accent); outline-offset: 2px; }
+
+.voice-btn--primary {
+  min-height: 44px;
+  padding: 0 22px;
+  border-color: var(--jeff-green-5);
+  background: var(--jeff-green);
+  color: #fff;
+  font-size: 15px;
+}
+.voice-btn--primary:hover:not(:disabled) { background: var(--jeff-green-5); }
+
+.voice-btn--ghost:hover:not(:disabled) { border-color: var(--jeff-ink); }
+.voice-btn--ghost.is-on { background: var(--jeff-ink); border-color: var(--jeff-ink); color: #fff; }
+
+.voice-btn--end { border-color: #f3c1bb; color: #b42318; }
+.voice-btn--end:hover { background: #b42318; border-color: #b42318; color: #fff; }
+
+/* ── The turns: both sides, newest at the bottom ────────────────────────── */
 
 .voice-dock-transcript {
-  max-width: 420px;
-  max-height: 32vh;
+  width: min(460px, 100%);
+  max-height: 34vh;
   overflow-y: auto;
-  margin-top: 14px;
-  padding: 0 8px;
+  margin-top: 18px;
+  padding: 0 6px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
   font-size: 14px;
   line-height: 1.5;
   color: var(--jeff-ink);
-  text-align: center;
+  /* Fade the top so old turns recede instead of stopping at a hard edge. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 22px);
+  scroll-behavior: smooth;
 }
-.voice-dock-transcript p { margin: 0 0 8px; opacity: 0.55; }
-.voice-dock-transcript p.is-latest { opacity: 1; }
+
+.voice-turn { display: flex; flex-direction: column; gap: 2px; max-width: 88%; opacity: 0.62; transition: opacity 200ms ease; }
+.voice-turn.is-latest { opacity: 1; }
+.voice-turn p { margin: 0; }
+.voice-turn-who { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--jeff-muted); }
+
+.voice-turn--jeff { align-self: flex-start; }
+.voice-turn--jeff.is-latest .voice-turn-who { color: var(--jeff-green-5); }
+
+.voice-turn--user { align-self: flex-end; align-items: flex-end; text-align: right; }
+.voice-turn--user p {
+  padding: 6px 12px;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--jeff-faint);
+  color: var(--jeff-ink);
+}
+
+.voice-turn--tool {
+  align-self: flex-start;
+  max-width: 100%;
+  font-size: 11.5px;
+  color: var(--jeff-muted);
+  font-family: var(--font-geist-mono, ui-monospace, monospace);
+  opacity: 0.7;
+}
+.voice-turn--tool::before { content: "↳ "; color: var(--jeff-line-strong); }
+
+/* Jeff has the floor but the words have not landed yet. */
+.voice-turn--typing p { display: flex; gap: 4px; padding: 6px 0; }
+.voice-turn--typing p span { width: 6px; height: 6px; border-radius: 50%; background: var(--jeff-green-3); animation: voice-dot-blink 1s ease-in-out infinite; }
+.voice-turn--typing p span:nth-child(2) { animation-delay: 0.15s; }
+.voice-turn--typing p span:nth-child(3) { animation-delay: 0.3s; }
 
 /* ── Transcript ─────────────────────────────────────────────────────────── */
 
