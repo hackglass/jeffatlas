@@ -5,15 +5,19 @@
 Built at Test Flight, the Glasswing Ventures hackathon, September 26 and 27, 2026.
 
 Team: 
- - Yan (Stella) Si (@sbel2)
- - Sai Nellutla (@SaiNel7)
- - Hoang Dang (@6namdang)
- - Steve Strassmann (@straz)
+ - Yan (Stella) Si ([@sbel2](https://github.com/sbel2))
+ - Sai Nellutla ([@SaiNel7](https://github.com/SaiNel7))
+ - Hoang Dang ([@6namdang](https://github.com/6namdang))
+ - Steve Strassmann ([@straz](https://github.com/straz))
 
 
 ## The problem
 
-Who inside a company has this problem, how often, and what it costs them today.
+Jeff is a voice you talk to about Red Hat's Boston office. Ask who actually has
+experience in something and he ranks people with the evidence (commits, repos,
+role, bio). Tell him you want to move three people to a new project and he tells
+you which systems would be left unowned, and who could backfill.
+
 
 
 ## Who pays
@@ -93,12 +97,48 @@ Be specific. Which integrations are live, which data is synthetic, what would br
 
 ## Running it
 
-```bash
-cp .env.example .env   # put your keys in .env, it never gets committed
-# install and run steps here
+1. **ElevenLabs API key** (one-time, only for creating the agent):
+   elevenlabs.io → profile (bottom left) → *API Keys* → *Create API Key* with the
+   Agents and Voices scopes. Put it in `src/.env.local`:
+   ```
+   ELEVENLABS_API_KEY=...
+   ```
+2. **Create Jeff's agent** (voice: Roger, brain: an ElevenLabs-hosted model):
+   ```
+   python3 ingest/create_agent.py
+   ```
+   To run the brain on GLM instead:
+   ```
+   python3 ingest/create_agent.py --glm-key "$GLM_API_KEY" --glm-model glm-4.6
+   ```
+   It prints an agent id. Add it to `src/.env.local`:
+   ```
+   NEXT_PUBLIC_ELEVENLABS_AGENT_ID=agent_...
+   ```
+   Re-run with `--update agent_...` after editing `jeff_prompt.md` or the tools.
+3. **Whiteboard brain** (optional): put a key in `src/.env.local`. Hackathon weekend, use the Sciforium team key (OpenAI-compatible; GLM 5.3 Flash works well):
+   ```
+   SCIFORIUM_API_KEY=...
+   SCIFORIUM_MODEL=<exact model string from compute setup>
+   ```
+   Or an Anthropic key (used when no Sciforium key is set):
+   ```
+   ANTHROPIC_API_KEY=...
+   ```
+   `BOARD_MODEL` overrides the Anthropic model (default `claude-opus-5`). Without either key, Jeff still draws with the quick `board_write` tool; only the animated `board_explain` sketches need a key. The GitHub Pages build has no server, so it never has the drawing brain.
+4. **Run it**:
+   ```
+   cd src && npm install && npm run dev
+   ```
+5. **Deploy**: pushes to `main` build to GitHub Pages. Set the repo *Variable*
+   `NEXT_PUBLIC_ELEVENLABS_AGENT_ID` (Settings → Secrets and variables → Actions → Variables).
+
+Regenerate the data after touching `data/`:
+```
+python3 ingest/export_json.py
 ```
 
-This is live at https://hackglass.github.io/jeffatlas/
+Jeff is live at https://hackglass.github.io/jeffatlas/
 
 ## Brought in from before the weekend
 
