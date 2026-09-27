@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trust Highway",
+  title: "Jeff Atlas",
   description: "A Next.js starter deployed to GitHub Pages.",
 };
 

@@ -1,6 +1,6 @@
-# Trust Highway — web app
+# Jeff Atlas — web app
 
-Hello-world starter for the Trust Highway front end.
+Hello-world starter for the Jeff Atlas front end.
 
 ## Stack
 
