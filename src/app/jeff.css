@@ -141,10 +141,10 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   50%      { transform: scale(1.05); }
 }
 
-/* Dormant: no call. The green goes to sleep: desaturated, slow, no breath. */
-.voice-blob--dormant .voice-blob-core { filter: saturate(0.35) brightness(1.1); animation-duration: 12s; }
+/* Dormant: no call. Full green, just slower and without the breathing halo. */
+.voice-blob--dormant .voice-blob-core { animation-duration: 12s; }
 .voice-blob--dormant .voice-blob-halo { opacity: 0.3; animation: none; }
-.voice-blob--dormant:hover:not(:disabled) .voice-blob-core { filter: saturate(0.8) brightness(1.04); }
+.voice-blob--dormant:hover:not(:disabled) .voice-blob-core { filter: brightness(1.04); }
 
 /* Thinking: Jeff has the floor but no words yet. A thin ring runs around the body. */
 .voice-blob--thinking .voice-blob-core { animation-duration: 4s; filter: brightness(1.04); }

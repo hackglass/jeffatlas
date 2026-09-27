@@ -95,7 +95,7 @@ export default function JeffBlob({ mood, getLevel, onTap, onEnd, muted, error, d
     : mood === "speaking" ? "Jeff is talking"
     : mood === "thinking" ? "Thinking"
     : mood === "listening" ? (muted ? "Muted" : "Listening")
-    : endedNote ?? (hasTurns ? "Ended" : "Jeff");
+    : endedNote ?? (hasTurns ? "Ended" : "");
   const hint =
     error ? error
     : mood === "connecting" ? "Tap to cancel"
@@ -131,7 +131,7 @@ export default function JeffBlob({ mood, getLevel, onTap, onEnd, muted, error, d
         <span className="voice-blob-halo" aria-hidden="true" />
       </button>
 
-      <div className={`voice-dock-word voice-dock-word--${mood}${muted && live ? " is-muted" : ""}`} aria-live="polite">{word}</div>
+      {word && <div className={`voice-dock-word voice-dock-word--${mood}${muted && live ? " is-muted" : ""}`} aria-live="polite">{word}</div>}
       <div className={`voice-dock-hint${error ? " is-error" : ""}`} role={error ? "alert" : undefined}>{hint}</div>
 
       {hasTurns && (

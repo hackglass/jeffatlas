@@ -425,18 +425,15 @@ function Jeff() {
       // Nobody without commits exists in the Skills lens; show them among their section instead.
       if (!(p?.commits ?? 0)) setLens("people");
       const who = p ? [p.role, sectionShort(p.section), p.commits ? `${p.commits} commits` : ""].filter(Boolean).join(", ") : "";
-      say("tool", `you picked ${pick.label}`);
       tellJeffRef.current(`The user just clicked ${pick.label} on the org graph${who ? ` (${who})` : ""}. If it fits, mention them briefly or ask what they want to know; do not read out a profile unprompted.`);
     } else if (pick.id.startsWith("section:")) {
       setHighlight(null);
-      say("tool", `you picked the ${pick.label} section`);
       tellJeffRef.current(`The user just clicked the "${pick.label}" section hub on the org graph. They may want an overview of that group; team_overview("${pick.label}") answers it.`);
     } else {
       setHighlight({ skills: [pick.label], people: [], title: pick.label });
-      say("tool", `you picked ${pick.label}`);
       tellJeffRef.current(`The user just clicked the "${pick.label}" skill area on the org graph; the people in it are now on screen. find_experts("${pick.label}") ranks them if they ask.`);
     }
-  }, [say]);
+  }, []);
 
   // ── The conversation ─────────────────────────────────────────────────────
   const conversation = useConversation({
