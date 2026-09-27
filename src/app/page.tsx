@@ -279,8 +279,12 @@ function Jeff() {
   const findPeople = useCallback((q: string) => {
     setFind(q);
     const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    const hits = words.length ? (peopleRef.current ?? []).filter((p) => words.every((w) => p.name.toLowerCase().includes(w))).map((p) => p.name) : [];
-    if (hits.length) focus({ people: hits, title: q.trim() }, "people");
+    const all = words.length ? (peopleRef.current ?? []).filter((p) => words.every((w) => p.name.toLowerCase().includes(w))) : [];
+    // Stay on the lens the user is on. Skills only shows people with GitHub
+    // work, so match those there; if none match, fall back to People.
+    const onSkills = lensRef.current === "skills" ? all.filter((p) => p.commits > 0) : [];
+    const hits = onSkills.length ? onSkills : all;
+    if (hits.length) focus({ people: hits.map((p) => p.name), title: q.trim() }, onSkills.length ? "skills" : "people");
     else setHighlight(null);
   }, [focus]);
 
@@ -670,10 +674,6 @@ function Jeff() {
             <label className="jeff-access" title="Find people by name: matches light up on the map">
               <span>search</span>
               <input type="search" value={find} placeholder="find a person" onChange={(e) => findPeople(e.target.value)} spellCheck={false} />
-            </label>
-            <label className="jeff-access" title="Who you are: recorded with the conversation so the transcripts say who asked">
-              <span>you are</span>
-              <input type="text" value={user} placeholder="name or email" onChange={(e) => chooseUser(e.target.value)} spellCheck={false} />
             </label>
             <label className="jeff-access" title="Who is looking: gates what Jeff and the tools will share">
               <span>viewing as</span>
