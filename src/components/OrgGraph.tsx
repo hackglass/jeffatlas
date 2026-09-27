@@ -1,28 +1,67 @@
 "use client";
 
 /**
- * OrgGraph — the animated org picture on the right.
+ * OrgGraph — the shared canvas on the right.
  *
- * Idle: the skill areas sit as hubs with the people who have them orbiting as
- * small dots, so the office reads as a constellation rather than a chart.
- * Highlighted (a tool call from Jeff): the named people and their skill /
- * repo neighbours are pulled forward, everything else fades, and a caption
- * says what is on screen. A tiny hand-rolled force layout keeps it moving
- * without pulling in d3.
+ * Two hands on the same picture:
+ *  - Jeff drives it through `highlight` (show_on_graph, find_experts, …):
+ *    the named people and their skill / repo neighbours are pulled forward,
+ *    everything else fades, and a caption says what is on screen.
+ *  - The human drives it directly: hover for a card, click a person or a
+ *    skill hub to focus on it (the parent tells Jeff), drag nodes to pin
+ *    them, drag the background to pan, wheel to zoom, double-click the
+ *    background to reset.
+ *
+ * A tiny hand-rolled force layout keeps it moving without pulling in d3.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Graph, GraphNode } from "@/lib/jeffData";
 
 export type Highlight = { people: string[]; skills?: string[]; title?: string } | null;
+export type Pick = { type: "person" | "skill"; label: string; id: string };
+/** People: everyone in Boston, grouped by section. Skills: the technical view from GitHub (skill areas + repos). */
+export type Lens = "people" | "skills";
 
-type Sim = { id: string; type: GraphNode["type"]; label: string; x: number; y: number; vx: number; vy: number; r: number; lit: boolean; dim: boolean };
+const SECTION_SHORT: Record<string, string> = {
+  "Platform / infrastructure engineering, QA, SRE": "Platform & infra",
+  "Product, UX, docs, marketing, sales, GTM, ops": "Product & GTM",
+  "AI / ML research, engineering, data science": "AI / ML",
+  "Leadership": "Leadership",
+  "": "Other",
+};
+export const sectionShort = (s: string | undefined) => SECTION_SHORT[s ?? ""] ?? s ?? "Other";
 
-const COLORS = { person: "#2fb36a", skill: "#2fb36a", repo: "#000" };
+type Sim = {
+  id: string; type: GraphNode["type"]; label: string;
+  x: number; y: number; vx: number; vy: number; r: number;
+  lit: boolean; dim: boolean;
+  fx?: number; fy?: number; // pinned position (while dragging, and after a drop)
+};
+type View = { x: number; y: number; k: number };
 
-export default function OrgGraph({ graph, highlight }: { graph: Graph | null; highlight: Highlight }) {
+// Quiet by default: grey dots and hairlines. Green is reserved for what Jeff
+// or the human is pointing at, so a highlight actually reads as one.
+const COLORS = { person: "#9aa4ae", skill: "#3b4552", repo: "#c7ccd1", lit: "#2fb36a", ink: "#111827", line: "#cfd4d9" };
+const CLICK_SLOP = 4; // px of movement before a press becomes a drag
+
+export default function OrgGraph({ graph, highlight, lens = "people", selected, onPick, onAsk }: {
+  graph: Graph | null;
+  highlight: Highlight;
+  lens?: Lens;
+  /** The node the human last clicked (kept by the parent so Jeff can be told). */
+  selected?: Pick | null;
+  onPick?: (pick: Pick | null) => void;
+  /** "Ask Jeff" from the selection card. */
+  onAsk?: (pick: Pick) => void;
+}) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [size, setSize] = useState({ w: 800, h: 480 });
+  const [view, setView] = useState<View>({ x: 0, y: 0, k: 1 });
+  const viewRef = useRef<View>(view);
+  useEffect(() => { viewRef.current = view; }, [view]);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [panning, setPanning] = useState(false);
 
   useEffect(() => {
     const el = svgRef.current?.parentElement;
@@ -39,22 +78,37 @@ export default function OrgGraph({ graph, highlight }: { graph: Graph | null; hi
     const byId = new Map(graph.nodes.map((n) => [n.id, n]));
     const litNames = new Set((highlight?.people ?? []).map((n) => n.toLowerCase()));
     const litSkills = new Set((highlight?.skills ?? []).map((n) => n.toLowerCase()));
-    const keep = new Set<string>();
 
-    if (highlight && litNames.size) {
+    if (lens === "people") {
+      // Everyone, hung off a hub per section. Highlights only light and dim;
+      // nobody leaves the picture, because the point of this lens is the whole office.
+      const people = graph.nodes.filter((n) => n.type === "person");
+      const sections = [...new Set(people.map((p) => p.section ?? ""))].sort((a, b) => (a === "" ? 1 : b === "" ? -1 : a.localeCompare(b)));
+      const hubs: GraphNode[] = sections.map((sec) => ({ id: `section:${sec || "other"}`, type: "skill", label: sectionShort(sec), section: sec }));
+      const edges: Graph["edges"] = people.map((p) => ({ source: p.id, target: `section:${p.section || "other"}`, weight: 1 }));
+      return { nodes: [...hubs, ...people], edges };
+    }
+
+    const keep = new Set<string>();
+    if (highlight && (litNames.size || litSkills.size)) {
       const litPeople = graph.nodes.filter((n) => n.type === "person" && litNames.has(n.label.toLowerCase()));
       for (const p of litPeople) keep.add(p.id);
       for (const e of graph.edges) {
         if (keep.has(e.source)) keep.add(e.target);
       }
+      const litSkillIds = new Set(graph.nodes.filter((n) => n.type === "skill" && litSkills.has(n.label.toLowerCase())).map((n) => n.id));
+      for (const id of litSkillIds) keep.add(id);
       // Second ring: other people who share a lit skill, capped so it stays legible.
+      // A skill-only focus (someone clicked a hub) gets a bigger ring: that *is* the picture.
+      const cap = litNames.size ? 26 : 60;
       let extra = 0;
-      for (const e of graph.edges) {
-        if (keep.has(e.target) && !keep.has(e.source) && byId.get(e.target)?.type === "skill" && extra < 26) {
-          keep.add(e.source); extra++;
-        }
+      const ring = graph.edges
+        .filter((e) => keep.has(e.target) && !keep.has(e.source) && byId.get(e.target)?.type === "skill" && (litNames.size || litSkillIds.has(e.target)))
+        .sort((a, b) => b.weight - a.weight);
+      for (const e of ring) {
+        if (extra >= cap) break;
+        if (!keep.has(e.source)) { keep.add(e.source); extra++; }
       }
-      for (const n of graph.nodes) if (n.type === "skill" && litSkills.has(n.label.toLowerCase())) keep.add(n.id);
     } else {
       for (const n of graph.nodes) if (n.type === "skill") keep.add(n.id);
       const people = graph.nodes.filter((n) => n.type === "person" && (n.commits ?? 0) > 0)
@@ -64,7 +118,7 @@ export default function OrgGraph({ graph, highlight }: { graph: Graph | null; hi
     const nodes = graph.nodes.filter((n) => keep.has(n.id));
     const edges = graph.edges.filter((e) => keep.has(e.source) && keep.has(e.target) && byId.get(e.target)?.type !== "repo" || (highlight && keep.has(e.source) && keep.has(e.target) && litNames.has(byId.get(e.source)?.label.toLowerCase() ?? "")));
     return { nodes, edges };
-  }, [graph, highlight]);
+  }, [graph, highlight, lens]);
 
   const simRef = useRef<Map<string, Sim>>(new Map());
   // A per-frame snapshot of positions: render reads state, never the ref.
@@ -80,16 +134,18 @@ export default function OrgGraph({ graph, highlight }: { graph: Graph | null; hi
     for (const n of nodes) {
       const lit = n.type === "person" ? litNames.has(n.label.toLowerCase()) : n.type === "skill" ? litSkills.has(n.label.toLowerCase()) : false;
       const existing = sims.get(n.id);
-      const r = n.type === "skill" ? 16 : n.type === "repo" ? 5 : lit ? 11 : Math.min(8, 3 + Math.log10(1 + (n.commits ?? 0)) * 1.5);
-      if (existing) { existing.lit = lit; existing.r = r; existing.dim = !!highlight && !lit && n.type === "person" && litNames.size > 0; continue; }
+      const r = n.type === "skill" ? (lens === "people" ? 22 : 16) : n.type === "repo" ? 5 : lit ? 11 : lens === "people" ? Math.min(6.5, 3 + Math.log10(1 + (n.commits ?? 0)) * 1.1) : Math.min(8, 3 + Math.log10(1 + (n.commits ?? 0)) * 1.5);
+      const dim = !!highlight && !lit && n.type === "person" && litNames.size > 0;
+      if (existing) { existing.lit = lit; existing.r = r; existing.dim = dim; continue; }
       // Skill hubs start evenly spaced on a ring; people scatter around them.
       const skillIdx = nodes.filter((m) => m.type === "skill").findIndex((m) => m.id === n.id);
       const skillCount = nodes.filter((m) => m.type === "skill").length || 1;
       const a = n.type === "skill" ? (skillIdx / skillCount) * Math.PI * 2 : Math.random() * Math.PI * 2;
       const d = n.type === "skill" ? Math.min(w, h) * 0.32 : Math.min(w, h) * (0.15 + Math.random() * 0.3);
-      sims.set(n.id, { id: n.id, type: n.type, label: n.label, x: w / 2 + Math.cos(a) * d, y: h / 2 + Math.sin(a) * d, vx: 0, vy: 0, r, lit, dim: !!highlight && !lit && n.type === "person" });
+      sims.set(n.id, { id: n.id, type: n.type, label: n.label, x: w / 2 + Math.cos(a) * d, y: h / 2 + Math.sin(a) * d, vx: 0, vy: 0, r, lit, dim });
     }
 
+    const hubGap = lens === "people" ? 260 : 150;
     let raf = 0;
     let frames = 0;
     const step = () => {
@@ -104,7 +160,7 @@ export default function OrgGraph({ graph, highlight }: { graph: Graph | null; hi
           let dx = a.x - b.x, dy = a.y - b.y;
           let d2 = dx * dx + dy * dy;
           if (d2 < 1) { dx = Math.random() - 0.5; dy = Math.random() - 0.5; d2 = 1; }
-          const min = a.type === "skill" && b.type === "skill" ? 150 : a.r + b.r + 14;
+          const min = a.type === "skill" && b.type === "skill" ? hubGap : a.r + b.r + (lens === "people" ? 8 : 14);
           if (d2 < min * min * 4) {
             const d = Math.sqrt(d2);
             const f = ((min * 2 - d) / d) * 0.05 * alpha;
@@ -118,12 +174,13 @@ export default function OrgGraph({ graph, highlight }: { graph: Graph | null; hi
         if (!s || !t) continue;
         const dx = t.x - s.x, dy = t.y - s.y;
         const d = Math.sqrt(dx * dx + dy * dy) || 1;
-        const rest = s.lit || t.lit ? 70 : t.type === "repo" ? 40 : 110;
+        const rest = s.lit || t.lit ? 70 : t.type === "repo" ? 40 : lens === "people" ? 95 : 110;
         const f = ((d - rest) / d) * 0.012 * alpha;
         s.vx += dx * f; s.vy += dy * f;
         t.vx -= dx * f; t.vy -= dy * f;
       }
       for (const a of arr) {
+        if (a.fx !== undefined && a.fy !== undefined) { a.x = a.fx; a.y = a.fy; a.vx = 0; a.vy = 0; continue; }
         a.vx *= 0.82; a.vy *= 0.82;
         const pad = a.type === "skill" ? 52 : a.r + 6; // room for hub labels
         a.x = Math.max(pad, Math.min(w - pad, a.x + a.vx));
@@ -143,36 +200,227 @@ export default function OrgGraph({ graph, highlight }: { graph: Graph | null; hi
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [nodes, edges, size, highlight]);
+  }, [nodes, edges, size, highlight, lens]);
 
   const byId = useMemo(() => new Map(sims.map((s) => [s.id, s])), [sims]);
 
+  // ── Pointer handling: click / drag a node, pan the background, wheel zoom ──
+  // Pointer → graph coordinates. The viewBox matches the element size 1:1,
+  // so screen px are svg units; undo the pan/zoom transform on top.
+  const toGraph = useCallback((e: { clientX: number; clientY: number }) => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    const v = viewRef.current;
+    const sx = e.clientX - (rect?.left ?? 0), sy = e.clientY - (rect?.top ?? 0);
+    return { sx, sy, x: (sx - v.x) / v.k, y: (sy - v.y) / v.k };
+  }, []);
+
+  const gesture = useRef<
+    | { kind: "node"; id: string; startX: number; startY: number; moved: boolean; pointerId: number }
+    | { kind: "pan"; startX: number; startY: number; viewX: number; viewY: number; moved: boolean; pointerId: number }
+    | null
+  >(null);
+
+  const onNodeDown = (id: string) => (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    const p = toGraph(e);
+    const s = simRef.current.get(id);
+    if (!s) return;
+    s.fx = s.x; s.fy = s.y; // hold it still while the finger is on it
+    gesture.current = { kind: "node", id, startX: p.sx, startY: p.sy, moved: false, pointerId: e.pointerId };
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+  };
+
+  const onBackgroundDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    const p = toGraph(e);
+    const v = viewRef.current;
+    gesture.current = { kind: "pan", startX: p.sx, startY: p.sy, viewX: v.x, viewY: v.y, moved: false, pointerId: e.pointerId };
+    setPanning(true);
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+  };
+
+  const onMove = (e: React.PointerEvent) => {
+    const g = gesture.current;
+    if (!g) return;
+    const p = toGraph(e);
+    const dist = Math.hypot(p.sx - g.startX, p.sy - g.startY);
+    if (dist > CLICK_SLOP) g.moved = true;
+    if (!g.moved) return;
+    if (g.kind === "node") {
+      const s = simRef.current.get(g.id);
+      if (s) { s.fx = p.x; s.fy = p.y; }
+    } else {
+      setView({ ...viewRef.current, x: g.viewX + (p.sx - g.startX), y: g.viewY + (p.sy - g.startY) });
+    }
+  };
+
+  const onUp = (e: React.PointerEvent) => {
+    const g = gesture.current;
+    gesture.current = null;
+    setPanning(false);
+    if (!g) return;
+    (e.currentTarget as Element).releasePointerCapture?.(g.pointerId);
+    if (g.kind === "node") {
+      const s = simRef.current.get(g.id);
+      if (!s) return;
+      if (!g.moved) {
+        // A tap: let it float again, and treat it as a pick.
+        s.fx = undefined; s.fy = undefined;
+        if (s.type === "repo") return;
+        const already = selected?.id === s.id;
+        onPick?.(already ? null : { type: s.type, label: s.label, id: s.id });
+      }
+      // A drop leaves it pinned where it landed (double-click unpins).
+    } else if (!g.moved) {
+      onPick?.(null);
+      setHovered(null);
+    }
+  };
+
+  const onWheel = (e: React.WheelEvent) => {
+    const p = toGraph(e);
+    const v = viewRef.current;
+    const k = Math.max(0.5, Math.min(3, v.k * Math.exp(-e.deltaY * 0.0015)));
+    // Zoom about the cursor: keep the graph point under it fixed.
+    setView({ k, x: p.sx - p.x * k, y: p.sy - p.y * k });
+  };
+
+  const unpin = (id: string) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const s = simRef.current.get(id);
+    if (s) { s.fx = undefined; s.fy = undefined; }
+  };
+
+  // Wheel must be a non-passive listener to stop the page scrolling.
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const block = (e: WheelEvent) => e.preventDefault();
+    el.addEventListener("wheel", block, { passive: false });
+    return () => el.removeEventListener("wheel", block);
+  }, []);
+
+  // ── Hover / selection card ──
+  const card = useMemo(() => {
+    const id = hovered ?? selected?.id ?? null;
+    if (!id || !graph) return null;
+    const s = byId.get(id);
+    const n = graph.nodes.find((m) => m.id === id) ?? nodes.find((m) => m.id === id);
+    if (!s || !n || n.type === "repo") return null;
+    const skillById = new Map(graph.nodes.filter((m) => m.type === "skill").map((m) => [m.id, m.label]));
+    const personIds = new Set(graph.nodes.filter((m) => m.type === "person").map((m) => m.id));
+    let lines: string[] = [];
+    if (n.type === "person") {
+      const skills = graph.edges.filter((e) => e.source === id && skillById.has(e.target)).sort((a, b) => b.weight - a.weight).map((e) => shortSkill(skillById.get(e.target)!)).slice(0, 4);
+      lines = [
+        [n.role, n.section].filter(Boolean).join(" · "),
+        n.commits ? `${n.commits.toLocaleString()} commits` : "",
+        skills.length ? skills.join(", ") : "",
+      ].filter(Boolean);
+    } else if (id.startsWith("section:")) {
+      const sec = graph.nodes.filter((m) => m.type === "person" && (m.section || "") === (n.section ?? ""));
+      lines = [`${sec.length} people`, ...sec.slice(0, 3).map((m) => m.label), sec.length > 3 ? `and ${sec.length - 3} more` : ""].filter(Boolean);
+    } else {
+      const count = graph.edges.filter((e) => e.target === id && personIds.has(e.source)).length;
+      lines = [`${count} ${count === 1 ? "person" : "people"} in this area`];
+    }
+    // Screen position of the node.
+    const sx = s.x * view.k + view.x, sy = s.y * view.k + view.y;
+    const flip = sx > size.w * 0.62;
+    return { id, type: n.type, label: n.label, lines, sx, sy, flip, pinned: s.fx !== undefined, isSelected: selected?.id === id };
+  }, [hovered, selected, graph, nodes, byId, view, size.w]);
+
+  const zoomed = view.k !== 1 || view.x !== 0 || view.y !== 0;
+
   return (
-    <div className="jeff-graph">
-      <svg ref={svgRef} viewBox={`0 0 ${size.w} ${size.h}`} role="img" aria-label="Org graph of Red Hat Boston">
-        {edges.map((e, i) => {
-          const s = byId.get(e.source), t = byId.get(e.target);
-          if (!s || !t) return null;
-          const lit = s.lit || t.lit;
-          return <line key={i} x1={s.x} y1={s.y} x2={t.x} y2={t.y} stroke="#2fb36a" strokeOpacity={lit ? 0.7 : highlight ? 0.12 : 0.22} strokeWidth={lit ? 1.6 : 1} />;
-        })}
-        {sims.map((n) => (
-          <g key={n.id} transform={`translate(${n.x},${n.y})`} opacity={n.dim ? 0.28 : 1} style={{ transition: "opacity 300ms" }}>
-            {n.lit && <circle r={n.r + 9} fill="rgba(47,179,106,0.2)"><animate attributeName="r" values={`${n.r + 6};${n.r + 12};${n.r + 6}`} dur="2.4s" repeatCount="indefinite" /></circle>}
-            <circle r={n.r} fill={n.type === "skill" ? "#fff" : COLORS[n.type]} stroke={n.type === "skill" ? COLORS.skill : n.lit ? "#000" : "none"} strokeWidth={n.type === "skill" ? 1.5 : 2} />
-            {(n.type === "skill" || n.lit || (n.type === "person" && !highlight && n.r >= 7)) && (
-              <text y={n.type === "skill" ? 4 : n.r + 13} textAnchor="middle" fontSize={n.type === "skill" ? 10.5 : n.lit ? 12 : 10} fontWeight={n.lit || n.type === "skill" ? 600 : 400} fill={n.type === "skill" ? COLORS.skill : "#000"} style={{ pointerEvents: "none" }}>
-                {n.type === "skill" ? shortSkill(n.label) : n.label}
-              </text>
-            )}
-          </g>
-        ))}
+    <div className={`jeff-graph${panning ? " jeff-graph--panning" : ""}`}>
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${size.w} ${size.h}`}
+        role="img"
+        aria-label="Org graph of Red Hat Boston"
+        onPointerDown={onBackgroundDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={onUp}
+        onWheel={onWheel}
+        onDoubleClick={() => setView({ x: 0, y: 0, k: 1 })}
+        style={{ touchAction: "none" }}
+      >
+        <g transform={`translate(${view.x},${view.y}) scale(${view.k})`}>
+          {edges.map((e, i) => {
+            const s = byId.get(e.source), t = byId.get(e.target);
+            if (!s || !t) return null;
+            const lit = s.lit || t.lit;
+            const near = hovered !== null && (s.id === hovered || t.id === hovered) || (selected && (s.id === selected.id || t.id === selected.id));
+            return <line key={i} x1={s.x} y1={s.y} x2={t.x} y2={t.y} stroke={near ? COLORS.ink : lit ? COLORS.lit : COLORS.line} strokeOpacity={near ? 0.6 : lit ? 0.8 : highlight ? 0.25 : lens === "people" ? 0.45 : 0.6} strokeWidth={near ? 1.4 : lit ? 1.6 : 1} />;
+          })}
+          {sims.map((n) => {
+            const isSel = selected?.id === n.id;
+            const isHover = hovered === n.id;
+            return (
+              <g
+                key={n.id}
+                className={`jeff-node jeff-node--${n.type}`}
+                transform={`translate(${n.x},${n.y})`}
+                opacity={n.dim && !isSel && !isHover ? 0.28 : 1}
+                style={{ transition: "opacity 300ms" }}
+                onPointerDown={onNodeDown(n.id)}
+                onPointerEnter={() => setHovered(n.id)}
+                onPointerLeave={() => setHovered((h) => (h === n.id ? null : h))}
+                onDoubleClick={unpin(n.id)}
+              >
+                {n.lit && <circle r={n.r + 9} fill="rgba(47,179,106,0.2)"><animate attributeName="r" values={`${n.r + 6};${n.r + 12};${n.r + 6}`} dur="2.4s" repeatCount="indefinite" /></circle>}
+                {isSel && <circle r={n.r + 6} fill="none" stroke={COLORS.ink} strokeWidth={1.5} strokeDasharray="3 3" />}
+                {/* An invisible, larger hit target so small dots are easy to grab. */}
+                <circle r={Math.max(n.r, 10)} fill="transparent" />
+                <circle
+                  r={n.r}
+                  fill={n.type === "skill" ? (n.lit ? "#eaf7ef" : "#fff") : n.lit ? COLORS.lit : isSel || isHover ? COLORS.ink : COLORS[n.type]}
+                  stroke={n.type === "skill" ? (n.lit || isSel || isHover ? COLORS.lit : COLORS.line) : n.lit ? COLORS.ink : "none"}
+                  strokeWidth={n.type === "skill" ? (n.lit || isSel || isHover ? 2 : 1.25) : 1.5}
+                />
+                {n.fx !== undefined && n.type !== "skill" && <circle r={2} cy={-n.r - 4} fill={COLORS.ink} />}
+                {(n.type === "skill" || n.lit || isSel || isHover || (lens === "skills" && n.type === "person" && !highlight && n.r >= 7)) && (
+                  <text y={n.type === "skill" ? 4 : n.r + 13} textAnchor="middle" fontSize={n.type === "skill" ? 10.5 : n.lit || isSel ? 12 : 10} fontWeight={n.lit || isSel || n.type === "skill" ? 600 : 400} fill={n.type === "skill" ? (n.lit ? COLORS.lit : COLORS.skill) : COLORS.ink} paintOrder="stroke" stroke="#fff" strokeWidth={3} strokeLinejoin="round" style={{ pointerEvents: "none" }}>
+                    {n.type === "skill" ? shortSkill(n.label) : n.label}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </g>
       </svg>
+
+      {card && (
+        <div
+          className={`jeff-graph-card${card.isSelected ? " jeff-graph-card--selected" : ""}`}
+          style={{ left: card.flip ? undefined : card.sx + 18, right: card.flip ? size.w - card.sx + 18 : undefined, top: Math.max(8, Math.min(size.h - 120, card.sy - 16)) }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div className="jeff-graph-card-kind">{card.type === "skill" ? (card.id.startsWith("section:") ? "section" : "skill area") : "person"}{card.pinned ? " · pinned" : ""}</div>
+          <strong>{card.type === "skill" ? shortSkill(card.label) : card.label}</strong>
+          {card.lines.map((l) => <div key={l} className="jeff-graph-card-line">{l}</div>)}
+          {card.isSelected && onAsk && (
+            <div className="jeff-graph-card-actions">
+              <button type="button" onClick={() => onAsk({ type: card.type as Pick["type"], label: card.label, id: card.id })}>Ask Jeff</button>
+              <button type="button" className="ghost" onClick={() => onPick?.(null)}>Clear</button>
+            </div>
+          )}
+        </div>
+      )}
+
       {highlight?.title && <div className="jeff-graph-caption">{highlight.title}</div>}
+      {zoomed && (
+        <button type="button" className="jeff-graph-reset" onClick={() => setView({ x: 0, y: 0, k: 1 })} title="Reset view">reset view</button>
+      )}
       <div className="jeff-graph-legend">
-        <span><i style={{ background: "#fff", border: "1.5px solid #2fb36a" }} />skill area</span>
+        <span><i style={{ background: "#fff", border: `1.5px solid ${COLORS.line}` }} />{lens === "people" ? "section" : "skill area"}</span>
         <span><i style={{ background: COLORS.person }} />person</span>
-        <span><i style={{ background: COLORS.repo }} />repo</span>
+        {lens === "skills" && <span><i style={{ background: COLORS.repo }} />repo</span>}
+        <span><i style={{ background: COLORS.lit }} />in focus</span>
+        <span className="jeff-graph-hint">click to focus · drag to pin · wheel to zoom</span>
       </div>
     </div>
   );

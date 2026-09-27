@@ -84,15 +84,25 @@ TOOLS = [
     },
     {
         "name": "show_on_graph",
-        "description": "Highlight people, skills, or repositories on the org graph the user is looking at. Call this after find_experts or impact_if_moved so the screen matches what you are saying. Returns nothing useful; do not wait on it for facts.",
+        "description": "Highlight people and/or skill areas on the org graph the user is looking at. Call this after find_experts or impact_if_moved so the screen matches what you are saying. With no people and no skills it clears the highlight. The graph picks the lens that can show the people (someone with no GitHub footprint only appears in the People lens). Returns nothing useful; do not wait on it for facts.",
         "parameters": {
             "type": "object",
             "properties": {
                 "people": {"type": "array", "items": {"type": "string", "description": "A person's full name."}, "description": "Names of people to highlight."},
                 "skills": {"type": "array", "items": {"type": "string", "description": "A skill area name."}, "description": "Skill areas to highlight."},
                 "title": {"type": "string", "description": "A short caption for what is being shown, e.g. 'Cluster provisioning experts'."},
+                "lens": {"type": "string", "enum": ["people", "skills"], "description": "Optional: force the People lens (everyone by section) or the Skills lens (technical, GitHub-derived)."},
             },
-            "required": ["people"],
+            "required": [],
+        },
+    },
+    {
+        "name": "graph_lens",
+        "description": "Switch the org graph between the People lens (all 381 Boston people grouped by section: Leadership, AI/ML, Platform, Product & GTM, Other) and the Skills lens (the technical picture: skill areas and GitHub repos, only people with commits). Use People for org shape, leadership, and non-engineering questions; Skills for who-knows-what.",
+        "parameters": {
+            "type": "object",
+            "properties": {"lens": {"type": "string", "enum": ["people", "skills"], "description": "Which lens to show."}},
+            "required": ["lens"],
         },
     },
     # ── The whiteboard ──
@@ -145,7 +155,7 @@ TOOLS = [
 ]
 
 # Tools that draw or highlight never block Jeff: he keeps talking while the screen catches up.
-FIRE_AND_FORGET = {"show_on_graph", "board_explain", "board_write", "board_clear"}
+FIRE_AND_FORGET = {"show_on_graph", "graph_lens", "board_explain", "board_write", "board_clear"}
 
 
 def load_env_key() -> str:

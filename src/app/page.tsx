@@ -12,10 +12,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import JeffBlob, { type BlobMood } from "@/components/JeffBlob";
-import OrgGraph, { type Highlight } from "@/components/OrgGraph";
+import OrgGraph, { sectionShort, type Highlight, type Lens, type Pick } from "@/components/OrgGraph";
 import Whiteboard from "@/components/Whiteboard";
 import { describeScene, quickScene, SceneSchema, type QuickBoard, type Scene } from "@/lib/board";
 import { ExpertCards, ImpactCards } from "@/components/PeopleCards";
+import * as history from "@/lib/history";
 import {
   findPerson, impactOfMoving, loadGraph, loadPeople, personSummary, rankExperts, sectionOverview,
   type Graph, type ImpactReport, type Person, type ScoredPerson,
@@ -52,6 +53,20 @@ const DEMO_SCENE: Scene = {
 };
 type Panel = { kind: "experts"; ranked: ScoredPerson[] } | { kind: "impact"; report: ImpactReport } | null;
 
+// Who is looking. There is no login on this demo, so the viewer picks a
+// level; a real deployment would take it from SSO claims. It gates what the
+// tools return *and* is told to Jeff so he pitches the conversation right:
+//   new      — service desk: who to ask, what team they are on. No risk analysis.
+//   manager  — plus staffing impact and backfill suggestions.
+//   leader   — plus full profiles, bios and public links.
+type Access = "new" | "manager" | "leader";
+const ACCESS_LABEL: Record<Access, string> = { new: "New hire", manager: "Manager", leader: "Senior leader" };
+const ACCESS_BLURB: Record<Access, string> = {
+  new: "directory level: who to ask and where they sit; no staffing or risk analysis",
+  manager: "manager level: who knows what, plus staffing impact and backfills",
+  leader: "leadership level: everything, including full profiles and public bios",
+};
+
 export default function Home() {
   return (
     <ConversationProvider>
@@ -61,6 +76,8 @@ export default function Home() {
 }
 
 function Jeff() {
+  // Tools tell Jeff what the screen is doing through contextual updates (no reply expected).
+  const tellJeffRef = useRef<(text: string) => void>(() => {});
   const [people, setPeople] = useState<Person[] | null>(null);
   const [graph, setGraph] = useState<Graph | null>(null);
   const [panel, setPanel] = useState<Panel>(null);
@@ -72,6 +89,28 @@ function Jeff() {
   const [board, setBoard] = useState<Scene | null>(null);
   const [boardBusy, setBoardBusy] = useState<string | null>(null);
   const [view, setView] = useState<"graph" | "board">("graph");
+  // The shared canvas: which lens is on, and what the human last clicked.
+  const [lens, setLens] = useState<Lens>("people");
+  const [selected, setSelected] = useState<Pick | null>(null);
+  const lensRef = useRef<Lens>("people");
+  useEffect(() => { lensRef.current = lens; }, [lens]);
+  // Remembered per browser. Read after mount (not in the initializer) so the
+  // server and first client render agree.
+  const [access, setAccess] = useState<Access>("new");
+  const accessRef = useRef<Access>(access);
+  useEffect(() => { accessRef.current = access; }, [access]);
+  useEffect(() => {
+    let a: Access | null = null;
+    try { a = localStorage.getItem("jeff.access") as Access | null; } catch { /* no storage */ }
+    if (!a || !(a in ACCESS_LABEL)) return;
+    const t = setTimeout(() => setAccess(a as Access), 0);
+    return () => clearTimeout(t);
+  }, []);
+  const chooseAccess = useCallback((a: Access) => {
+    setAccess(a);
+    try { localStorage.setItem("jeff.access", a); } catch { /* no storage */ }
+    tellJeffRef.current(`The viewer switched their access level to "${ACCESS_LABEL[a]}" (${ACCESS_BLURB[a]}). Adjust what you offer accordingly.`);
+  }, []);
 
   // Is the drawing brain (/api/board) reachable in this build? The static
   // GitHub Pages site has no server, and a dev box may have no key yet. An
@@ -94,16 +133,33 @@ function Jeff() {
   const peopleRef = useRef<Person[] | null>(null);
   useEffect(() => { peopleRef.current = people; }, [people]);
 
-  // Every turn goes to the console; Jeff's own words are also printed under the blob.
+  // Every turn (the person, Jeff, and what the tools did) is saved to the
+  // session's history in localStorage, echoed to the console, and Jeff's own
+  // words are printed under the blob.
+  const sessionRef = useRef<string | null>(null);
+  const [histStats, setHistStats] = useState<{ sessions: number; turns: number } | null>(null);
+  useEffect(() => { const t = setTimeout(() => setHistStats(history.historyStats()), 0); return () => clearTimeout(t); }, []);
   const say = useCallback((role: Line["role"], text: string) => {
     console.log(`[jeff:${role}]`, text);
+    history.appendTurn(sessionRef.current, role, text);
     if (role === "jeff" && text.trim()) setTranscript((t) => [...t, text.trim()]);
   }, []);
 
-  // Tools tell Jeff what the screen is doing through contextual updates (no reply expected).
-  const tellJeffRef = useRef<(text: string) => void>(() => {});
   const highlightRef = useRef<Highlight>(null);
   useEffect(() => { highlightRef.current = highlight; }, [highlight]);
+
+  // Point the graph at people. Someone with no GitHub footprint (most of
+  // leadership, product, GTM) only exists in the People lens, so switch to it
+  // when the Skills lens would show an empty picture.
+  const focus = useCallback((h: Exclude<Highlight, null>, wantLens?: Lens) => {
+    const ps = peopleRef.current ?? [];
+    const technical = h.people.length > 0 && h.people.every((n) => (findPerson(ps, n)?.commits ?? 0) > 0);
+    setHighlight(h);
+    setSelected(null);
+    setLens(wantLens ?? (technical || (h.skills?.length && !h.people.length) ? "skills" : "people"));
+    setView("graph");
+    setCanvasOpen(true);
+  }, []);
 
   const showScene = useCallback((scene: Scene, source: string) => {
     setBoard(scene);
@@ -117,12 +173,12 @@ function Jeff() {
   const clientTools = useMemo(() => ({
     find_experts: async ({ topic, limit }: { topic: string; limit?: number }) => {
       const ps = peopleRef.current ?? await loadPeople();
-      const ranked = rankExperts(ps, String(topic ?? ""), Math.min(8, Number(limit) || 5));
+      const cap = accessRef.current === "new" ? 3 : 8;
+      const ranked = rankExperts(ps, String(topic ?? ""), Math.min(cap, Number(limit) || 5));
       say("tool", `find_experts("${topic}") → ${ranked.length} candidates`);
       if (ranked.length) {
         setPanel({ kind: "experts", ranked });
-        setHighlight({ people: ranked.map((r) => r.person.name), title: `Who knows ${topic}` });
-        setCanvasOpen(true);
+        focus({ people: ranked.map((r) => r.person.name), title: `Who knows ${topic}` });
       }
       if (!ranked.length) return JSON.stringify({ result: "no matches in the Boston data", topic });
       return JSON.stringify({
@@ -135,19 +191,23 @@ function Jeff() {
       const p = findPerson(ps, String(name ?? ""));
       say("tool", `lookup_person("${name}") → ${p ? p.name : "not found"}`);
       if (!p) return JSON.stringify({ result: "not found in the Boston data", name });
-      setHighlight({ people: [p.name], title: p.name });
-      setCanvasOpen(true);
-      return JSON.stringify(personSummary(p, true));
+      focus({ people: [p.name], title: p.name });
+      // Full profiles (long bio, public links) are leadership-level; everyone else gets the card.
+      return JSON.stringify(personSummary(p, accessRef.current === "leader"));
     },
     impact_if_moved: async ({ names }: { names: string[] | string }) => {
       const ps = peopleRef.current ?? await loadPeople();
       const list = Array.isArray(names) ? names : String(names ?? "").split(/,|\band\b/).map((s) => s.trim()).filter(Boolean);
+      if (accessRef.current === "new") {
+        say("tool", `impact_if_moved(${list.join(", ")}) → blocked at new-hire access`);
+        return JSON.stringify({ result: "staffing impact analysis is not available at this viewer's access level; offer to point them at the right people instead" });
+      }
       const report = impactOfMoving(ps, list);
       say("tool", `impact_if_moved(${list.join(", ")}) → ${report.summary}`);
       setPanel({ kind: "impact", report });
       setCanvasOpen(true);
       const backfills = report.areas.filter((a) => a.backfill && a.status !== "fine").map((a) => a.backfill!.name);
-      setHighlight({ people: [...report.moved, ...backfills], skills: report.areas.filter((a) => a.kind === "skill" && a.status !== "fine").map((a) => a.area), title: `If ${report.moved.join(", ")} move` });
+      focus({ people: [...report.moved, ...backfills], skills: report.areas.filter((a) => a.kind === "skill" && a.status !== "fine").map((a) => a.area), title: `If ${report.moved.join(", ")} move` });
       return JSON.stringify({
         moved: report.moved,
         not_found: report.unknown,
@@ -163,16 +223,30 @@ function Jeff() {
       const ps = peopleRef.current ?? await loadPeople();
       say("tool", `team_overview(${section ? `"${section}"` : ""})`);
       setHighlight(null);
+      setSelected(null);
       setPanel(null);
-      return JSON.stringify({ total_people: ps.length, sections: sectionOverview(ps, section) });
-    },
-    show_on_graph: ({ people: names, skills, title }: { people?: string[]; skills?: string[]; title?: string }) => {
-      const ps = peopleRef.current ?? [];
-      const resolved = (names ?? []).map((n) => findPerson(ps, n)?.name ?? n);
-      setHighlight({ people: resolved, skills: skills ?? [], title });
+      setLens("people");
       setView("graph");
       setCanvasOpen(true);
+      return JSON.stringify({ total_people: ps.length, sections: sectionOverview(ps, section) });
+    },
+    show_on_graph: ({ people: names, skills, title, lens: wantLens }: { people?: string[]; skills?: string[]; title?: string; lens?: string }) => {
+      const ps = peopleRef.current ?? [];
+      const resolved = (names ?? []).map((n) => findPerson(ps, n)?.name ?? n);
+      const l = wantLens === "people" || wantLens === "skills" ? wantLens : undefined;
+      if (!resolved.length && !(skills ?? []).length) {
+        setHighlight(null); setSelected(null); setView("graph"); setCanvasOpen(true);
+        if (l) setLens(l);
+        return "cleared";
+      }
+      focus({ people: resolved, skills: skills ?? [], title }, l);
       return "shown";
+    },
+    graph_lens: ({ lens: wantLens }: { lens: string }) => {
+      const l = wantLens === "skills" ? "skills" : "people";
+      setLens(l); setView("graph"); setCanvasOpen(true);
+      say("tool", `graph_lens("${l}")`);
+      return l === "people" ? "showing everyone in Boston grouped by section" : "showing the technical view: skill areas and GitHub activity";
     },
 
     // ── The whiteboard ──
@@ -220,13 +294,43 @@ function Jeff() {
       say("tool", "board_clear()");
       return "wiped";
     },
-  }), [say, showScene, board]);
+  }), [say, showScene, focus, board]);
+
+  // ── The human's hand on the canvas ──
+  // A click is a pick: the graph focuses on it and Jeff is told, as context
+  // rather than as a question, so he can fold it in without being forced to answer.
+  const onPick = useCallback((pick: Pick | null) => {
+    setSelected(pick);
+    if (!pick) return;
+    const ps = peopleRef.current ?? [];
+    if (pick.type === "person") {
+      const p = findPerson(ps, pick.label);
+      setHighlight({ people: [pick.label], title: pick.label });
+      const who = p ? [p.role, sectionShort(p.section), p.commits ? `${p.commits} commits` : ""].filter(Boolean).join(", ") : "";
+      say("tool", `you picked ${pick.label}`);
+      tellJeffRef.current(`The user just clicked ${pick.label} on the org graph${who ? ` (${who})` : ""}. If it fits, mention them briefly or ask what they want to know; do not read out a profile unprompted.`);
+    } else if (pick.id.startsWith("section:")) {
+      setHighlight(null);
+      say("tool", `you picked the ${pick.label} section`);
+      tellJeffRef.current(`The user just clicked the "${pick.label}" section hub on the org graph. They may want an overview of that group; team_overview("${pick.label}") answers it.`);
+    } else {
+      setHighlight({ skills: [pick.label], people: [], title: pick.label });
+      say("tool", `you picked ${pick.label}`);
+      tellJeffRef.current(`The user just clicked the "${pick.label}" skill area on the org graph; the people in it are now on screen. find_experts("${pick.label}") ranks them if they ask.`);
+    }
+  }, [say]);
 
   // ── The conversation ─────────────────────────────────────────────────────
   const conversation = useConversation({
     clientTools,
     onConnect: () => {
       setError(null); setTranscript([]); setBoard(null); setView("graph");
+      const a = accessRef.current;
+      sessionRef.current = history.startSession(ACCESS_LABEL[a]);
+      setHistStats(history.historyStats());
+      setTimeout(() => tellJeffRef.current(`Viewer access level: ${ACCESS_LABEL[a]} (${ACCESS_BLURB[a]}). The screen shows the ${lensRef.current === "people" ? "People lens (everyone, by section)" : "Skills lens (technical, from GitHub)"}; the user can click people and areas on it and you will be told.`), 600);
+      const pending = pendingAskRef.current;
+      if (pending) { pendingAskRef.current = null; setTimeout(() => { try { conversationRef.current?.sendUserMessage(pending); } catch { /* not ready */ } }, 1200); }
       if (brainRef.current === "off") {
         setTimeout(() => tellJeffRef.current("Note: the drawing brain (board_explain) is offline in this build. Draw with board_write instead; it works fine."), 800);
       }
@@ -236,9 +340,16 @@ function Jeff() {
       if (r === "user") say("user", message);
       else if (message) say("jeff", message);
     },
+    onDisconnect: () => {
+      history.endSession(sessionRef.current);
+      sessionRef.current = null;
+      setHistStats(history.historyStats());
+    },
     onError: (msg) => setError(typeof msg === "string" ? msg : "Something went wrong with the connection."),
   });
   const { status, isSpeaking, startSession, endSession, sendUserMessage, sendContextualUpdate, getInputVolume, getOutputVolume } = conversation;
+  const conversationRef = useRef<typeof conversation | null>(null);
+  useEffect(() => { conversationRef.current = conversation; }, [conversation]);
   useEffect(() => {
     tellJeffRef.current = (text) => {
       if (status !== "connected") return;
@@ -255,8 +366,17 @@ function Jeff() {
       setError("Microphone unavailable. Check the browser's mic permission.");
       return;
     }
-    startSession({ agentId: AGENT_ID, connectionType: "webrtc" });
+    startSession({ agentId: AGENT_ID, connectionType: "webrtc", dynamicVariables: { access_level: ACCESS_LABEL[accessRef.current], access_scope: ACCESS_BLURB[accessRef.current] } });
   }, [startSession]);
+
+  // "Ask Jeff" on a picked node: a real user turn if we are talking, otherwise
+  // it starts the session and asks as soon as Jeff is on the line.
+  const pendingAskRef = useRef<string | null>(null);
+  const onAsk = useCallback((pick: Pick) => {
+    const q = pick.type === "person" ? `Tell me about ${pick.label}.` : pick.id.startsWith("section:") ? `Give me the shape of the ${pick.label} group.` : `Who should I talk to about ${pick.label}?`;
+    if (status === "connected") { say("user", q); sendUserMessage(q); }
+    else { pendingAskRef.current = q; void start(); }
+  }, [status, sendUserMessage, start, say]);
 
   const mood: BlobMood = status === "connected" ? (isSpeaking ? "speaking" : "listening") : status === "connecting" ? "connecting" : "idle";
 
@@ -302,10 +422,25 @@ function Jeff() {
       </section>
 
       <section className="jeff-panel" aria-hidden={!canvasOpen}>
+       <div className="jeff-panel-inner">
         <div className="jeff-panel-head">
-          <h2>Red Hat Boston</h2>
+          <div>
+            <h2>Red Hat Boston</h2>
+            <span>{graph ? `${graph.nodes.filter((n) => n.type === "person").length} people · ${lens === "people" ? "5 sections" : `${graph.nodes.filter((n) => n.type === "skill").length} skill areas`}` : ""}</span>
+          </div>
           <div className="jeff-panel-meta">
-            <span>{graph ? `${graph.nodes.filter((n) => n.type === "person").length} people · ${graph.nodes.filter((n) => n.type === "skill").length} skill areas` : ""}</span>
+            <label className="jeff-access" title="Who is looking: gates what Jeff and the tools will share">
+              <span>viewing as</span>
+              <select value={access} onChange={(e) => chooseAccess(e.target.value as Access)}>
+                {(Object.keys(ACCESS_LABEL) as Access[]).map((a) => <option key={a} value={a}>{ACCESS_LABEL[a]}</option>)}
+              </select>
+            </label>
+            {view === "graph" && (
+              <div className="jeff-view-switch" role="tablist" aria-label="Graph lens">
+                <button type="button" role="tab" aria-selected={lens === "people"} className={lens === "people" ? "on" : undefined} onClick={() => { setLens("people"); tellJeffRef.current("The user switched the graph to the People lens (everyone, by section)."); }}>People</button>
+                <button type="button" role="tab" aria-selected={lens === "skills"} className={lens === "skills" ? "on" : undefined} onClick={() => { setLens("skills"); tellJeffRef.current("The user switched the graph to the Skills lens (technical view from GitHub)."); }}>Skills</button>
+              </div>
+            )}
             {(board || boardBusy) && (
               <div className="jeff-view-switch" role="tablist" aria-label="Canvas view">
                 <button type="button" role="tab" aria-selected={view === "graph"} className={view === "graph" ? "on" : undefined} onClick={() => setView("graph")}>Graph</button>
@@ -323,10 +458,20 @@ function Jeff() {
         ) : view === "board" && boardBusy ? (
           <div className="wb"><div className="wb-busy">sketching “{boardBusy}”…</div></div>
         ) : (
-          <OrgGraph graph={graph} highlight={highlight} />
+          <OrgGraph graph={graph} highlight={highlight} lens={lens} selected={selected} onPick={onPick} onAsk={onAsk} />
         )}
         {panel?.kind === "experts" && <ExpertCards ranked={panel.ranked} />}
         {panel?.kind === "impact" && <ImpactCards report={panel.report} />}
+        <div className="jeff-history">
+          {histStats && histStats.sessions > 0 ? (
+            <>
+              <span>{histStats.sessions} saved {histStats.sessions === 1 ? "conversation" : "conversations"} · {histStats.turns} turns</span>
+              <button type="button" onClick={() => history.downloadHistory()}>Download transcripts</button>
+            </>
+          ) : (
+            <span>Conversations are saved in this browser as you talk.</span>
+          )}
+        </div>
         {!AGENT_ID && (
           <div className="jeff-setup">
             <strong>Jeff has no voice yet.</strong> Create the ElevenLabs agent once with{" "}
@@ -334,6 +479,7 @@ function Jeff() {
             <code>src/.env.local</code> as <code>NEXT_PUBLIC_ELEVENLABS_AGENT_ID</code> and restart the dev server.
           </div>
         )}
+       </div>
       </section>
     </main>
   );

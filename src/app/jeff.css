@@ -4,11 +4,17 @@
    voice-level swell. Re-cut in green on a plain white page. */
 
 :root {
-  --jeff-ink: #000000;
-  --jeff-muted: #000000;
-  --jeff-faint: #2fb36a;
-  --jeff-line: #2fb36a;
+  /* Ink and hairlines are neutral; green is one accent, used for what is in focus. */
+  --jeff-ink: #111827;
+  --jeff-muted: #6b7280;
+  --jeff-faint: #f6f7f8;
+  --jeff-line: #e5e7eb;
+  --jeff-line-strong: #cfd4d9;
   --jeff-green: #2fb36a;
+  --jeff-green-1: #eaf7ef;
+  --jeff-green-3: #7ccf9c;
+  --jeff-green-4: #2fb36a;
+  --jeff-green-5: #1f8a4f;
   --jeff-accent: #2fb36a;
 }
 
@@ -268,23 +274,44 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .jeff-panel {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   min-height: 100vh;
-  padding: 28px 28px 20px;
+  padding: 28px 32px 24px;
   background: #fff;
+}
+/* The canvas column: a fixed-width block sitting in the middle of the panel. */
+.jeff-panel-inner {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
 }
 
 @media (max-width: 860px) { .jeff-panel { min-height: auto; padding: 12px 20px 24px; } }
 
 .jeff-panel-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   padding-right: 44px;
 }
-.jeff-panel-head h2 { font-size: 15px; font-weight: 600; }
-.jeff-panel-head .jeff-panel-meta { display: flex; align-items: baseline; gap: 12px; }
+.jeff-panel-head h2 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.jeff-panel-head .jeff-panel-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.jeff-access { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--jeff-muted); }
+.jeff-access select {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--jeff-ink);
+  background: #fff;
+  border: 1px solid var(--jeff-line);
+  border-radius: 999px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+.jeff-access select:hover { border-color: var(--jeff-line-strong); }
 .jeff-canvas-toggle {
   position: fixed;
   top: 18px;
@@ -295,26 +322,84 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   border-radius: 10px;
   border: 1px solid var(--jeff-line);
   background: #fff;
-  color: var(--jeff-green-4);
+  color: var(--jeff-ink);
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
   box-shadow: none;
 }
-.jeff-canvas-toggle:hover { background: var(--jeff-green-1); }
+.jeff-canvas-toggle:hover { background: var(--jeff-faint); }
 .jeff-panel-head span { font-size: 12.5px; color: var(--jeff-muted); }
 
 .jeff-graph {
   position: relative;
   width: 100%;
-  height: min(52vh, 520px);
+  height: min(62vh, 620px);
   border: 1px solid var(--jeff-line);
-  border-radius: 18px;
+  border-radius: 16px;
   overflow: hidden;
-  background:
-    #fff;
+  /* A faint dot grid so the canvas reads as a surface, not a blank box. */
+  background-color: #fff;
+  background-image: radial-gradient(var(--jeff-line) 0.8px, transparent 0.8px);
+  background-size: 22px 22px;
+  background-position: 11px 11px;
+  cursor: grab;
 }
+.jeff-graph--panning { cursor: grabbing; }
 .jeff-graph svg { width: 100%; height: 100%; display: block; }
+.jeff-node { cursor: pointer; }
+.jeff-node--repo { cursor: default; }
+
+/* Hover / selection card */
+.jeff-graph-card {
+  position: absolute;
+  z-index: 2;
+  min-width: 150px;
+  max-width: 240px;
+  padding: 9px 12px 10px;
+  background: #fff;
+  border: 1px solid var(--jeff-line);
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(17, 24, 39, 0.08);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--jeff-ink);
+  pointer-events: none;
+  animation: voice-dock-in 160ms ease-out;
+}
+.jeff-graph-card--selected { pointer-events: auto; border-color: var(--jeff-line-strong); }
+.jeff-graph-card strong { display: block; font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.jeff-graph-card-kind { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jeff-muted); margin-bottom: 2px; }
+.jeff-graph-card-line { color: var(--jeff-muted); }
+.jeff-graph-card-actions { display: flex; gap: 6px; margin-top: 8px; }
+.jeff-graph-card-actions button {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--jeff-green);
+  background: var(--jeff-green);
+  color: #fff;
+  cursor: pointer;
+}
+.jeff-graph-card-actions button.ghost { background: #fff; color: var(--jeff-ink); border-color: var(--jeff-line); }
+.jeff-graph-card-actions button:hover { filter: brightness(0.96); }
+
+.jeff-graph-reset {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  font: inherit;
+  font-size: 11.5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--jeff-line);
+  background: #fff;
+  color: var(--jeff-muted);
+  cursor: pointer;
+}
+.jeff-graph-reset:hover { color: var(--jeff-ink); }
 
 .jeff-graph-legend {
   position: absolute;
@@ -332,6 +417,8 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   margin-right: 5px;
   vertical-align: middle;
 }
+.jeff-graph-hint { opacity: 0.7; }
+@media (max-width: 860px) { .jeff-graph-hint { display: none; } }
 
 .jeff-graph-caption {
   position: absolute;
@@ -340,7 +427,8 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   font-size: 12.5px;
   font-weight: 500;
   color: var(--jeff-green-5);
-  background: #fff;
+  background: var(--jeff-green-1);
+  border: 1px solid #cdeeda;
   padding: 4px 10px;
   border-radius: 999px;
   animation: voice-dock-in 220ms ease-out;
@@ -373,7 +461,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .jeff-card a { font-size: 11.5px; color: var(--jeff-accent); text-decoration: none; }
 .jeff-card a:hover { text-decoration: underline; }
 
-.jeff-risk { border-color: #000; }
+.jeff-risk { border-color: var(--jeff-ink); }
 .jeff-risk--fine { border-color: var(--jeff-line); }
 .jeff-risk-status {
   display: inline-block;
@@ -384,22 +472,42 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   padding: 2px 7px;
   border-radius: 999px;
   color: #fff;
-  background: #000;
+  background: var(--jeff-ink);
 }
-.jeff-risk-status--thin { background: #2fb36a; }
+.jeff-risk-status--thin { background: #d97706; }
 .jeff-risk-status--fine { background: var(--jeff-green-3); }
 .jeff-risk-backfill { margin-top: 8px; font-size: 12px; color: var(--jeff-green-5); }
+
+.jeff-history {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 11.5px;
+  color: var(--jeff-muted);
+}
+.jeff-history button {
+  font: inherit;
+  font-size: 11.5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--jeff-line);
+  background: #fff;
+  color: var(--jeff-ink);
+  cursor: pointer;
+}
+.jeff-history button:hover { border-color: var(--jeff-line-strong); }
 
 .jeff-setup {
   margin-top: 14px;
   padding: 12px 14px;
-  border: 1px dashed #2fb36a;
+  border: 1px dashed var(--jeff-line-strong);
   border-radius: 12px;
   font-size: 13px;
   line-height: 1.5;
   color: var(--jeff-ink);
 }
-.jeff-setup code { font-family: var(--font-geist-mono, ui-monospace, monospace); font-size: 12px; background: #fff; border: 1px solid #2fb36a; padding: 1px 5px; border-radius: 4px; }
+.jeff-setup code { font-family: var(--font-geist-mono, ui-monospace, monospace); font-size: 12px; background: #fff; border: 1px solid var(--jeff-line); padding: 1px 5px; border-radius: 4px; }
 
 @media (prefers-reduced-motion: reduce) {
   .voice-blob-core, .voice-blob-halo, .voice-dock, .jeff-card { animation: none; }
@@ -424,7 +532,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   border-radius: 999px;
   cursor: pointer;
 }
-.jeff-view-switch button.on { background: var(--jeff-accent); color: #fff; }
+.jeff-view-switch button.on { background: var(--jeff-ink); color: #fff; }
 
 .wb {
   position: relative;
