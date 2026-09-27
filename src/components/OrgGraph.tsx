@@ -28,9 +28,9 @@ const SECTION_SHORT: Record<string, string> = {
   "Product, UX, docs, marketing, sales, GTM, ops": "Product & GTM",
   "AI / ML research, engineering, data science": "AI / ML",
   "Leadership": "Leadership",
-  "": "Other",
+  "": "Community & alumni",
 };
-export const sectionShort = (s: string | undefined) => SECTION_SHORT[s ?? ""] ?? s ?? "Other";
+export const sectionShort = (s: string | undefined) => SECTION_SHORT[s ?? ""] ?? s ?? "Community & alumni";
 
 type Sim = {
   id: string; type: GraphNode["type"]; label: string;

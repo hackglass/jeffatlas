@@ -24,6 +24,11 @@ export type Person = {
   url: string;
   blog: string;
   sources: string;
+  /** red_hat | ibm | alumni | external | student | unknown (GitHub-only people are researched by ingest/enrich_github.py). */
+  affiliation?: string;
+  company?: string;
+  github_orgs?: string[];
+  pinned?: { repo: string; about: string }[];
   commits: number;
   skills: Skill[];
   languages: string[];
@@ -215,11 +220,21 @@ export function impactOfMoving(people: Person[], names: string[]): ImpactReport 
 
 // ── Compact serializers for the model ───────────────────────────────────────
 
+const AFFILIATION_TEXT: Record<string, string> = {
+  ibm: "at IBM (Red Hat's parent), not Red Hat staff",
+  alumni: "former Red Hat, now elsewhere",
+  external: "works at another company; contributes to Red Hat repos",
+  student: "student or early career; contributes to Red Hat repos",
+  unknown: "GitHub contributor in Boston; not confirmed Red Hat staff",
+};
+
 export function personSummary(p: Person, full = false): Record<string, unknown> {
   return {
     name: p.name,
     role: p.role || undefined,
-    section: p.section || undefined,
+    section: p.section || "Community & alumni (GitHub contributor, not confirmed Red Hat staff)",
+    affiliation: p.affiliation && p.affiliation !== "red_hat" ? AFFILIATION_TEXT[p.affiliation] ?? p.affiliation : undefined,
+    company: p.company && p.affiliation !== "red_hat" ? p.company : undefined,
     github: p.login || undefined,
     commits: p.commits || undefined,
     skills: p.skills.map((s) => s.skill),
@@ -227,6 +242,8 @@ export function personSummary(p: Person, full = false): Record<string, unknown> 
     languages: p.languages.length ? p.languages : undefined,
     bio: p.bio ? p.bio.slice(0, full ? 400 : 140) : undefined,
     profile: full && p.profile ? p.profile.slice(0, 900) : undefined,
+    pinned_repos: full && p.pinned?.length ? p.pinned.map((r) => `${r.repo}${r.about ? `: ${r.about.slice(0, 80)}` : ""}`) : undefined,
+    github_orgs: full && p.github_orgs?.length ? p.github_orgs : undefined,
     linkedin: full && p.linkedin ? p.linkedin : undefined,
   };
 }
@@ -234,14 +251,18 @@ export function personSummary(p: Person, full = false): Record<string, unknown> 
 export function sectionOverview(people: Person[], section?: string) {
   const groups = new Map<string, Person[]>();
   for (const p of people) {
-    const key = p.section || "Unlabeled (GitHub only)";
+    const key = p.section || "Community & alumni";
     if (section && !key.toLowerCase().includes(section.toLowerCase())) continue;
     groups.set(key, [...(groups.get(key) ?? []), p]);
   }
+  // Asking about one section gets everyone in it, not just a sample: people
+  // noticed "a few missing" when Jeff could only name six of fifty-seven.
+  const full = !!section && groups.size <= 2;
   return [...groups.entries()].map(([name, ps]) => ({
     section: name,
     headcount: ps.length,
     notable: ps.slice(0, 6).map((p) => `${p.name}${p.role ? ` — ${p.role}` : ""}`),
+    ...(full ? { everyone: ps.map((p) => `${p.name}${p.role ? ` — ${p.role}` : ""}`) } : {}),
     top_skills: topSkills(ps, 4),
   }));
 }

@@ -21,6 +21,7 @@ from skills import repo_signals
 ROOT = Path(__file__).resolve().parent.parent
 CSV_PATH = ROOT / "data" / "boston_people.csv"
 DB_PATH = ROOT / "data" / "redhat.db"
+ENRICH_PATH = ROOT / "data" / "github_enrichment.json"   # from enrich_github.py
 OUT_DIR = ROOT / "src" / "public" / "data"
 
 
@@ -46,6 +47,10 @@ def main():
         for l, b in langs.items():
             p["langs"][l] += w * b / tot
 
+    # GitHub-only people have no CRM row, so no role or section. enrich_github.py
+    # researched them (bio, company, orgs, pinned repos, README) and inferred both.
+    enrich = json.loads(ENRICH_PATH.read_text()) if ENRICH_PATH.exists() else {}
+
     people = []
     with CSV_PATH.open(newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
@@ -61,18 +66,23 @@ def main():
                 langs = [l for l, _ in sorted(g["langs"].items(), key=lambda kv: -kv[1])[:4]]
                 commits = g["commits"]
             name = (row.get("name") or "").strip() or gh_login or login
+            e = enrich.get(login, {}) if not (row.get("role") and row.get("section")) else {}
             people.append({
                 "id": login or name,
                 "name": name,
                 "login": gh_login,
-                "role": row.get("role") or "",
-                "section": row.get("section") or "",
+                "role": row.get("role") or e.get("role") or "",
+                "section": row.get("section") or e.get("section") or "",
+                "affiliation": "red_hat" if row.get("section") else (e.get("affiliation") or "unknown"),
+                "company": (row.get("company") or e.get("company") or "").lstrip("@"),
                 "location": row.get("location") or "",
-                "bio": row.get("bio") or "",
+                "bio": row.get("bio") or e.get("bio") or "",
                 "profile": row.get("profile") or "",
                 "linkedin": row.get("linkedin") or "",
                 "url": row.get("url") or "",
-                "blog": row.get("blog") or "",
+                "blog": row.get("blog") or e.get("website") or "",
+                "github_orgs": e.get("github_orgs") or [],
+                "pinned": e.get("pinned") or [],
                 "sources": row.get("sources") or "",
                 "commits": commits,
                 "skills": skills,

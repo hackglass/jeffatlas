@@ -82,9 +82,15 @@ type Panel = { kind: "experts"; ranked: ScoredPerson[] } | { kind: "impact"; rep
 type Access = "new" | "manager" | "leader";
 const ACCESS_LABEL: Record<Access, string> = { new: "New hire", manager: "Manager", leader: "Senior leader" };
 const ACCESS_BLURB: Record<Access, string> = {
-  new: "directory level: who to ask and where they sit; no staffing or risk analysis",
-  manager: "manager level: who knows what, plus staffing impact and backfills",
-  leader: "leadership level: everything, including full profiles and public bios",
+  new: "directory level: who to ask (top 3 names) and where they sit; no staffing impact, no usage stats, no bios",
+  manager: "manager level: who knows what with evidence (up to 8 names), staffing impact and backfills; still no full profiles or usage stats",
+  leader: "leadership level: everything, including full profiles, public bios, links, and the usage view of what people ask Jeff",
+};
+/** What each level unlocks, shown under the picker so the difference is visible. */
+const ACCESS_HINT: Record<Access, string> = {
+  new: "who to ask · where they sit",
+  manager: "+ evidence · staffing impact · backfills",
+  leader: "+ full profiles · links · what people ask",
 };
 
 /** Wrap client tools so each call is logged with params, result and duration. */
@@ -336,17 +342,26 @@ function Jeff() {
     team_overview: async ({ section }: { section?: string }) => {
       const ps = peopleRef.current ?? await loadPeople();
       say("tool", `team_overview(${section ? `"${section}"` : ""})`);
-      setHighlight(null);
-      setSelected(null);
+      const sections = sectionOverview(ps, section);
       setPanel(null);
-      setLens("people");
-      setView("graph");
-      setCanvasOpen(true);
-      return JSON.stringify({ total_people: ps.length, sections: sectionOverview(ps, section) });
+      // One section asked for: light up everyone in it, so the screen moves
+      // before Jeff talks and the whole group is visible, not a sample.
+      const one = section && sections.length === 1 ? sections[0] : null;
+      if (one) {
+        const names = ps.filter((p) => (p.section || "Unlabeled (GitHub only)") === one.section).map((p) => p.name);
+        focus({ people: names, title: `${one.section} · ${names.length} people` }, "people");
+      } else {
+        setHighlight(null); setSelected(null); setLens("people"); setView("graph"); setCanvasOpen(true);
+      }
+      return JSON.stringify({ total_people: ps.length, sections, ...(one ? { on_screen: `all ${one.headcount} people in ${one.section} are highlighted on the graph now` } : {}) });
     },
-    show_on_graph: ({ people: names, skills, title, lens: wantLens }: { people?: string[]; skills?: string[]; title?: string; lens?: string }) => {
+    show_on_graph: ({ people: names, skills, section, title, lens: wantLens }: { people?: string[]; skills?: string[]; section?: string; title?: string; lens?: string }) => {
       const ps = peopleRef.current ?? [];
       const resolved = (names ?? []).map((n) => findPerson(ps, n)?.name ?? n);
+      if (section) {
+        const sec = String(section).toLowerCase();
+        for (const p of ps) if ((p.section || "").toLowerCase().includes(sec)) resolved.push(p.name);
+      }
       const l = wantLens === "people" || wantLens === "skills" ? wantLens : undefined;
       if (!resolved.length && !(skills ?? []).length) {
         setHighlight(null); setSelected(null); setView("graph"); setCanvasOpen(true);
@@ -421,9 +436,9 @@ function Jeff() {
       setCanvasOpen(true);
       say("tool", `show_usage(${f ? `"${f}"` : ""})`);
       if (!u || !u.conversations.length) return "no usage data yet: nobody's transcripts have been exported";
-      if (accessRef.current === "new") {
+      if (accessRef.current !== "leader") {
         const n = u.conversations.reduce((a, c) => a + c.queries.length, 0);
-        return `${u.conversations.length} conversations and ${n} questions so far; the breakdown is a manager-level view, keep it to that`;
+        return `${u.conversations.length} conversations and ${n} questions so far; the breakdown is a senior-leader view, keep it to the tally`;
       }
       return describeUsage(u, f ?? undefined);
     },
@@ -614,13 +629,11 @@ function Jeff() {
         {canvasOpen ? "›" : "‹"}
       </button>
       <section className="jeff-stage">
-        <div className="jeff-brand"><h1>Jeff</h1></div>
+        {mood === "dormant" && <div className="jeff-brand"><h1>Jeff</h1></div>}
         <JeffBlob
           mood={mood}
           getLevel={getLevel}
           onTap={onTap}
-          onDone={done}
-          onEnd={stop}
           muted={isMuted}
           error={error}
           disabled={!people && mood === "dormant"}
@@ -641,6 +654,17 @@ function Jeff() {
               <span>search</span>
               <input type="search" value={find} placeholder="find a person" onChange={(e) => findPeople(e.target.value)} spellCheck={false} />
             </label>
+            <label className="jeff-access" title="Who you are: recorded with the conversation so the transcripts say who asked">
+              <span>you are</span>
+              <input type="text" value={user} placeholder="name or email" onChange={(e) => chooseUser(e.target.value)} spellCheck={false} />
+            </label>
+            <label className="jeff-access" title="Who is looking: gates what Jeff and the tools will share">
+              <span>viewing as</span>
+              <select value={access} onChange={(e) => chooseAccess(e.target.value as Access)}>
+                {(Object.keys(ACCESS_LABEL) as Access[]).map((a) => <option key={a} value={a}>{ACCESS_LABEL[a]}</option>)}
+              </select>
+              <em className="jeff-access-hint">{ACCESS_HINT[access]}</em>
+            </label>
           </div>
         </div>
         {view === "usage" ? (
@@ -657,10 +681,10 @@ function Jeff() {
         ) : view === "board" && boardBusy ? (
           <div className="wb"><div className="wb-busy">sketching “{boardBusy}”…</div></div>
         ) : (<>
-          {(board || (access !== "new" && usage && usage.conversations.length > 0)) && (
+          {(board || (access === "leader" && usage && usage.conversations.length > 0)) && (
             <div className="jeff-back-row">
               {board && <button type="button" className="jeff-back" onClick={() => { track("view", { view: "board" }); setView("board"); }}>whiteboard</button>}
-              {access !== "new" && usage && usage.conversations.length > 0 && <button type="button" className="jeff-back" onClick={() => { track("view", { view: "usage" }); setView("usage"); tellJeffRef.current("The user opened the Usage view: a Sankey of what people have asked you, by access level, kind, topic and outcome, with a leaderboard of topics."); }}>what people ask</button>}
+              {access === "leader" && usage && usage.conversations.length > 0 && <button type="button" className="jeff-back" onClick={() => { track("view", { view: "usage" }); setView("usage"); tellJeffRef.current("The user opened the Usage view: a Sankey of what people have asked you, by access level, kind, topic and outcome, with a leaderboard of topics."); }}>what people ask</button>}
             </div>
           )}
           <OrgGraph graph={graph} people={people} highlight={highlight} lens={lens} selected={selected} onPick={onPick} onAsk={onAsk} onClear={() => { track("control", { action: "clear_graph" }); setHighlight(null); setSelected(null); }} />
