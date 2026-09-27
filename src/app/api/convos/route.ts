@@ -15,6 +15,7 @@
 
 import { NextResponse } from "next/server";
 import { normalise, summarise } from "@/lib/convos";
+import { serverLog } from "@/lib/serverLog";
 
 const API = "https://api.elevenlabs.io/v1";
 const KEY = process.env.ELEVENLABS_API_KEY ?? "";
@@ -38,7 +39,11 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const id = url.searchParams.get("id");
   try {
-    if (id) return NextResponse.json(await fetchConvo(id));
+    if (id) {
+      const convo = await fetchConvo(id);
+      serverLog("convo fetched", { route: "/api/convos", conversation_id: id });
+      return NextResponse.json(convo);
+    }
     const list = (await el(`/convai/conversations?agent_id=${AGENT}&page_size=100`)).conversations as Record<string, unknown>[];
     // Detail fetches run in parallel; empty (0-message) sessions are listed without a fetch.
     const convos = await Promise.all(list.map(async (c) => {
@@ -49,8 +54,11 @@ export async function GET(req: Request) {
       }
       return summarise(await fetchConvo(id));
     }));
+    serverLog("convos listed", { route: "/api/convos", count: convos.length });
     return NextResponse.json({ fetchedAt: new Date().toISOString(), conversations: convos });
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 502 });
+    const msg = e instanceof Error ? e.message : String(e);
+    serverLog("convos fetch failed", { route: "/api/convos", conversation_id: id, error: msg }, "error");
+    return NextResponse.json({ error: msg }, { status: 502 });
   }
 }

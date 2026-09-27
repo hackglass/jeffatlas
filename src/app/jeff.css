@@ -443,6 +443,81 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .jeff-graph-card-actions button.ghost { background: #fff; color: var(--jeff-ink); border-color: var(--jeff-line); }
 .jeff-graph-card-actions button:hover { filter: brightness(0.96); }
 
+/* Stacks the selection bar above the legend, bottom-left, without either
+   needing to know the other's height (no magic-number overlap fixes). */
+.jeff-graph-bottom {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: none;
+}
+.jeff-graph-bottom > * { pointer-events: auto; }
+
+.jeff-graph-selection {
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 7px 9px;
+  background: #fff;
+  border: 1px solid var(--jeff-line);
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(17, 24, 39, 0.06);
+  animation: voice-dock-in 160ms ease-out;
+}
+.jeff-graph-selection-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.jeff-graph-selection-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px 3px 10px;
+  border-radius: 999px;
+  background: var(--jeff-mist, #f3f6f4);
+  font-size: 12px;
+  color: var(--jeff-ink);
+}
+.jeff-graph-selection-chip button {
+  border: none;
+  background: none;
+  color: var(--jeff-muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px;
+}
+.jeff-graph-selection-chip button:hover { color: var(--jeff-ink); }
+.jeff-graph-selection-ask {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--jeff-green);
+  background: var(--jeff-green);
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.jeff-graph-selection-ask:hover { filter: brightness(0.96); }
+.jeff-graph-selection-clear {
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--jeff-line);
+  background: #fff;
+  color: var(--jeff-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.jeff-graph-selection-clear:hover { color: var(--jeff-ink); border-color: var(--jeff-line-strong); }
+
 .jeff-graph-reset {
   position: absolute;
   right: 12px;
@@ -459,13 +534,12 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .jeff-graph-reset:hover { color: var(--jeff-ink); }
 
 .jeff-graph-legend {
-  position: absolute;
-  left: 14px;
-  bottom: 12px;
   display: flex;
+  flex-wrap: wrap;
   gap: 14px;
   font-size: 11.5px;
   color: var(--jeff-muted);
+  padding-left: 2px;
 }
 .jeff-graph-legend i {
   display: inline-block;
