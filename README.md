@@ -3,7 +3,8 @@
 
 ## Overview
 
-The code in this repo is a hackathon entry for [Glasswing Test Flight](https://glasswing.vc/hackathon-2026/).
+The code in this repo is a hackathon entry for [Glasswing Test
+Flight](https://glasswing.vc/hackathon-2026/), a two-day AI hackathon.
 
 Visit it here: https://hackglass.github.io/jeffatlas/
 
@@ -13,3 +14,4 @@ Visit it here: https://hackglass.github.io/jeffatlas/
  - Yan (Stella) Si
  - Sai Nellutla
  - Hoang
+ - Steve Strassmann
