@@ -73,9 +73,17 @@ function Jeff() {
   const [boardBusy, setBoardBusy] = useState<string | null>(null);
   const [view, setView] = useState<"graph" | "board">("graph");
 
+  // Is the drawing brain (/api/board) reachable in this build? The static
+  // GitHub Pages site has no server, and a dev box may have no key yet. An
+  // empty POST answers 400 when the route is live and keyed, anything else
+  // means "off". Jeff is told once so he goes straight to board_write.
+  const brainRef = useRef<"unknown" | "on" | "off">("unknown");
   useEffect(() => {
     loadPeople().then(setPeople).catch(() => setError("Couldn't load the people data."));
     loadGraph().then(setGraph).catch(() => { /* graph is decoration */ });
+    fetch(`${BASE}/api/board`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })
+      .then((r) => { brainRef.current = r.status === 400 ? "on" : "off"; })
+      .catch(() => { brainRef.current = "off"; });
     // ?board=demo previews the whiteboard without a conversation.
     if (new URLSearchParams(window.location.search).get("board") === "demo") {
       const t = setTimeout(() => { setBoard(DEMO_SCENE); setView("board"); setCanvasOpen(true); }, 0);
@@ -174,6 +182,7 @@ function Jeff() {
       const b = String(brief ?? "").trim();
       if (!b) return "need a brief";
       say("tool", `board_explain("${b}")`);
+      if (brainRef.current === "off") return "the drawing brain is offline in this build; use board_write to put the key items on the board yourself";
       setBoardBusy(b);
       setView("board");
       setCanvasOpen(true);
@@ -216,7 +225,12 @@ function Jeff() {
   // ── The conversation ─────────────────────────────────────────────────────
   const conversation = useConversation({
     clientTools,
-    onConnect: () => { setError(null); setTranscript([]); setBoard(null); setView("graph"); },
+    onConnect: () => {
+      setError(null); setTranscript([]); setBoard(null); setView("graph");
+      if (brainRef.current === "off") {
+        setTimeout(() => tellJeffRef.current("Note: the drawing brain (board_explain) is offline in this build. Draw with board_write instead; it works fine."), 800);
+      }
+    },
     onMessage: ({ message, role }) => {
       const r = String(role);
       if (r === "user") say("user", message);
