@@ -13,6 +13,12 @@ Team:
 
 ## The problem
 
+Onboarding new employees is painful, slow, and inefficient. New hires
+need to come up to speed quickly on things they don't know. They don't
+know who to ask. The answers are buried in tribal knowledge.
+
+Current employees face similar problems coming up to speed on new projects.
+
 Jeff is a voice you talk to about Red Hat's Boston office. Ask who actually has
 experience in something and he ranks people with the evidence (commits, repos,
 role, bio). Tell him you want to move three people to a new project and he tells
