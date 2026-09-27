@@ -32,7 +32,7 @@ Design rules:
 - Use "person" for a named person (text = their name, e.g. "Bill Burke"). Use "box" for a system, team, or concept. Use "note" for a short aside or evidence ("~900 commits to Keycloak"). Use "group" (drawn behind, with its title) to fence a team or an area; place the members inside its rectangle. Use "arrow" for a relationship, flow, or dependency between two element ids. Use "check" / "cross" beside an item to mark good / risky. Use "label" for a free-standing heading.
 - Keep text to 1 to 5 words per element. Names exactly as given in the brief; never invent people, numbers, or systems that are not in the brief.
 - Typical sizes: box 200x80, note 220x70, group large enough to contain its members with 30px padding. Space elements so nothing overlaps; arrows need room to be seen.
-- Every step should have a one-line caption in Jeff's plain spoken voice, no jargon, no lists.
+- Every step should have a one-line caption in Jeff's plain spoken voice, no jargon, no lists, no "Step 1:" prefixes. Refer to people by name, not by pronoun.
 - Use highlight to spotlight the elements the caption is about.
 - Emphasis "strong" for the single point of the drawing, "muted" for context.`;
 
@@ -48,7 +48,7 @@ const JSON_SHAPE = `Reply with ONLY a JSON object, no prose, no markdown fences,
           "id": string (unique, short, e.g. "priya"),
           "kind": "box" | "note" | "person" | "group" | "label" | "arrow" | "check" | "cross",
           "text": string | null,
-          "x": number, "y": number,
+          "x": number, "y": number   (arrows: 0, 0),
           "w": number | null, "h": number | null,
           "from": string | null, "to": string | null   (element ids; arrows only),
           "emphasis": "strong" | "normal" | "muted" | null
@@ -77,6 +77,9 @@ async function chatCompletion(messages: { role: string; content: string }[]) {
       temperature: 0.4,
       max_tokens: 4000,
       response_format: { type: "json_object" },
+      // DeepSeek on this endpoint reasons for ~8s before answering; the
+      // layout is good enough without it. SCIFORIUM_THINKING=1 turns it back on.
+      ...(process.env.SCIFORIUM_THINKING ? {} : { chat_template_kwargs: { thinking: false } }),
     }),
     signal: AbortSignal.timeout(45_000),
   });
@@ -94,6 +97,24 @@ function extractJson(text: string): unknown {
   throw new Error("no JSON object in reply");
 }
 
+/** Fill in what a JSON-mode model tends to leave out: nulls for unused keys, 0,0 for arrows. */
+function normalize(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object") return raw;
+  const scene = raw as { steps?: unknown };
+  if (!Array.isArray(scene.steps)) return raw;
+  for (const step of scene.steps as Record<string, unknown>[]) {
+    if (!step || typeof step !== "object") continue;
+    if (!("highlight" in step)) step.highlight = null;
+    if (!Array.isArray(step.add)) continue;
+    for (const el of step.add as Record<string, unknown>[]) {
+      if (!el || typeof el !== "object") continue;
+      for (const k of ["text", "w", "h", "from", "to", "emphasis"]) if (!(k in el)) el[k] = null;
+      if (el.kind === "arrow") { el.x = typeof el.x === "number" ? el.x : 0; el.y = typeof el.y === "number" ? el.y : 0; }
+    }
+  }
+  return raw;
+}
+
 async function sceneViaSciforium(brief: string, context: string): Promise<{ scene: Scene; usage?: unknown }> {
   const messages = [
     { role: "system", content: `${SYSTEM}\n\n${JSON_SHAPE}` },
@@ -103,7 +124,7 @@ async function sceneViaSciforium(brief: string, context: string): Promise<{ scen
   for (let attempt = 0; attempt < 2; attempt++) {
     const { text, usage } = await chatCompletion(messages);
     try {
-      const parsed = SceneSchema.safeParse(extractJson(text));
+      const parsed = SceneSchema.safeParse(normalize(extractJson(text)));
       if (parsed.success) return { scene: parsed.data, usage };
       lastErr = z.prettifyError(parsed.error);
     } catch (e) {
