@@ -19,10 +19,16 @@ role, bio). Tell him you want to move three people to a new project and he tells
 you which systems would be left unowned, and who could backfill.
 
 
-
 ## Who pays
 
-The buyer, the budget it comes out of, and why they would sign.
+Jeff creates value by making organizational knowlege more accessible and more accurate. Use cases:
+  - new employee onboarding
+  - employees coming up to speed on projects
+  - executive oversight, matching talent with projects
+  
+The main beneficiary are business owners at the director level and
+above. HR is the natural purchasing customer, spending on behalf of
+the business units.
 
 
 ## How it works
@@ -92,10 +98,23 @@ Add `?dev` to the main page's URL to show the team-only footer with the link.
 
 ## What's real and what's mocked
 
-Be specific. Which integrations are live, which data is synthetic, what would break at real scale.
+All data in our demo is real. Nothing was mocked.
+
+Our data sources, all public domain:
+  - github (scraping repos owned by RedHat)
+  - linkedin (scraping profiles of RedHat employees)
+  - primed knowledge (personal communication with RedHat employees)
+  - open source documentation (RedHat projects)
+  - OpenAccelerator web site
 
 
 ## Running it
+
+### Demo
+
+Jeff is live at https://hackglass.github.io/jeffatlas/
+
+### Configuration
 
 1. **ElevenLabs API key** (one-time, only for creating the agent):
    elevenlabs.io → profile (bottom left) → *API Keys* → *Create API Key* with the
@@ -138,7 +157,6 @@ Regenerate the data after touching `data/`:
 python3 ingest/export_json.py
 ```
 
-Jeff is live at https://hackglass.github.io/jeffatlas/
 
 ## Brought in from before the weekend
 
