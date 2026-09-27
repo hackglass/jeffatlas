@@ -263,6 +263,16 @@ function Jeff() {
     setCanvasOpen(true);
   }, []);
 
+  // The search box: everyone whose name has every typed word lights up on the map.
+  const [find, setFind] = useState("");
+  const findPeople = useCallback((q: string) => {
+    setFind(q);
+    const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const hits = words.length ? (peopleRef.current ?? []).filter((p) => words.every((w) => p.name.toLowerCase().includes(w))).map((p) => p.name) : [];
+    if (hits.length) focus({ people: hits, title: q.trim() }, "people");
+    else setHighlight(null);
+  }, [focus]);
+
   const showScene = useCallback((scene: Scene, source: string) => {
     setBoard(scene);
     setView("board");
@@ -627,15 +637,9 @@ function Jeff() {
             <span>{graph ? `${graph.nodes.filter((n) => n.type === "person").length} people · ${lens === "people" ? "5 sections" : `${graph.nodes.filter((n) => n.type === "skill").length} skill areas`}` : ""}</span>
           </div>
           <div className="jeff-panel-meta">
-            <label className="jeff-access" title="Who you are: recorded with the conversation so the transcripts say who asked">
-              <span>you are</span>
-              <input type="text" value={user} placeholder="name or email" onChange={(e) => chooseUser(e.target.value)} spellCheck={false} />
-            </label>
-            <label className="jeff-access" title="Who is looking: gates what Jeff and the tools will share">
-              <span>viewing as</span>
-              <select value={access} onChange={(e) => chooseAccess(e.target.value as Access)}>
-                {(Object.keys(ACCESS_LABEL) as Access[]).map((a) => <option key={a} value={a}>{ACCESS_LABEL[a]}</option>)}
-              </select>
+            <label className="jeff-access" title="Find people by name: matches light up on the map">
+              <span>search</span>
+              <input type="search" value={find} placeholder="find a person" onChange={(e) => findPeople(e.target.value)} spellCheck={false} />
             </label>
           </div>
         </div>
