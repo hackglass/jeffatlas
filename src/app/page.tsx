@@ -28,6 +28,9 @@ const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 type Line = { role: "user" | "jeff" | "tool" };
 
+// Sent as the first user turn so Jeff opens in his own words. Hidden from the dock.
+const KICKOFF = "[The viewer just sat down at your desk; greet them briefly in your own words.]";
+
 // A sample sketch for ?board=demo: the shape of a staffing move.
 const DEMO_SCENE: Scene = {
   title: "If Priya moves",
@@ -86,6 +89,7 @@ function Jeff() {
   const [error, setError] = useState<string | null>(null);
   const [canvasOpen, setCanvasOpen] = useState(false);
   const [instant, setInstant] = useState(false); // open without the slide animation (?canvas=)
+  const [dev, setDev] = useState(false); // ?dev shows the team-only footer (saved history, x-ray link)
   const [transcript, setTranscript] = useState<DockTurn[]>([]);
   const [endedNote, setEndedNote] = useState<string | null>(null);
   // Thinking: the person's words have landed (or a tool ran) and Jeff has not
@@ -160,6 +164,7 @@ function Jeff() {
       .then((r) => { brainRef.current = r.status === 400 ? "on" : "off"; })
       .catch(() => { brainRef.current = "off"; });
     const qs = new URLSearchParams(window.location.search);
+    if (qs.has("dev")) setTimeout(() => setDev(true), 0);
     if (qs.get("canvas")) {
       const t = setTimeout(() => { setInstant(true); setCanvasOpen(true); if (qs.get("canvas") === "skills") setLens("skills"); }, 0);
       return () => clearTimeout(t);
@@ -337,6 +342,16 @@ function Jeff() {
       showScene(quickScene({ title: String(title ?? "Whiteboard"), items: list, connections: connections ?? null }), "board_write");
       return "on the board";
     },
+    // Feedback about Jeff himself, filed as a tool call so it lands in the
+    // ElevenLabs transcript, the local history, the usage export and /xray.
+    record_feedback: ({ note, kind }: { note: string; kind?: string }) => {
+      const n = String(note ?? "").trim();
+      if (!n) return "nothing to file";
+      const k = ["suggestion", "bug", "complaint", "praise"].includes(String(kind)) ? String(kind) : "suggestion";
+      say("tool", `record_feedback(${k}) → "${n}"`);
+      console.log("[jeff:feedback]", k, n);
+      return `filed as ${k}; thank them in one breath and carry on`;
+    },
     board_clear: () => {
       setBoard(null);
       setBoardBusy(null);
@@ -399,8 +414,13 @@ function Jeff() {
       sessionRef.current = history.startSession(ACCESS_LABEL[a]);
       setHistStats(history.historyStats());
       setTimeout(() => tellJeffRef.current(`Viewer access level: ${ACCESS_LABEL[a]} (${ACCESS_BLURB[a]}). The screen shows the ${lensRef.current === "people" ? "People lens (everyone, by section)" : "Skills lens (technical, from GitHub)"}; the user can click people and areas on it and you will be told.`), 600);
+      // No canned first message on the agent: a hidden kickoff turn asks Jeff
+      // to greet in his own words. A pending "Ask Jeff" click rides along instead.
       const pending = pendingAskRef.current;
-      if (pending) { pendingAskRef.current = null; setTimeout(() => { try { conversationRef.current?.sendUserMessage(pending); } catch { /* not ready */ } }, 1200); }
+      pendingAskRef.current = null;
+      const who = userRef.current.trim();
+      const kickoff = pending ?? `${KICKOFF} ${who ? `Their name is ${who}.` : "They did not give a name."}`;
+      setTimeout(() => { try { conversationRef.current?.sendUserMessage(kickoff); } catch { /* not ready */ } }, 400);
       if (brainRef.current === "off") {
         setTimeout(() => tellJeffRef.current("Note: the drawing brain (board_explain) is offline in this build. Draw with board_write instead; it works fine."), 800);
       }
@@ -412,7 +432,7 @@ function Jeff() {
     },
     onMessage: ({ message, role }) => {
       const r = String(role);
-      if (r === "user") say("user", message);
+      if (r === "user") { if (!message.startsWith(KICKOFF)) say("user", message); }
       else if (message) say("jeff", message);
     },
     onDisconnect: (details) => {
@@ -573,7 +593,7 @@ function Jeff() {
         )}
         {panel?.kind === "experts" && <ExpertCards ranked={panel.ranked} />}
         {panel?.kind === "impact" && <ImpactCards report={panel.report} />}
-        <div className="jeff-history">
+        {dev && <div className="jeff-history">
           {histStats && histStats.sessions > 0 ? (
             <>
               <span>{histStats.sessions} saved {histStats.sessions === 1 ? "conversation" : "conversations"} · {histStats.turns} turns</span>
@@ -583,7 +603,7 @@ function Jeff() {
           ) : (
             <span>Conversations are saved in this browser as you talk.</span>
           )}
-        </div>
+        </div>}
         {!AGENT_ID && (
           <div className="jeff-setup">
             <strong>Jeff has no voice yet.</strong> Create the ElevenLabs agent once with{" "}

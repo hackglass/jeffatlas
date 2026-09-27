@@ -34,10 +34,9 @@ DEFAULT_LLM = "gemini-2.5-flash"
 GLM_URL = "https://open.bigmodel.cn/api/paas/v4"
 
 # Plain hello. Humor is part of Jeff's personality in the prompt, not a scripted opener.
-FIRST_MESSAGE = (
-    "Hey, I'm Jeff. Been around the Boston office long enough to know who actually does what. "
-    "Pull up a chair. Who are you looking for, or what are you trying to figure out?"
-)
+# No canned opener: the page sends a hidden kickoff turn on connect and Jeff
+# greets in his own words each time (see jeff_prompt.md, "Opening").
+FIRST_MESSAGE = ""
 
 # Client tools: the browser answers these (see src/lib/jeffTools.ts).
 TOOLS = [
@@ -154,6 +153,18 @@ TOOLS = [
             "type": "object",
             "properties": {"focus": {"type": "string", "description": "Optional node to highlight, e.g. a topic name, a kind ('by topic'), an outcome ('nothing found') or an access level ('New hire')."}},
             "required": [],
+        },
+    },
+    {
+        "name": "record_feedback",
+        "description": "File what the person just said about Jeff himself: a suggestion, a feature or tool they want, a bug on the screen, a complaint, or praise. Goes to the team that builds Jeff. Call it whenever someone gives you feedback, then thank them in one breath and carry on.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "note": {"type": "string", "description": "The feedback in their words, one to three sentences, specific enough to act on."},
+                "kind": {"type": "string", "description": "One of: suggestion, bug, complaint, praise."},
+            },
+            "required": ["note"],
         },
     },
     {

@@ -26,7 +26,7 @@ KEY, AGENT = os.environ["ELEVENLABS_API_KEY"], os.environ["NEXT_PUBLIC_ELEVENLAB
 OUT = ROOT / "ingest/transcripts"; OUT.mkdir(exist_ok=True)
 USAGE = ROOT / "src/public/data/usage.json"
 
-TOOL_KIND = {"find_experts": "topic", "lookup_person": "person", "impact_if_moved": "staffing", "team_overview": "team"}
+TOOL_KIND = {"find_experts": "topic", "lookup_person": "person", "impact_if_moved": "staffing", "team_overview": "team", "record_feedback": "feedback"}
 RULES = [  # (kind, regex on the user's words) tried in order when no data tool was called
     ("suggestion", r"\b(suggestion|feature|tool call|transcript|claude code|sankey)\b"),
     ("region", r"\b(region|office|country|countr|geograph|timezone|time zone|remote|raleigh|brno|bangalore|pune|europe|emea|apac|latam|where (is|are|does)|based in)\b"),
@@ -63,6 +63,8 @@ def classify(user_text, reply):
             except Exception: p = {}
             topic = p.get("topic") or p.get("name") or p.get("section") or ", ".join(p.get("names") or []) or "(unspecified)"
             res = results.get(name, "")
+            if name == "record_feedback":
+                return "feedback", (p.get("kind") or "suggestion"), "filed", name
             if "blocked" in res or "not available at this viewer" in res: outcome = "declined"
             elif '"candidates":[]' in res or "no matches" in res or "not found" in res or "result" in res[:20]: outcome = "nothing found"
             elif not res: outcome = "cut off"
@@ -79,12 +81,24 @@ def classify(user_text, reply):
     return "other", re.sub(r"[?.!].*$", "", text).strip()[:60] or "(chit-chat)", outcome, None
 
 
+def feedback_of(transcript):
+    """Every record_feedback call: what people told Jeff about Jeff."""
+    out = []
+    for t in transcript:
+        for tc in t.get("tool_calls") or []:
+            if tc.get("tool_name") != "record_feedback": continue
+            try: p = json.loads(tc.get("params_as_json") or "{}")
+            except Exception: p = {}
+            if p.get("note"): out.append({"kind": p.get("kind") or "suggestion", "note": p["note"], "t": t.get("time_in_call_secs")})
+    return out
+
+
 def queries_of(conv, transcript):
     out = []
     for i, t in enumerate(transcript):
         if t["role"] != "user": continue
         text = (t.get("message") or "").strip()
-        if not text or FILLER.match(text) or len(text.split()) < 2: continue
+        if not text or FILLER.match(text) or len(text.split()) < 2 or text.startswith("[The viewer just sat down"): continue
         reply = []
         for u in transcript[i + 1:]:
             if u["role"] == "user": break
@@ -111,8 +125,9 @@ def main():
         qs = queries_of(c, tr)
         dyn = (d.get("conversation_initiation_client_data") or {}).get("dynamic_variables") or {}
         user = d.get("user_id") or dyn.get("user_name") or None
+        fb = feedback_of(tr)
         usage.append({"id": cid, "startedAt": started.isoformat(timespec="minutes"), "seconds": c.get("call_duration_secs"),
-                      "access": access, "user": user, "queries": qs})
+                      "access": access, "user": user, "queries": qs, "feedback": fb})
         md.append(f"\n## {started:%Y-%m-%d %H:%M} · {c.get('call_duration_secs')}s · {user or 'anonymous'} · {access} · {cid}\n")
         for t in tr:
             who = "USER" if t["role"] == "user" else "JEFF"
@@ -121,11 +136,23 @@ def main():
                 md.append(f"  - tool → {tc.get('tool_name')}({tc.get('params_as_json', '')})")
             for r in t.get("tool_results") or []:
                 md.append(f"  - result ← {r.get('tool_name')} {str(r.get('result_value', ''))[:200]}")
-    (OUT / "transcripts.md").write_text("\n".join(md))
+    # Feedback first: the part of the record the team acts on.
+    fb_lines = ["# Jeff transcripts\n", "## Feedback for the team\n"]
+    n_fb = 0
+    for u in usage:
+        for f in u["feedback"]:
+            n_fb += 1
+            fb_lines.append(f"- **{f['kind']}** ({u['startedAt']}, {u['user'] or 'anonymous'}, {u['access']}): {f['note']}")
+    if not n_fb: fb_lines.append("- none filed yet (Jeff files record_feedback when someone gives him a suggestion, bug, complaint or praise)")
+    (OUT / "transcripts.md").write_text("\n".join(fb_lines + md[1:]))
+    (OUT / "feedback.md").write_text("\n".join(fb_lines[1:]) + "\n")
     USAGE.write_text(json.dumps({"exportedAt": dt.datetime.now().isoformat(timespec="minutes"), "source": "elevenlabs",
                                  "conversations": usage}, indent=1))
     n = sum(len(u["queries"]) for u in usage)
-    print(f"{len(usage)} conversations, {n} queries → {USAGE.relative_to(ROOT)}")
+    print(f"{len(usage)} conversations, {n} queries, {n_fb} feedback notes → {USAGE.relative_to(ROOT)}")
+    for u in usage:
+        for f in u["feedback"]:
+            print(f"  FEEDBACK {f['kind']:10} {u['user'] or 'anonymous'}: {f['note']}")
     for u in usage:
         for q in u["queries"]:
             print(f"  {u['startedAt'][5:]} {u['access']:14} {q['kind']:10} {q['outcome']:14} {q['topic'][:40]!r}")

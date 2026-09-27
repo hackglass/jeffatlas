@@ -54,6 +54,7 @@ export function normalise(raw: Record<string, unknown>): Convo {
     }
     const text = (t.message ?? "").trim();
     if (!text && !tools.length) continue;
+    if (t.role === "user" && text.startsWith("[The viewer just sat down")) continue; // the page's hidden kickoff
     turns.push({ role: t.role === "user" ? "user" : "jeff", text, at: t.time_in_call_secs ?? null, tools });
   }
   // Attach late results (they land on a Jeff turn with no message) to the turn that made the call.
@@ -79,7 +80,8 @@ export function summarise(c: Convo): ConvoSummary {
   const results = turns.flatMap((t) => t.tools.map((x) => x.result ?? ""));
   if (results.some((r) => /no matches|not found|"candidates":\[\]/.test(r))) flags.push("nothing found");
   if (results.some((r) => /blocked at|not available at this viewer/.test(r))) flags.push("declined");
-  if (turns.some((t) => t.role === "user" && /suggestion|feature|tool call/i.test(t.text))) flags.push("suggestion");
+  if (turns.some((t) => t.tools.some((x) => x.name === "record_feedback"))) flags.push("feedback");
+  else if (turns.some((t) => t.role === "user" && /suggestion|feature|tool call/i.test(t.text))) flags.push("suggestion");
   if (turns.some((t) => t.tools.some((x) => x.error))) flags.push("tool error");
   return { ...rest, firstQuestion, flags };
 }

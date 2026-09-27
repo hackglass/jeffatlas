@@ -23,14 +23,14 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .jeff-page {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: start;
   background: #fff;
   transition: grid-template-columns 320ms ease;
 }
-.jeff-page--collapsed { grid-template-columns: 1fr 0fr; }
+.jeff-page--collapsed { grid-template-columns: minmax(0, 1fr) minmax(0, 0fr); }
 .jeff-page--instant { transition: none; }
-.jeff-page--collapsed .jeff-panel { overflow: hidden; padding-left: 0; padding-right: 0; }
+.jeff-page--collapsed .jeff-panel { overflow: hidden; min-width: 0; padding-left: 0; padding-right: 0; }
 .jeff-page--collapsed .jeff-stage { border-right: 0; }
 .jeff-page:not(.jeff-page--collapsed) .voice-blob { width: min(46vmin, 28vw, 380px); height: min(46vmin, 28vw, 380px); }
 
