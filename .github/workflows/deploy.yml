@@ -66,6 +66,9 @@ jobs:
           PAGES_BASE_PATH: ${{ steps.setup_pages.outputs.base_path }}
           # Public ElevenLabs agent id (repo Settings -> Secrets and variables -> Actions -> Variables).
           NEXT_PUBLIC_ELEVENLABS_AGENT_ID: ${{ vars.NEXT_PUBLIC_ELEVENLABS_AGENT_ID }}
+          # PostHog project key + host (repo Variables). Blank = no logging.
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ vars.NEXT_PUBLIC_POSTHOG_KEY }}
+          NEXT_PUBLIC_POSTHOG_HOST: ${{ vars.NEXT_PUBLIC_POSTHOG_HOST }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

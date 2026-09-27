@@ -252,7 +252,9 @@ function Jeff() {
   }, [say]);
 
   // ── Client tools: what Jeff can look up ──────────────────────────────────
-  const clientTools = useMemo(() => ({
+  // (The closures read refs only when Jeff calls a tool, never during render.)
+  // eslint-disable-next-line react-hooks/refs
+  const clientTools = useMemo(() => withLogging({
     find_experts: async ({ topic, limit }: { topic: string; limit?: number }) => {
       const ps = peopleRef.current ?? await loadPeople();
       const cap = accessRef.current === "new" ? 3 : 8;
@@ -408,8 +410,6 @@ function Jeff() {
     },
   }), [say, showScene, focus, board]);
 
-  // Every tool Jeff calls is logged with its parameters, its result and how long it took.
-  const loggedTools = useMemo(() => withLogging(clientTools), [clientTools]);
 
   // ── The human's hand on the canvas ──
   // A click is a pick: the graph focuses on it and Jeff is told, as context
@@ -440,7 +440,7 @@ function Jeff() {
 
   // ── The conversation ─────────────────────────────────────────────────────
   const conversation = useConversation({
-    clientTools: loggedTools,
+    clientTools,
     onConnect: ({ conversationId }) => {
       beginConversation(conversationId);
       track("conversation_started", { access: accessRef.current, user: userRef.current.trim() || "anonymous", lens: lensRef.current, drawing_brain: brainRef.current });

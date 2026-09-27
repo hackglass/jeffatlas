@@ -5,24 +5,20 @@
  * The system of record is ElevenLabs: every session the agent runs is stored
  * there with the full transcript, the user id the page passed at start, and
  * each client-tool call with its parameters and result. This route reads it
- * with the server-side key (never shipped to the browser), normalises it into
- * the shape the x-ray page and the usage export use, and snapshots each
- * conversation to ingest/transcripts/<id>.json so the record also lives on
- * disk with the repo.
+ * with the server-side key (never shipped to the browser) and normalises it
+ * into the shape the x-ray page uses. Nothing is written to disk; the
+ * browser-side log of the same events lives in PostHog (src/lib/analytics.ts).
  *
  * Needs a server (npm run dev or any Node host); the static GitHub Pages
  * build has no API routes, so /xray tells the viewer to run it locally.
  */
 
 import { NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
 import { normalise, summarise } from "@/lib/convos";
 
 const API = "https://api.elevenlabs.io/v1";
 const KEY = process.env.ELEVENLABS_API_KEY ?? "";
 const AGENT = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID ?? "";
-const SNAP_DIR = path.join(process.cwd(), "..", "ingest", "transcripts");
 
 export const dynamic = "force-dynamic";
 
@@ -33,17 +29,8 @@ async function el(pathname: string) {
 }
 
 
-async function snapshot(id: string, raw: unknown) {
-  try {
-    await fs.mkdir(SNAP_DIR, { recursive: true });
-    await fs.writeFile(path.join(SNAP_DIR, `${id}.json`), JSON.stringify(raw, null, 1));
-  } catch { /* read-only host: the record still lives at ElevenLabs */ }
-}
-
 async function fetchConvo(id: string) {
-  const raw = await el(`/convai/conversations/${encodeURIComponent(id)}`);
-  await snapshot(id, raw);
-  return normalise(raw);
+  return normalise(await el(`/convai/conversations/${encodeURIComponent(id)}`));
 }
 
 export async function GET(req: Request) {
