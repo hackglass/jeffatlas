@@ -91,7 +91,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   position: absolute;
   inset: 0;
   display: block;
-  background: #2fb36a;
+  background: radial-gradient(circle at 32% 28%, #6fd39a 0%, #2fb36a 48%, #1f8f52 100%);
   border-radius: 46% 54% 52% 48% / 50% 46% 54% 50%;
   transform: scale(calc(1 + var(--voice-level) * 0.16));
   transition: transform 90ms ease-out, background 240ms ease;
@@ -134,7 +134,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 
 /* Connecting: no mic yet, so the green drains to a pale mint and pulses. */
 .voice-blob--connecting .voice-blob-core {
-  background: #2fb36a; opacity: 0.55;
+  background: radial-gradient(circle at 32% 28%, #6fd39a 0%, #2fb36a 48%, #1f8f52 100%); opacity: 0.55;
   animation: voice-blob-waver 7s ease-in-out infinite, voice-blob-pulse 2.2s ease-in-out infinite;
 }
 .voice-blob--connecting .voice-blob-halo { background: radial-gradient(circle, rgba(47, 179, 106, 0.5), transparent 68%); }
@@ -144,7 +144,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 
 /* Speaking: Jeff's own voice. Brighter, faster, and the tap cuts in. */
 .voice-blob--speaking .voice-blob-core {
-  background: #2fb36a;
+  background: radial-gradient(circle at 32% 28%, #86dfab 0%, #2fb36a 50%, #1f8f52 100%);
   animation: voice-blob-waver 3s ease-in-out infinite, voice-blob-pulse 1.4s ease-in-out infinite;
 }
 .voice-blob--speaking .voice-blob-halo { animation-duration: 1.4s; }
