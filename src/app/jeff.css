@@ -4,16 +4,12 @@
    voice-level swell. Re-cut in green on a plain white page. */
 
 :root {
-  --jeff-ink: #14261c;
-  --jeff-muted: #5b6f63;
-  --jeff-faint: #a3b3aa;
-  --jeff-line: rgba(31, 95, 66, 0.14);
-  --jeff-green-1: #b9ecd0;
-  --jeff-green-2: #7fd6a4;
-  --jeff-green-3: #46b27c;
-  --jeff-green-4: #2c8a5f;
-  --jeff-green-5: #1f6446;
-  --jeff-accent: #2c8a5f;
+  --jeff-ink: #000000;
+  --jeff-muted: #000000;
+  --jeff-faint: #2fb36a;
+  --jeff-line: #2fb36a;
+  --jeff-green: #2fb36a;
+  --jeff-accent: #2fb36a;
 }
 
 html, body { background: #ffffff; color: var(--jeff-ink); }
@@ -95,14 +91,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   position: absolute;
   inset: 0;
   display: block;
-  background: linear-gradient(
-    180deg,
-    rgba(185, 236, 208, 0.94) 0%,
-    rgba(127, 214, 164, 0.94) 30%,
-    rgba(70, 178, 124, 0.94) 58%,
-    rgba(44, 138, 95, 0.94) 82%,
-    rgba(31, 100, 70, 0.94) 100%
-  );
+  background: #2fb36a;
   border-radius: 46% 54% 52% 48% / 50% 46% 54% 50%;
   transform: scale(calc(1 + var(--voice-level) * 0.16));
   transition: transform 90ms ease-out, background 240ms ease;
@@ -116,7 +105,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   inset: -14%;
   display: block;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(70, 178, 124, 0.24), rgba(70, 178, 124, 0) 68%);
+  background: radial-gradient(circle, rgba(47, 179, 106, 0.28), rgba(47, 179, 106, 0) 68%);
   transform: scale(calc(1 + var(--voice-level) * 0.3));
   transition: transform 120ms ease-out;
   animation: voice-halo-breathe 3.4s ease-in-out infinite;
@@ -145,17 +134,17 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 
 /* Connecting: no mic yet, so the green drains to a pale mint and pulses. */
 .voice-blob--connecting .voice-blob-core {
-  background: radial-gradient(circle at 32% 28%, #e4f6ec, #b9ecd0 75%);
+  background: #2fb36a; opacity: 0.55;
   animation: voice-blob-waver 7s ease-in-out infinite, voice-blob-pulse 2.2s ease-in-out infinite;
 }
-.voice-blob--connecting .voice-blob-halo { background: radial-gradient(circle, rgba(185, 236, 208, 0.7), transparent 68%); }
+.voice-blob--connecting .voice-blob-halo { background: radial-gradient(circle, rgba(47, 179, 106, 0.5), transparent 68%); }
 
 /* Listening: full green, swelling with the user's voice. */
 .voice-blob--listening .voice-blob-core { animation-duration: 5s; }
 
 /* Speaking: Jeff's own voice. Brighter, faster, and the tap cuts in. */
 .voice-blob--speaking .voice-blob-core {
-  background: radial-gradient(circle at 32% 28%, rgba(185, 236, 208, 0.98), rgba(44, 138, 95, 0.94) 75%);
+  background: #2fb36a;
   animation: voice-blob-waver 3s ease-in-out infinite, voice-blob-pulse 1.4s ease-in-out infinite;
 }
 .voice-blob--speaking .voice-blob-halo { animation-duration: 1.4s; }
@@ -174,7 +163,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   line-height: 1.45;
 }
 
-.voice-dock-error { color: #b4462f; }
+.voice-dock-error { color: #000; }
 
 .voice-dock-controls {
   display: flex;
@@ -240,7 +229,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   border: 1px solid var(--jeff-line);
   border-radius: 16px;
 }
-.jeff-type:focus-within { border-color: rgba(44, 138, 95, 0.5); }
+.jeff-type:focus-within { border-color: #2fb36a; }
 .jeff-type input {
   flex: 1;
   border: 0;
@@ -296,7 +285,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
-  box-shadow: 0 2px 10px rgba(31, 100, 70, 0.08);
+  box-shadow: none;
 }
 .jeff-canvas-toggle:hover { background: var(--jeff-green-1); }
 .jeff-panel-head span { font-size: 12.5px; color: var(--jeff-muted); }
@@ -309,7 +298,6 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   border-radius: 18px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 50%, rgba(185, 236, 208, 0.18), transparent 70%),
     #fff;
 }
 .jeff-graph svg { width: 100%; height: 100%; display: block; }
@@ -338,7 +326,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   font-size: 12.5px;
   font-weight: 500;
   color: var(--jeff-green-5);
-  background: rgba(255, 255, 255, 0.85);
+  background: #fff;
   padding: 4px 10px;
   border-radius: 999px;
   animation: voice-dock-in 220ms ease-out;
@@ -371,7 +359,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .jeff-card a { font-size: 11.5px; color: var(--jeff-accent); text-decoration: none; }
 .jeff-card a:hover { text-decoration: underline; }
 
-.jeff-risk { border-color: rgba(180, 70, 47, 0.35); }
+.jeff-risk { border-color: #000; }
 .jeff-risk--fine { border-color: var(--jeff-line); }
 .jeff-risk-status {
   display: inline-block;
@@ -382,22 +370,22 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
   padding: 2px 7px;
   border-radius: 999px;
   color: #fff;
-  background: #b4462f;
+  background: #000;
 }
-.jeff-risk-status--thin { background: #c9892a; }
+.jeff-risk-status--thin { background: #2fb36a; }
 .jeff-risk-status--fine { background: var(--jeff-green-3); }
 .jeff-risk-backfill { margin-top: 8px; font-size: 12px; color: var(--jeff-green-5); }
 
 .jeff-setup {
   margin-top: 14px;
   padding: 12px 14px;
-  border: 1px dashed rgba(180, 70, 47, 0.4);
+  border: 1px dashed #2fb36a;
   border-radius: 12px;
   font-size: 13px;
   line-height: 1.5;
   color: var(--jeff-ink);
 }
-.jeff-setup code { font-family: var(--font-geist-mono, ui-monospace, monospace); font-size: 12px; background: #f3f7f4; padding: 1px 5px; border-radius: 4px; }
+.jeff-setup code { font-family: var(--font-geist-mono, ui-monospace, monospace); font-size: 12px; background: #fff; border: 1px solid #2fb36a; padding: 1px 5px; border-radius: 4px; }
 
 @media (prefers-reduced-motion: reduce) {
   .voice-blob-core, .voice-blob-halo, .voice-dock, .jeff-card { animation: none; }

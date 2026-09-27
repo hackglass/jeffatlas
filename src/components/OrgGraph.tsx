@@ -18,7 +18,7 @@ export type Highlight = { people: string[]; skills?: string[]; title?: string } 
 
 type Sim = { id: string; type: GraphNode["type"]; label: string; x: number; y: number; vx: number; vy: number; r: number; lit: boolean; dim: boolean };
 
-const COLORS = { person: "#2c8a5f", skill: "#1f6446", repo: "#7fd6a4" };
+const COLORS = { person: "#2fb36a", skill: "#2fb36a", repo: "#000" };
 
 export default function OrgGraph({ graph, highlight }: { graph: Graph | null; highlight: Highlight }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -154,14 +154,14 @@ export default function OrgGraph({ graph, highlight }: { graph: Graph | null; hi
           const s = byId.get(e.source), t = byId.get(e.target);
           if (!s || !t) return null;
           const lit = s.lit || t.lit;
-          return <line key={i} x1={s.x} y1={s.y} x2={t.x} y2={t.y} stroke={lit ? "#2c8a5f" : "#1f6446"} strokeOpacity={lit ? 0.55 : highlight ? 0.08 : 0.16} strokeWidth={lit ? 1.6 : 1} />;
+          return <line key={i} x1={s.x} y1={s.y} x2={t.x} y2={t.y} stroke="#2fb36a" strokeOpacity={lit ? 0.7 : highlight ? 0.12 : 0.22} strokeWidth={lit ? 1.6 : 1} />;
         })}
         {sims.map((n) => (
           <g key={n.id} transform={`translate(${n.x},${n.y})`} opacity={n.dim ? 0.28 : 1} style={{ transition: "opacity 300ms" }}>
-            {n.lit && <circle r={n.r + 9} fill="rgba(70,178,124,0.18)"><animate attributeName="r" values={`${n.r + 6};${n.r + 12};${n.r + 6}`} dur="2.4s" repeatCount="indefinite" /></circle>}
-            <circle r={n.r} fill={n.type === "skill" ? "#fff" : COLORS[n.type]} stroke={n.type === "skill" ? COLORS.skill : n.lit ? "#1f6446" : "none"} strokeWidth={n.type === "skill" ? 1.5 : 2} />
+            {n.lit && <circle r={n.r + 9} fill="rgba(47,179,106,0.2)"><animate attributeName="r" values={`${n.r + 6};${n.r + 12};${n.r + 6}`} dur="2.4s" repeatCount="indefinite" /></circle>}
+            <circle r={n.r} fill={n.type === "skill" ? "#fff" : COLORS[n.type]} stroke={n.type === "skill" ? COLORS.skill : n.lit ? "#000" : "none"} strokeWidth={n.type === "skill" ? 1.5 : 2} />
             {(n.type === "skill" || n.lit || (n.type === "person" && !highlight && n.r >= 7)) && (
-              <text y={n.type === "skill" ? 4 : n.r + 13} textAnchor="middle" fontSize={n.type === "skill" ? 10.5 : n.lit ? 12 : 10} fontWeight={n.lit || n.type === "skill" ? 600 : 400} fill={n.type === "skill" ? "#1f6446" : "#14261c"} style={{ pointerEvents: "none" }}>
+              <text y={n.type === "skill" ? 4 : n.r + 13} textAnchor="middle" fontSize={n.type === "skill" ? 10.5 : n.lit ? 12 : 10} fontWeight={n.lit || n.type === "skill" ? 600 : 400} fill={n.type === "skill" ? COLORS.skill : "#000"} style={{ pointerEvents: "none" }}>
                 {n.type === "skill" ? shortSkill(n.label) : n.label}
               </text>
             )}
@@ -170,7 +170,7 @@ export default function OrgGraph({ graph, highlight }: { graph: Graph | null; hi
       </svg>
       {highlight?.title && <div className="jeff-graph-caption">{highlight.title}</div>}
       <div className="jeff-graph-legend">
-        <span><i style={{ background: "#fff", border: "1.5px solid #1f6446" }} />skill area</span>
+        <span><i style={{ background: "#fff", border: "1.5px solid #2fb36a" }} />skill area</span>
         <span><i style={{ background: COLORS.person }} />person</span>
         <span><i style={{ background: COLORS.repo }} />repo</span>
       </div>

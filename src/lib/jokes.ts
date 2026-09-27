@@ -12,6 +12,9 @@ export const RED_HAT_JOKES = [
   "Someone asked if Red Hat has a hardware team. I said sure, we make hats.",
   "What's a Red Hatter's favorite Boston sport? Rebasing.",
   "Red Hat's motto is 'open source everything.' Except the coffee machine. That's the one thing we lock down.",
+  "My boss says there's no 'I' in team. There is, however, a 'me' in 'meeting,' and I'm in all of them.",
+  "I got a seat at the table. Turns out it's the kids' table, and the grown-ups meet on a different calendar invite.",
+  "Our new structure is a matrix. Like the movie, nobody's sure what's real anymore.",
 ];
 
 export function pickJoke(): string {

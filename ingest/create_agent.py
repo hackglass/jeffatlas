@@ -183,6 +183,11 @@ def main():
                 "first_message": FIRST_MESSAGE,
                 "language": "en",
                 "prompt": prompt_cfg,
+                # Fallback if the page ever fails to send a joke: the server
+                # rejects the whole session on a missing variable otherwise.
+                "dynamic_variables": {"dynamic_variable_placeholders": {
+                    "opening_joke": "Why does Red Hat never lose an argument? Because they always have the last patch.",
+                }},
             },
             "tts": {
                 "voice_id": VOICE_ID,
