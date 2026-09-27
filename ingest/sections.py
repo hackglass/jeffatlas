@@ -33,6 +33,11 @@ PRODUCT = "Product & programs"
 SALES = "Sales & partners"
 COMMUNITY = "Community & ops"
 OTHER = ""  # not confirmed Red Hat staff: drawn as "Community & alumni"
+# Its own section, not folded into Leadership: a small, visible team (the
+# accelerator lives on its own floor, its own program) that people ask about
+# by name. Anyone whose role or bio names it lands here regardless of their
+# broad CSV section - see the early-out at the top of refine().
+OPEN_ACCELERATOR = "The Open Accelerator"
 
 # What someone does for a living, checked in order; the first match wins.
 # Functions come before technologies, so a UX designer on OpenShift AI is UX.
@@ -101,6 +106,8 @@ def match(rules, text):
 
 def refine(login, section, role, bio, top_skill):
     """The fine section for someone whose broad section is `section`."""
+    if re.search(r"open accelerator", f"{role or ''} {bio or ''}", re.I):
+        return OPEN_ACCELERATOR
     frame = FRAME.get(section or "")
     if not frame:
         return OTHER

@@ -16,13 +16,14 @@ import OrgGraph, { sectionShort, type Highlight, type Lens, type Pick } from "@/
 import Whiteboard from "@/components/Whiteboard";
 import UsageSankey, { describeUsage, loadUsage, type Usage } from "@/components/UsageSankey";
 import { describeScene, quickScene, SceneSchema, type QuickBoard, type Scene } from "@/lib/board";
-import { ExpertCards, ImpactCards, PersonCard } from "@/components/PeopleCards";
+import { ExpertCards, ImpactCards, DocCards, PersonCard } from "@/components/PeopleCards";
 import * as history from "@/lib/history";
 import { analyticsOn, beginConversation, endConversation, identifyViewer, initAnalytics, track, trackTool, trackTurn } from "@/lib/analytics";
 import {
   findPerson, impactOfMoving, loadGraph, loadPeople, personSummary, rankExperts, sectionMatches, sectionOverview,
   type Graph, type ImpactReport, type Person, type ScoredPerson,
 } from "@/lib/jeffData";
+import { loadDocs, passageSummary, rankDocs, type DocPassage, type ScoredPassage } from "@/lib/docsData";
 
 const AGENT_ID = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID ?? "";
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -78,7 +79,8 @@ const DEMO_SCENE: Scene = {
     ] },
   ],
 };
-type Panel = { kind: "experts"; ranked: ScoredPerson[] } | { kind: "impact"; report: ImpactReport } | { kind: "person"; person: Person } | null;
+type Panel = { kind: "experts"; ranked: ScoredPerson[] } | { kind: "impact"; report: ImpactReport }
+  | { kind: "docs"; passages: ScoredPassage[]; experts: ScoredPerson[] } | { kind: "person"; person: Person } | null;
 
 // Who is looking. There is no login on this demo, so the viewer picks a
 // level; a real deployment would take it from SSO claims. It gates what the
@@ -132,6 +134,7 @@ function Jeff() {
   const tellJeffRef = useRef<(text: string) => void>(() => {});
   const [people, setPeople] = useState<Person[] | null>(null);
   const [graph, setGraph] = useState<Graph | null>(null);
+  const [docs, setDocs] = useState<DocPassage[] | null>(null);
   const [panel, setPanel] = useState<Panel>(null);
   const [highlight, setHighlight] = useState<Highlight>(null);
   const [error, setError] = useState<string | null>(null);
@@ -213,6 +216,7 @@ function Jeff() {
     initAnalytics();
     loadPeople().then(setPeople).catch(() => setError("Couldn't load the people data."));
     loadGraph().then(setGraph).catch(() => { /* graph is decoration */ });
+    loadDocs().then(setDocs).catch(() => { /* docs.json not built yet; search_docs degrades to people-only */ });
     loadUsage().then(setUsage).catch(() => { /* no transcripts exported yet */ });
     fetch(`${BASE}/api/board`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })
       .then((r) => { brainRef.current = r.status === 400 ? "on" : "off"; })
@@ -237,6 +241,8 @@ function Jeff() {
 
   const peopleRef = useRef<Person[] | null>(null);
   useEffect(() => { peopleRef.current = people; }, [people]);
+  const docsRef = useRef<DocPassage[] | null>(null);
+  useEffect(() => { docsRef.current = docs; }, [docs]);
 
   // Every turn (the person, Jeff, and what the tools did) is saved to the
   // session's history in localStorage, echoed to the console, and Jeff's own
@@ -313,6 +319,22 @@ function Jeff() {
       return JSON.stringify({
         topic,
         candidates: ranked.map((r, i) => ({ rank: i + 1, ...personSummary(r.person), evidence: r.evidence })),
+      });
+    },
+    search_docs: async ({ query, product, limit }: { query: string; product?: string; limit?: number }) => {
+      const [ds, ps] = await Promise.all([docsRef.current ?? loadDocs(), peopleRef.current ?? loadPeople()]);
+      const passages = rankDocs(ds, String(query ?? ""), product, Math.min(6, Number(limit) || 5));
+      const experts = rankExperts(ps, String(query ?? ""), 5);
+      say("tool", `search_docs("${query}") → ${passages.length} passages, ${experts.length} people`);
+      if (passages.length || experts.length) {
+        setPanel({ kind: "docs", passages, experts });
+        if (experts.length) focus({ people: experts.map((e) => e.person.name), title: `Docs: ${query}` });
+      }
+      if (!passages.length && !experts.length) return JSON.stringify({ result: "nothing in the curated docs slice or the Boston data on that", query });
+      return JSON.stringify({
+        query,
+        doc_passages: passages.map((p) => passageSummary(p.passage)),
+        people_who_know_this: experts.map((e) => ({ ...personSummary(e.person), evidence: e.evidence })),
       });
     },
     lookup_person: async ({ name }: { name: string }) => {
@@ -742,6 +764,7 @@ function Jeff() {
         </>)}
         {panel?.kind === "experts" && <ExpertCards ranked={panel.ranked} />}
         {panel?.kind === "impact" && <ImpactCards report={panel.report} />}
+        {panel?.kind === "docs" && <DocCards passages={panel.passages} experts={panel.experts} />}
         {panel?.kind === "person" && <PersonCard person={panel.person} showEvidence={access !== "new"} showLinks={access === "leader"} />}
         {dev && <div className="jeff-history">
           {histStats && histStats.sessions > 0 ? (

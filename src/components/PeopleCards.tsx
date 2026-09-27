@@ -1,6 +1,7 @@
 "use client";
 
 import type { AtRiskArea, ImpactReport, Person, ScoredPerson } from "@/lib/jeffData";
+import type { ScoredPassage } from "@/lib/docsData";
 
 export function PersonCard({ person: p, showEvidence, showLinks }: { person: Person; showEvidence: boolean; showLinks: boolean }) {
   const evidence = [
@@ -56,6 +57,31 @@ export function ImpactCards({ report }: { report: ImpactReport }) {
   return (
     <div className="jeff-cards">
       {shown.map((a, i) => <RiskCard key={`${a.kind}:${a.area}`} area={a} delay={i * 60} />)}
+    </div>
+  );
+}
+
+/** Doc passages from search_docs, plus the Boston people who know the same topic. */
+export function DocCards({ passages, experts }: { passages: ScoredPassage[]; experts: ScoredPerson[] }) {
+  if (!passages.length && !experts.length) return null;
+  return (
+    <div className="jeff-cards">
+      {passages.map(({ passage: p }, i) => (
+        <article className="jeff-card" key={`${p.url}:${i}`} style={{ animationDelay: `${i * 60}ms` }}>
+          <div className="jeff-card-role">{p.book}</div>
+          <h3>{p.section}</h3>
+          <p style={{ margin: "6px 0 8px", fontSize: 13, lineHeight: 1.4 }}>{p.text.slice(0, 220)}{p.text.length > 220 ? "…" : ""}</p>
+          <a href={p.url} target="_blank" rel="noreferrer">docs.redhat.com</a>
+        </article>
+      ))}
+      {experts.map(({ person: p, evidence }, i) => (
+        <article className="jeff-card" key={p.id} style={{ animationDelay: `${(passages.length + i) * 60}ms` }}>
+          <div className="jeff-card-rank">who knows this</div>
+          <h3>{p.name}</h3>
+          <div className="jeff-card-role">{p.role || p.section || (p.login ? `@${p.login}` : "")}</div>
+          <ul>{evidence.slice(0, 2).map((e) => <li key={e}>{e}</li>)}</ul>
+        </article>
+      ))}
     </div>
   );
 }
