@@ -84,6 +84,7 @@ function Jeff() {
   const [highlight, setHighlight] = useState<Highlight>(null);
   const [error, setError] = useState<string | null>(null);
   const [canvasOpen, setCanvasOpen] = useState(false);
+  const [instant, setInstant] = useState(false); // open without the slide animation (?canvas=)
   const [transcript, setTranscript] = useState<string[]>([]);
   // The whiteboard: what Jeff has sketched, and whether the graph or the board is up.
   const [board, setBoard] = useState<Scene | null>(null);
@@ -123,8 +124,13 @@ function Jeff() {
     fetch(`${BASE}/api/board`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })
       .then((r) => { brainRef.current = r.status === 400 ? "on" : "off"; })
       .catch(() => { brainRef.current = "off"; });
+    const qs = new URLSearchParams(window.location.search);
+    if (qs.get("canvas")) {
+      const t = setTimeout(() => { setInstant(true); setCanvasOpen(true); if (qs.get("canvas") === "skills") setLens("skills"); }, 0);
+      return () => clearTimeout(t);
+    }
     // ?board=demo previews the whiteboard without a conversation.
-    if (new URLSearchParams(window.location.search).get("board") === "demo") {
+    if (qs.get("board") === "demo") {
       const t = setTimeout(() => { setBoard(DEMO_SCENE); setView("board"); setCanvasOpen(true); }, 0);
       return () => clearTimeout(t);
     }
@@ -301,11 +307,13 @@ function Jeff() {
   // rather than as a question, so he can fold it in without being forced to answer.
   const onPick = useCallback((pick: Pick | null) => {
     setSelected(pick);
-    if (!pick) return;
+    if (!pick) { setHighlight(null); return; }
     const ps = peopleRef.current ?? [];
     if (pick.type === "person") {
       const p = findPerson(ps, pick.label);
       setHighlight({ people: [pick.label], title: pick.label });
+      // Nobody without commits exists in the Skills lens; show them among their section instead.
+      if (!(p?.commits ?? 0)) setLens("people");
       const who = p ? [p.role, sectionShort(p.section), p.commits ? `${p.commits} commits` : ""].filter(Boolean).join(", ") : "";
       say("tool", `you picked ${pick.label}`);
       tellJeffRef.current(`The user just clicked ${pick.label} on the org graph${who ? ` (${who})` : ""}. If it fits, mention them briefly or ask what they want to know; do not read out a profile unprompted.`);
@@ -396,7 +404,7 @@ function Jeff() {
 
 
   return (
-    <main className={`jeff-page${canvasOpen ? "" : " jeff-page--collapsed"}`}>
+    <main className={`jeff-page${canvasOpen ? "" : " jeff-page--collapsed"}${instant ? " jeff-page--instant" : ""}`}>
       <button
         type="button"
         className="jeff-canvas-toggle"
@@ -458,7 +466,7 @@ function Jeff() {
         ) : view === "board" && boardBusy ? (
           <div className="wb"><div className="wb-busy">sketching “{boardBusy}”…</div></div>
         ) : (
-          <OrgGraph graph={graph} highlight={highlight} lens={lens} selected={selected} onPick={onPick} onAsk={onAsk} />
+          <OrgGraph graph={graph} highlight={highlight} lens={lens} selected={selected} onPick={onPick} onAsk={onAsk} onClear={() => { setHighlight(null); setSelected(null); }} />
         )}
         {panel?.kind === "experts" && <ExpertCards ranked={panel.ranked} />}
         {panel?.kind === "impact" && <ImpactCards report={panel.report} />}

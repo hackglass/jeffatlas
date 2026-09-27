@@ -37,6 +37,7 @@ type Sim = {
   x: number; y: number; vx: number; vy: number; r: number;
   lit: boolean; dim: boolean;
   fx?: number; fy?: number; // pinned position (while dragging, and after a drop)
+  ax?: number; ay?: number; // hub anchor on the ring; hubs are pulled toward it, people orbit them
 };
 type View = { x: number; y: number; k: number };
 
@@ -45,7 +46,7 @@ type View = { x: number; y: number; k: number };
 const COLORS = { person: "#9aa4ae", skill: "#3b4552", repo: "#c7ccd1", lit: "#2fb36a", ink: "#111827", line: "#cfd4d9" };
 const CLICK_SLOP = 4; // px of movement before a press becomes a drag
 
-export default function OrgGraph({ graph, highlight, lens = "people", selected, onPick, onAsk }: {
+export default function OrgGraph({ graph, highlight, lens = "people", selected, onPick, onAsk, onClear }: {
   graph: Graph | null;
   highlight: Highlight;
   lens?: Lens;
@@ -54,6 +55,8 @@ export default function OrgGraph({ graph, highlight, lens = "people", selected, 
   onPick?: (pick: Pick | null) => void;
   /** "Ask Jeff" from the selection card. */
   onAsk?: (pick: Pick) => void;
+  /** The × on the caption: drop the highlight. */
+  onClear?: () => void;
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [size, setSize] = useState({ w: 800, h: 480 });
@@ -98,6 +101,8 @@ export default function OrgGraph({ graph, highlight, lens = "people", selected, 
       }
       const litSkillIds = new Set(graph.nodes.filter((n) => n.type === "skill" && litSkills.has(n.label.toLowerCase())).map((n) => n.id));
       for (const id of litSkillIds) keep.add(id);
+      // The hubs stay as the map's landmarks even when only one person is lit.
+      for (const n of graph.nodes) if (n.type === "skill") keep.add(n.id);
       // Second ring: other people who share a lit skill, capped so it stays legible.
       // A skill-only focus (someone clicked a hub) gets a bigger ring: that *is* the picture.
       const cap = litNames.size ? 26 : 60;
@@ -136,25 +141,48 @@ export default function OrgGraph({ graph, highlight, lens = "people", selected, 
       const existing = sims.get(n.id);
       const r = n.type === "skill" ? (lens === "people" ? 22 : 16) : n.type === "repo" ? 5 : lit ? 11 : lens === "people" ? Math.min(6.5, 3 + Math.log10(1 + (n.commits ?? 0)) * 1.1) : Math.min(8, 3 + Math.log10(1 + (n.commits ?? 0)) * 1.5);
       const dim = !!highlight && !lit && n.type === "person" && litNames.size > 0;
-      if (existing) { existing.lit = lit; existing.r = r; existing.dim = dim; continue; }
-      // Skill hubs start evenly spaced on a ring; people scatter around them.
-      const skillIdx = nodes.filter((m) => m.type === "skill").findIndex((m) => m.id === n.id);
-      const skillCount = nodes.filter((m) => m.type === "skill").length || 1;
-      const a = n.type === "skill" ? (skillIdx / skillCount) * Math.PI * 2 : Math.random() * Math.PI * 2;
-      const d = n.type === "skill" ? Math.min(w, h) * 0.32 : Math.min(w, h) * (0.15 + Math.random() * 0.3);
-      sims.set(n.id, { id: n.id, type: n.type, label: n.label, x: w / 2 + Math.cos(a) * d, y: h / 2 + Math.sin(a) * d, vx: 0, vy: 0, r, lit, dim });
+      // Hubs live on a ring that fills the canvas (an ellipse, so a wide
+      // canvas is used side to side). People start near their hub.
+      const hubs = nodes.filter((m) => m.type === "skill");
+      const hubIdx = hubs.findIndex((m) => m.id === n.id);
+      const hubCount = hubs.length || 1;
+      const rx = w * 0.36, ry = h * 0.30;
+      const start = -Math.PI / 2 - (hubCount > 2 ? Math.PI / hubCount : 0);
+      const ringAngle = start + (hubIdx / hubCount) * Math.PI * 2;
+      const ax = w / 2 + Math.cos(ringAngle) * rx, ay = h / 2 + Math.sin(ringAngle) * ry;
+      if (existing) {
+        existing.lit = lit; existing.r = r; existing.dim = dim;
+        if (n.type === "skill") { existing.ax = ax; existing.ay = ay; }
+        continue;
+      }
+      let x: number, y: number;
+      if (n.type === "skill") { x = ax; y = ay; }
+      else {
+        const home = edges.find((e) => e.source === n.id && sims.get(e.target)?.type === "skill");
+        const hub = home ? sims.get(home.target) : undefined;
+        const a = Math.random() * Math.PI * 2, d = 30 + Math.random() * Math.min(w, h) * 0.18;
+        x = (hub ? hub.x : w / 2) + Math.cos(a) * d;
+        y = (hub ? hub.y : h / 2) + Math.sin(a) * d;
+      }
+      sims.set(n.id, { id: n.id, type: n.type, label: n.label, x, y, vx: 0, vy: 0, r, lit, dim, ax: n.type === "skill" ? ax : undefined, ay: n.type === "skill" ? ay : undefined });
     }
 
-    const hubGap = lens === "people" ? 260 : 150;
+    const hubGap = lens === "people" ? Math.min(w, h) * 0.45 : 150;
     let raf = 0;
     let frames = 0;
     const step = () => {
       const arr = [...sims.values()];
       const alpha = frames < 240 ? 0.9 : 0.35;
-      // Centering + gentle repulsion.
+      // Hubs are pulled to their ring anchor; everything else drifts gently
+      // toward the middle so stray dots do not pile up in the corners.
       for (const a of arr) {
-        a.vx += (w / 2 - a.x) * 0.0025 * alpha;
-        a.vy += (h / 2 - a.y) * 0.0025 * alpha;
+        if (a.ax !== undefined && a.ay !== undefined) {
+          a.vx += (a.ax - a.x) * 0.06 * alpha;
+          a.vy += (a.ay - a.y) * 0.06 * alpha;
+        } else {
+          a.vx += (w / 2 - a.x) * 0.0008 * alpha;
+          a.vy += (h / 2 - a.y) * 0.0008 * alpha;
+        }
         for (const b of arr) {
           if (a === b) continue;
           let dx = a.x - b.x, dy = a.y - b.y;
@@ -174,8 +202,9 @@ export default function OrgGraph({ graph, highlight, lens = "people", selected, 
         if (!s || !t) continue;
         const dx = t.x - s.x, dy = t.y - s.y;
         const d = Math.sqrt(dx * dx + dy * dy) || 1;
-        const rest = s.lit || t.lit ? 70 : t.type === "repo" ? 40 : lens === "people" ? 95 : 110;
-        const f = ((d - rest) / d) * 0.012 * alpha;
+        const base = Math.min(w, h);
+        const rest = s.lit || t.lit ? base * 0.14 : t.type === "repo" ? 40 : lens === "people" ? base * 0.2 : base * 0.22;
+        const f = ((d - rest) / d) * (lens === "people" ? 0.02 : 0.012) * alpha;
         s.vx += dx * f; s.vy += dy * f;
         t.vx -= dx * f; t.vy -= dy * f;
       }
@@ -196,6 +225,14 @@ export default function OrgGraph({ graph, highlight, lens = "people", selected, 
     setSims(arr.map((a) => ({ ...a })));
     const tick = () => {
       setSims(step().map((a) => ({ ...a })));
+      // Belt and braces: the panel animates open, and a ResizeObserver
+      // notification can land mid-transition. Re-measure every frame so the
+      // viewBox and the layout always match the box we are actually in.
+      const el = svgRef.current?.parentElement;
+      if (el && (Math.abs(el.clientWidth - w) > 1 || Math.abs(el.clientHeight - h) > 1)) {
+        setSize({ w: el.clientWidth, h: el.clientHeight });
+        return; // the effect re-runs with the new size and restarts the loop
+      }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -331,7 +368,16 @@ export default function OrgGraph({ graph, highlight, lens = "people", selected, 
     return { id, type: n.type, label: n.label, lines, sx, sy, flip, pinned: s.fx !== undefined, isSelected: selected?.id === id };
   }, [hovered, selected, graph, nodes, byId, view, size.w]);
 
+  // Reset puts everything back: pan/zoom, pinned nodes, hover, and the highlight.
+  const resetAll = useCallback(() => {
+    setView({ x: 0, y: 0, k: 1 });
+    for (const s of simRef.current.values()) { s.fx = undefined; s.fy = undefined; }
+    setHovered(null);
+    onClear?.();
+  }, [onClear]);
   const zoomed = view.k !== 1 || view.x !== 0 || view.y !== 0;
+  const pinnedCount = sims.filter((s) => s.fx !== undefined).length;
+  const dirty = zoomed || pinnedCount > 0 || !!highlight || !!selected;
 
   return (
     <div className={`jeff-graph${panning ? " jeff-graph--panning" : ""}`}>
@@ -345,7 +391,7 @@ export default function OrgGraph({ graph, highlight, lens = "people", selected, 
         onPointerUp={onUp}
         onPointerCancel={onUp}
         onWheel={onWheel}
-        onDoubleClick={() => setView({ x: 0, y: 0, k: 1 })}
+        onDoubleClick={resetAll}
         style={{ touchAction: "none" }}
       >
         <g transform={`translate(${view.x},${view.y}) scale(${view.k})`}>
@@ -411,9 +457,14 @@ export default function OrgGraph({ graph, highlight, lens = "people", selected, 
         </div>
       )}
 
-      {highlight?.title && <div className="jeff-graph-caption">{highlight.title}</div>}
-      {zoomed && (
-        <button type="button" className="jeff-graph-reset" onClick={() => setView({ x: 0, y: 0, k: 1 })} title="Reset view">reset view</button>
+      {highlight?.title && (
+        <div className="jeff-graph-caption">
+          {highlight.title}
+          {onClear && <button type="button" aria-label="Clear highlight" title="Clear" onClick={onClear}>×</button>}
+        </div>
+      )}
+      {dirty && (
+        <button type="button" className="jeff-graph-reset" onClick={resetAll} title="Reset the view, unpin nodes and clear the highlight">reset</button>
       )}
       <div className="jeff-graph-legend">
         <span><i style={{ background: "#fff", border: `1.5px solid ${COLORS.line}` }} />{lens === "people" ? "section" : "skill area"}</span>
