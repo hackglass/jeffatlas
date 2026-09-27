@@ -18,6 +18,7 @@ import UsageSankey, { describeUsage, loadUsage, type Usage } from "@/components/
 import { describeScene, quickScene, SceneSchema, type QuickBoard, type Scene } from "@/lib/board";
 import { ExpertCards, ImpactCards } from "@/components/PeopleCards";
 import * as history from "@/lib/history";
+import { analyticsOn, beginConversation, endConversation, identifyViewer, initAnalytics, track, trackTool, trackTurn } from "@/lib/analytics";
 import {
   findPerson, impactOfMoving, loadGraph, loadPeople, personSummary, rankExperts, sectionOverview,
   type Graph, type ImpactReport, type Person, type ScoredPerson,
@@ -71,6 +72,25 @@ const ACCESS_BLURB: Record<Access, string> = {
   leader: "leadership level: everything, including full profiles and public bios",
 };
 
+/** Wrap client tools so each call is logged with params, result and duration. */
+function withLogging<T extends Record<string, (p: never) => unknown>>(tools: T): T {
+  const out: Record<string, (p: never) => unknown> = {};
+  for (const [name, fn] of Object.entries(tools)) {
+    out[name] = (params: never) => {
+      const t0 = performance.now();
+      const done = (result: unknown) => { trackTool(name, params, result, Math.round(performance.now() - t0)); return result; };
+      try {
+        const r = fn(params);
+        return r instanceof Promise ? r.then(done, (e) => { done(`error: ${e instanceof Error ? e.message : String(e)}`); throw e; }) : done(r);
+      } catch (e) {
+        done(`error: ${e instanceof Error ? e.message : String(e)}`);
+        throw e;
+      }
+    };
+  }
+  return out as T;
+}
+
 export default function Home() {
   return (
     <ConversationProvider>
@@ -92,6 +112,8 @@ function Jeff() {
   const [dev, setDev] = useState(false); // ?dev shows the team-only footer (saved history, x-ray link)
   const [transcript, setTranscript] = useState<DockTurn[]>([]);
   const [endedNote, setEndedNote] = useState<string | null>(null);
+  const transcriptRef = useRef<DockTurn[]>([]);
+  useEffect(() => { transcriptRef.current = transcript; }, [transcript]);
   // Thinking: the person's words have landed (or a tool ran) and Jeff has not
   // started talking yet. Cleared when his audio starts, or after a safety timeout.
   const [thinking, setThinking] = useState(false);
@@ -133,7 +155,9 @@ function Jeff() {
   const chooseUser = useCallback((u: string) => {
     setUser(u);
     try { localStorage.setItem("jeff.user", u); } catch { /* no storage */ }
+    identifyViewer(u);
   }, []);
+  useEffect(() => { identifyViewer(user); }, [user]);
 
   const [access, setAccess] = useState<Access>("new");
   const accessRef = useRef<Access>(access);
@@ -148,6 +172,7 @@ function Jeff() {
   const chooseAccess = useCallback((a: Access) => {
     setAccess(a);
     try { localStorage.setItem("jeff.access", a); } catch { /* no storage */ }
+    track("access_changed", { access: a });
     tellJeffRef.current(`The viewer switched their access level to "${ACCESS_LABEL[a]}" (${ACCESS_BLURB[a]}). Adjust what you offer accordingly.`);
   }, []);
 
@@ -157,6 +182,7 @@ function Jeff() {
   // means "off". Jeff is told once so he goes straight to board_write.
   const brainRef = useRef<"unknown" | "on" | "off">("unknown");
   useEffect(() => {
+    initAnalytics();
     loadPeople().then(setPeople).catch(() => setError("Couldn't load the people data."));
     loadGraph().then(setGraph).catch(() => { /* graph is decoration */ });
     loadUsage().then(setUsage).catch(() => { /* no transcripts exported yet */ });
@@ -197,6 +223,7 @@ function Jeff() {
     // Tool lines are kept short on the dock: what Jeff looked up, not the result.
     const shown = role === "tool" ? text.trim().split(" → ")[0] : text.trim();
     setTranscript((t) => [...t, { role, text: shown }]);
+    if (role !== "tool") trackTurn(role, text.trim());
     if (role !== "jeff") think();
   }, [think]);
 
@@ -327,6 +354,7 @@ function Jeff() {
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           say("tool", `board_explain failed: ${msg}`);
+          track("error", { where: "drawing_brain", message: msg });
           setView((v) => (v === "board" && !board ? "graph" : v));
           tellJeffRef.current(`The drawing brain could not sketch that (${msg}). Use board_write to put the key items on the board yourself.`);
         } finally {
@@ -349,6 +377,7 @@ function Jeff() {
       if (!n) return "nothing to file";
       const k = ["suggestion", "bug", "complaint", "praise"].includes(String(kind)) ? String(kind) : "suggestion";
       say("tool", `record_feedback(${k}) → "${n}"`);
+      track("feedback", { kind: k, note: n, access: accessRef.current });
       console.log("[jeff:feedback]", k, n);
       return `filed as ${k}; thank them in one breath and carry on`;
     },
@@ -379,11 +408,15 @@ function Jeff() {
     },
   }), [say, showScene, focus, board]);
 
+  // Every tool Jeff calls is logged with its parameters, its result and how long it took.
+  const loggedTools = useMemo(() => withLogging(clientTools), [clientTools]);
+
   // ── The human's hand on the canvas ──
   // A click is a pick: the graph focuses on it and Jeff is told, as context
   // rather than as a question, so he can fold it in without being forced to answer.
   const onPick = useCallback((pick: Pick | null) => {
     setSelected(pick);
+    track("canvas_pick", { type: pick?.type ?? null, id: pick?.id ?? null, label: pick?.label ?? null, lens: lensRef.current });
     if (!pick) { setHighlight(null); return; }
     const ps = peopleRef.current ?? [];
     if (pick.type === "person") {
@@ -407,8 +440,10 @@ function Jeff() {
 
   // ── The conversation ─────────────────────────────────────────────────────
   const conversation = useConversation({
-    clientTools,
-    onConnect: () => {
+    clientTools: loggedTools,
+    onConnect: ({ conversationId }) => {
+      beginConversation(conversationId);
+      track("conversation_started", { access: accessRef.current, user: userRef.current.trim() || "anonymous", lens: lensRef.current, drawing_brain: brainRef.current });
       setError(null); setTranscript([]); setEndedNote(null); setBoard(null); setView("graph");
       const a = accessRef.current;
       sessionRef.current = history.startSession(ACCESS_LABEL[a]);
@@ -441,10 +476,12 @@ function Jeff() {
       setHistStats(history.historyStats());
       // Say why the line went quiet: hanging up looks different from Jeff timing out.
       const reason = (details as { reason?: string; message?: string } | undefined)?.reason;
+      track("conversation_ended", { reason: reason ?? "unknown", message: (details as { message?: string } | undefined)?.message ?? null, turns: transcriptRef.current.filter((t) => t.role !== "tool").length });
+      endConversation();
       setThinking(false);
       setEndedNote(reason === "user" ? "Conversation ended" : reason === "agent" ? "Jeff ended the conversation" : reason === "error" ? "The connection dropped" : "Conversation ended");
     },
-    onError: (msg) => setError(typeof msg === "string" ? msg : "Something went wrong with the connection."),
+    onError: (msg) => { track("error", { where: "conversation", message: String(msg) }); setError(typeof msg === "string" ? msg : "Something went wrong with the connection."); },
   });
   const { status, isSpeaking, isMuted, setMuted, startSession, endSession, sendUserMessage, sendContextualUpdate, getInputVolume, getOutputVolume } = conversation;
   const conversationRef = useRef<typeof conversation | null>(null);
@@ -459,9 +496,11 @@ function Jeff() {
   const start = useCallback(async () => {
     if (!AGENT_ID) { setError("No agent configured yet. See the setup note on the right."); return; }
     setError(null);
+    track("control", { action: "start", access: accessRef.current });
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
+      track("error", { where: "microphone" });
       setError("Microphone unavailable. Check the browser's mic permission.");
       return;
     }
@@ -477,6 +516,7 @@ function Jeff() {
   const pendingAskRef = useRef<string | null>(null);
   const onAsk = useCallback((pick: Pick) => {
     const q = pick.type === "person" ? `Tell me about ${pick.label}.` : pick.id.startsWith("section:") ? `Give me the shape of the ${pick.label} group.` : `Who should I talk to about ${pick.label}?`;
+    track("ask_jeff", { type: pick.type, label: pick.label, question: q, live: status === "connected" });
     if (status === "connected") { say("user", q); sendUserMessage(q); }
     else { pendingAskRef.current = q; void start(); }
   }, [status, sendUserMessage, start, say]);
@@ -485,17 +525,19 @@ function Jeff() {
 
   // Cut Jeff off. The SDK has no interrupt call; an empty user turn is the
   // cheapest thing that stops his audio and hands the floor back.
-  const interrupt = useCallback(() => { try { sendUserMessage(""); } catch { /* not connected */ } }, [sendUserMessage]);
-  const toggleMute = useCallback(() => { setMuted(!isMuted); }, [isMuted, setMuted]);
+  const interrupt = useCallback(() => { track("control", { action: "interrupt" }); try { sendUserMessage(""); } catch { /* not connected */ } }, [sendUserMessage]);
+  const toggleMute = useCallback(() => { track("control", { action: isMuted ? "unmute" : "mute" }); setMuted(!isMuted); }, [isMuted, setMuted]);
 
-  // The blob itself: start when idle, cut in while Jeff talks, unmute if muted. Never ends the call.
+  // The blob is the only control: start when idle, cancel while connecting,
+  // cut in while Jeff talks, otherwise toggle the mic. Holding it ends the call.
   const onTap = useCallback(() => {
     if (mood === "dormant") void start();
+    else if (mood === "connecting") void endSession();
     else if (mood === "speaking") interrupt();
-    else if (mood === "listening" && isMuted) setMuted(false);
-  }, [mood, start, interrupt, isMuted, setMuted]);
+    else setMuted(!isMuted);
+  }, [mood, start, endSession, interrupt, isMuted, setMuted]);
 
-  const stop = useCallback(() => { void endSession(); }, [endSession]);
+  const stop = useCallback(() => { track("control", { action: "end" }); void endSession(); }, [endSession]);
 
   // Keyboard: Escape hangs up, Space cuts Jeff off (unless typing in a field).
   useEffect(() => {
@@ -521,7 +563,7 @@ function Jeff() {
       <button
         type="button"
         className="jeff-canvas-toggle"
-        onClick={() => setCanvasOpen((o) => !o)}
+        onClick={() => { track("control", { action: canvasOpen ? "hide_canvas" : "show_canvas" }); setCanvasOpen((o) => !o); }}
         aria-label={canvasOpen ? "Hide canvas" : "Show canvas"}
         title={canvasOpen ? "Hide canvas" : "Show canvas"}
       >
@@ -565,31 +607,31 @@ function Jeff() {
             </label>
             {view === "graph" && (
               <div className="jeff-view-switch" role="tablist" aria-label="Graph lens">
-                <button type="button" role="tab" aria-selected={lens === "people"} className={lens === "people" ? "on" : undefined} onClick={() => { setLens("people"); tellJeffRef.current("The user switched the graph to the People lens (everyone, by section)."); }}>People</button>
-                <button type="button" role="tab" aria-selected={lens === "skills"} className={lens === "skills" ? "on" : undefined} onClick={() => { setLens("skills"); tellJeffRef.current("The user switched the graph to the Skills lens (technical view from GitHub)."); }}>Skills</button>
+                <button type="button" role="tab" aria-selected={lens === "people"} className={lens === "people" ? "on" : undefined} onClick={() => { track("lens", { lens: "people" }); setLens("people"); tellJeffRef.current("The user switched the graph to the People lens (everyone, by section)."); }}>People</button>
+                <button type="button" role="tab" aria-selected={lens === "skills"} className={lens === "skills" ? "on" : undefined} onClick={() => { track("lens", { lens: "skills" }); setLens("skills"); tellJeffRef.current("The user switched the graph to the Skills lens (technical view from GitHub)."); }}>Skills</button>
               </div>
             )}
             {(board || boardBusy || view === "usage" || (usage && usage.conversations.length > 0)) && (
               <div className="jeff-view-switch" role="tablist" aria-label="Canvas view">
-                <button type="button" role="tab" aria-selected={view === "graph"} className={view === "graph" ? "on" : undefined} onClick={() => setView("graph")}>Graph</button>
-                {(board || boardBusy) && <button type="button" role="tab" aria-selected={view === "board"} className={view === "board" ? "on" : undefined} onClick={() => setView("board")}>Board</button>}
-                {usage && usage.conversations.length > 0 && <button type="button" role="tab" aria-selected={view === "usage"} className={view === "usage" ? "on" : undefined} onClick={() => { setView("usage"); tellJeffRef.current("The user opened the Usage view: a Sankey of what people have asked you, by access level, kind, topic and outcome, with a leaderboard of topics."); }}>Usage</button>}
+                <button type="button" role="tab" aria-selected={view === "graph"} className={view === "graph" ? "on" : undefined} onClick={() => { track("view", { view: "graph" }); setView("graph"); }}>Graph</button>
+                {(board || boardBusy) && <button type="button" role="tab" aria-selected={view === "board"} className={view === "board" ? "on" : undefined} onClick={() => { track("view", { view: "board" }); setView("board"); }}>Board</button>}
+                {usage && usage.conversations.length > 0 && <button type="button" role="tab" aria-selected={view === "usage"} className={view === "usage" ? "on" : undefined} onClick={() => { track("view", { view: "usage" }); setView("usage"); tellJeffRef.current("The user opened the Usage view: a Sankey of what people have asked you, by access level, kind, topic and outcome, with a leaderboard of topics."); }}>Usage</button>}
               </div>
             )}
           </div>
         </div>
         {view === "usage" ? (
-          <UsageSankey usage={usage} focus={usageFocus} onFocus={(label) => { setUsageFocus(label); tellJeffRef.current(label ? `On the usage view the user clicked "${label}"; the flows through it are highlighted.` : "The user cleared the usage filter."); }} />
+          <UsageSankey usage={usage} focus={usageFocus} onFocus={(label) => { track("usage_focus", { label }); setUsageFocus(label); tellJeffRef.current(label ? `On the usage view the user clicked "${label}"; the flows through it are highlighted.` : "The user cleared the usage filter."); }} />
         ) : view === "board" && board ? (
           <Whiteboard
             scene={board}
             onDone={() => tellJeffRef.current(`The whiteboard "${board.title}" is fully drawn.`)}
-            onClear={() => { setBoard(null); setView("graph"); }}
+            onClear={() => { track("control", { action: "clear_board" }); setBoard(null); setView("graph"); }}
           />
         ) : view === "board" && boardBusy ? (
           <div className="wb"><div className="wb-busy">sketching “{boardBusy}”…</div></div>
         ) : (
-          <OrgGraph graph={graph} highlight={highlight} lens={lens} selected={selected} onPick={onPick} onAsk={onAsk} onClear={() => { setHighlight(null); setSelected(null); }} />
+          <OrgGraph graph={graph} highlight={highlight} lens={lens} selected={selected} onPick={onPick} onAsk={onAsk} onClear={() => { track("control", { action: "clear_graph" }); setHighlight(null); setSelected(null); }} />
         )}
         {panel?.kind === "experts" && <ExpertCards ranked={panel.ranked} />}
         {panel?.kind === "impact" && <ImpactCards report={panel.report} />}
@@ -599,6 +641,7 @@ function Jeff() {
               <span>{histStats.sessions} saved {histStats.sessions === 1 ? "conversation" : "conversations"} · {histStats.turns} turns</span>
               <button type="button" onClick={() => history.downloadHistory()}>Download transcripts</button>
               <a href={`${BASE}/xray`}>x-ray all conversations</a>
+              <span>{analyticsOn() ? "logging to PostHog" : "PostHog off (no NEXT_PUBLIC_POSTHOG_KEY)"}</span>
             </>
           ) : (
             <span>Conversations are saved in this browser as you talk.</span>
