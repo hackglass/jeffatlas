@@ -1,6 +1,31 @@
 "use client";
 
-import type { AtRiskArea, ImpactReport, ScoredPerson } from "@/lib/jeffData";
+import type { AtRiskArea, ImpactReport, Person, ScoredPerson } from "@/lib/jeffData";
+
+export function PersonCard({ person: p, showEvidence, showLinks }: { person: Person; showEvidence: boolean; showLinks: boolean }) {
+  const evidence = [
+    ...p.top_repos.slice(0, 2).map((repo) => `${repo.commits} commits to ${repo.repo}`),
+    ...p.skills.slice(0, 2).map((skill) => `${skill.skill} · ${Math.round(skill.score * 100)}% of GitHub work`),
+  ].slice(0, 3);
+
+  return (
+    <div className="jeff-cards jeff-cards--person">
+      <article className="jeff-card">
+        <div className="jeff-card-rank">PROFILE</div>
+        <h3>{p.name}</h3>
+        <div className="jeff-card-role">{p.role || p.section}</div>
+        {p.section && <div className="jeff-card-section">{p.section}</div>}
+        {showEvidence && evidence.length > 0 && <ul>{evidence.map((item) => <li key={item}>{item}</li>)}</ul>}
+        {showLinks && (p.url || p.linkedin) && (
+          <div className="jeff-card-links">
+            {p.url && <a href={p.url} target="_blank" rel="noreferrer">GitHub</a>}
+            {p.linkedin && <a href={p.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>}
+          </div>
+        )}
+      </article>
+    </div>
+  );
+}
 
 export function ExpertCards({ ranked }: { ranked: ScoredPerson[] }) {
   if (!ranked.length) return null;
