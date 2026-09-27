@@ -6,7 +6,10 @@ a two-day AI hackathon. Live: https://hackglass.github.io/jeffatlas/
 Jeff is a voice you talk to about Red Hat's Boston office. Ask who actually has
 experience in something and he ranks people with the evidence (commits, repos,
 role, bio). Tell him you want to move three people to a new project and he tells
-you which systems would be left unowned, and who could backfill.
+you which systems would be left unowned, and who could backfill. Ask a technical
+question — how to configure SELinux, install an OpenShift Operator, get started
+with an Ansible playbook — and he answers from a curated slice of Red Hat's
+official docs, plus points you at the Boston person who knows that area.
 
 ## How it works
 
@@ -14,8 +17,8 @@ you which systems would be left unowned, and who could backfill.
 browser ──WebRTC──▶ ElevenLabs Agent (speech-to-text + LLM + Roger's voice)
    ▲                        │
    │   client tool calls    │  find_experts / lookup_person / impact_if_moved /
-   └────────────────────────┘  team_overview / show_on_graph
-       answered locally from public/data/people.json + graph.json
+   └────────────────────────┘  team_overview / show_on_graph / search_docs
+       answered locally from public/data/people.json + graph.json + docs.json
 ```
 
 Everything runs in the page. The agent calls "client tools" that the browser
@@ -64,9 +67,12 @@ Add `?dev` to the main page's URL to show the team-only footer with the link.
   - `app/xray/page.tsx` + `app/api/convos/route.ts` + `lib/convos.ts` — the ElevenLabs conversation record and its viewer
   - `app/api/board/route.ts` — the drawing brain (needs `SCIFORIUM_API_KEY` or `ANTHROPIC_API_KEY`)
   - `lib/jeffData.ts` — ranking, person lookup, impact analysis
+  - `lib/docsData.ts` — doc passage ranking (search_docs)
+  - `lib/searchTerms.ts` — shared synonym/term expansion used by both
 - `ingest/` — data collection and agent setup
   - `collect.py`, `fetch_people.py`, `skills.py` — GitHub scrape and skill inference
   - `export_json.py` — writes `src/public/data/*.json`
+  - `fetch_docs.py` — crawls a curated slice of docs.redhat.com into `src/public/data/docs.json` (see `ingest/DOCS.md`)
   - `jeff_prompt.md` — Jeff's personality and rules
   - `create_agent.py` — creates/updates the ElevenLabs agent
   - `fetch_transcripts.py` — pulls conversation transcripts and classifies every question into `usage.json`
@@ -113,6 +119,12 @@ Add `?dev` to the main page's URL to show the team-only footer with the link.
 Regenerate the data after touching `data/`:
 ```
 python3 ingest/export_json.py
+```
+
+Fetch (or refresh) the documentation slice — a manual, occasional job, see `ingest/DOCS.md`:
+```
+pip install -r ingest/requirements.txt
+python3 ingest/fetch_docs.py
 ```
 
 ## Contributors

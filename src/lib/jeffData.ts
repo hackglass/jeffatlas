@@ -9,6 +9,8 @@
  * ingest/export_json.py from boston_people.csv + redhat.db.
  */
 
+import { terms, contains } from "@/lib/searchTerms";
+
 export type Skill = { skill: string; score: number };
 export type RepoStat = { repo: string; commits: number };
 export type Person = {
@@ -59,45 +61,8 @@ export async function loadGraph(): Promise<Graph> {
 }
 
 // ── Matching ────────────────────────────────────────────────────────────────
-
-/** Loose synonyms so "k8s" finds the Cloud / Kubernetes skill, etc. */
-const SYNONYMS: Record<string, string[]> = {
-  kubernetes: ["k8s", "openshift", "cluster", "operator", "cloud", "provisioning"],
-  openshift: ["kubernetes", "cluster", "ocp"],
-  ai: ["ml", "llm", "vllm", "model", "inference", "instructlab", "granite", "data science", "machine learning"],
-  vllm: ["inference", "llm", "ai", "serving"],
-  storage: ["ceph", "rook", "csi", "s3"],
-  security: ["keycloak", "auth", "identity", "oidc", "sso", "cve", "compliance"],
-  auth: ["keycloak", "identity", "oidc", "sso", "security"],
-  payments: ["billing", "commerce", "subscription"],
-  java: ["quarkus", "jvm"],
-  quarkus: ["java", "jvm"],
-  ansible: ["automation", "playbook", "awx"],
-  virtualization: ["kubevirt", "vm", "kvm", "libvirt"],
-  observability: ["prometheus", "grafana", "monitoring", "metrics", "logging"],
-  frontend: ["react", "typescript", "ui", "patternfly", "console"],
-  go: ["golang", "backend"],
-  linux: ["rhel", "fedora", "kernel", "os", "bootc"],
-  leadership: ["director", "vp", "manager", "cto", "ceo", "chief"],
-  docs: ["documentation", "writer", "technical writer"],
-  product: ["product manager", "pm", "roadmap"],
-};
-
-function terms(topic: string): string[] {
-  const raw = topic.toLowerCase().replace(/[^a-z0-9+#./ -]/g, " ").split(/\s+/).filter((t) => t.length > 1);
-  const stop = new Set(["the", "and", "who", "has", "have", "with", "for", "in", "on", "of", "most", "best", "deepest", "experience", "expert", "experts", "knows", "about", "someone", "people", "person", "engineer", "engineers", "infrastructure", "team", "our", "at", "red", "hat", "boston"]);
-  const out = new Set<string>();
-  for (const t of raw) {
-    if (stop.has(t)) continue;
-    out.add(t);
-    for (const s of SYNONYMS[t] ?? []) out.add(s);
-  }
-  return [...out];
-}
-
-function contains(hay: string, needle: string): boolean {
-  return hay.toLowerCase().includes(needle);
-}
+// Term expansion (synonyms, stopwords) lives in searchTerms.ts, shared with
+// docsData.ts so a query like "RHEL" drives both people and doc ranking.
 
 export type ScoredPerson = { person: Person; score: number; evidence: string[] };
 
@@ -265,6 +230,7 @@ const SECTION_ALIASES: Record<string, string[]> = {
   "Product & programs": ["product", "pm", "programs", "productmanagement"],
   "Sales & partners": ["sales", "partners", "gtm", "accounts", "consulting"],
   "Community & ops": ["ops", "operations", "events", "talent", "advocates"],
+  "The Open Accelerator": ["open accelerator", "accelerator", "toa", "the open accelerator", "5th floor", "fifth floor"],
 };
 const squash = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
 

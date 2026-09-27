@@ -63,6 +63,19 @@ TOOLS = [
         },
     },
     {
+        "name": "search_docs",
+        "description": "Search a curated slice of official Red Hat product documentation (OpenShift/Kubernetes, RHEL, Ansible Automation Platform, OpenShift AI) PLUS Boston office tribal knowledge (Wi-Fi, ordering meals, booking a desk). Call it for how something works, is configured, or installed; what a product IS (a new hire asking 'what is RHEL'); or office logistics a new hire needs day one. Returns matched doc passages (title, section, excerpt, link) AND, from the same query, the Boston people who know that area (same evidence as find_experts) — give both in one breath, not two calls. Use this instead of guessing at what an acronym or product means.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "The question or topic, e.g. 'install an operator', 'configure SELinux', 'what is RHEL', 'connect to wifi', 'reserve a desk'."},
+                "product": {"type": "string", "enum": ["kubernetes", "linux", "ansible", "ai", "office"], "description": "Optional: narrow to one product tree (kubernetes = OpenShift, linux = RHEL, ansible = Ansible Automation Platform, ai = OpenShift AI, office = Boston office logistics)."},
+                "limit": {"type": "integer", "description": "How many doc passages to return (default 5)."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
         "name": "impact_if_moved",
         "description": "Analyze what breaks if these people are moved off their current work: which skill areas and repositories would be left unowned or as a single point of failure, who remains, and a suggested backfill for each risky area. ALWAYS call this before endorsing a staffing move.",
         "parameters": {
@@ -75,7 +88,7 @@ TOOLS = [
     },
     {
         "name": "team_overview",
-        "description": "Summarize the Boston org: sections, headcounts, notable people, and the dominant skills in each. Filter to one section by name or keyword (Leadership, AI / ML, OpenShift & Kubernetes, Linux & virtualization, Developer tools & runtimes, SRE, QA & automation, UX & design, Docs & learning, Product & programs, Sales & partners, Community & ops, Community & alumni; 'platform' covers the four engineering sections) to get everyone in it by name and have them all highlighted on the graph automatically. If the reply says no section matches, do not describe the whole office; use one of the names it lists.",
+        "description": "Summarize the Boston org: sections, headcounts, notable people, and the dominant skills in each. Filter to one section by name or keyword (Leadership, AI / ML, OpenShift & Kubernetes, Linux & virtualization, Developer tools & runtimes, SRE, QA & automation, UX & design, Docs & learning, Product & programs, Sales & partners, Community & ops, Community & alumni, The Open Accelerator; 'platform' covers the four engineering sections) to get everyone in it by name and have them all highlighted on the graph automatically. If the reply says no section matches, do not describe the whole office; use one of the names it lists.",
         "parameters": {
             "type": "object",
             "properties": {"section": {"type": "string", "description": "Optional section name or keyword to filter on."}},
@@ -99,7 +112,7 @@ TOOLS = [
     },
     {
         "name": "graph_lens",
-        "description": "Switch the org graph between the People lens (all 381 Boston people grouped into 11 sections plus Community & alumni: Leadership, AI / ML, OpenShift & Kubernetes, Linux & virtualization, Developer tools & runtimes, SRE, QA & automation, UX & design, Docs & learning, Product & programs, Sales & partners, Community & ops) and the Skills lens (the technical picture: skill areas and GitHub repos, only people with commits). Use People for org shape, leadership, and non-engineering questions; Skills for who-knows-what.",
+        "description": "Switch the org graph between the People lens (all Boston people grouped into sections: Leadership, AI / ML, OpenShift & Kubernetes, Linux & virtualization, Developer tools & runtimes, SRE, QA & automation, UX & design, Docs & learning, Product & programs, Sales & partners, Community & ops, The Open Accelerator, plus Community & alumni) and the Skills lens (the technical picture: skill areas and GitHub repos, only people with commits). Use People for org shape, leadership, and non-engineering questions; Skills for who-knows-what.",
         "parameters": {
             "type": "object",
             "properties": {"lens": {"type": "string", "enum": ["people", "skills"], "description": "Which lens to show."}},
