@@ -483,6 +483,10 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .jeff-graph-card strong { display: block; font-size: 13px; font-weight: 600; margin-bottom: 2px; }
 .jeff-graph-card-kind { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jeff-muted); margin-bottom: 2px; }
 .jeff-graph-card-line { color: var(--jeff-muted); }
+.jeff-graph-card-links { display: flex; gap: 10px; margin-top: 8px; }
+.jeff-graph-card-links a { display: flex; color: var(--jeff-muted); }
+.jeff-graph-card-links a:hover { color: var(--jeff-ink); }
+.jeff-graph-card-links a svg { width: 14px; height: 14px; }
 .jeff-graph-card-actions { display: flex; gap: 6px; margin-top: 8px; }
 .jeff-graph-card-actions button {
   font: inherit;

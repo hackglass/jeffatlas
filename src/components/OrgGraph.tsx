@@ -16,7 +16,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Graph, GraphNode } from "@/lib/jeffData";
+import type { Graph, GraphNode, Person } from "@/lib/jeffData";
 
 export type Highlight = { people: string[]; skills?: string[]; title?: string } | null;
 export type Pick = { type: "person" | "skill"; label: string; id: string };
@@ -46,8 +46,10 @@ type View = { x: number; y: number; k: number };
 const COLORS = { person: "#9aa4ae", skill: "#3b4552", repo: "#c7ccd1", lit: "#2fb36a", ink: "#111827", line: "#cfd4d9" };
 const CLICK_SLOP = 4; // px of movement before a press becomes a drag
 
-export default function OrgGraph({ graph, highlight, lens = "people", selected, onPick, onAsk, onClear }: {
+export default function OrgGraph({ graph, people, highlight, lens = "people", selected, onPick, onAsk, onClear }: {
   graph: Graph | null;
+  /** For the person card's GitHub / LinkedIn links; the graph itself only carries name + section. */
+  people?: Person[] | null;
   highlight: Highlight;
   lens?: Lens;
   /** The node the human last clicked (kept by the parent so Jeff can be told). */
@@ -348,6 +350,7 @@ export default function OrgGraph({ graph, highlight, lens = "people", selected, 
     const skillById = new Map(graph.nodes.filter((m) => m.type === "skill").map((m) => [m.id, m.label]));
     const personIds = new Set(graph.nodes.filter((m) => m.type === "person").map((m) => m.id));
     let lines: string[] = [];
+    let github: string | undefined, linkedin: string | undefined;
     if (n.type === "person") {
       const skills = graph.edges.filter((e) => e.source === id && skillById.has(e.target)).sort((a, b) => b.weight - a.weight).map((e) => shortSkill(skillById.get(e.target)!)).slice(0, 4);
       lines = [
@@ -355,9 +358,12 @@ export default function OrgGraph({ graph, highlight, lens = "people", selected, 
         n.commits ? `${n.commits.toLocaleString()} commits` : "",
         skills.length ? skills.join(", ") : "",
       ].filter(Boolean);
+      const p = people?.find((m) => m.name === n.label);
+      github = p?.url || undefined;
+      linkedin = p?.linkedin || undefined;
     } else if (id.startsWith("section:")) {
       const sec = graph.nodes.filter((m) => m.type === "person" && (m.section || "") === (n.section ?? ""));
-      lines = [`${sec.length} people`, ...sec.slice(0, 3).map((m) => m.label), sec.length > 3 ? `and ${sec.length - 3} more` : ""].filter(Boolean);
+      lines = [`${sec.length} people`];
     } else {
       const count = graph.edges.filter((e) => e.target === id && personIds.has(e.source)).length;
       lines = [`${count} ${count === 1 ? "person" : "people"} in this area`];
@@ -365,8 +371,8 @@ export default function OrgGraph({ graph, highlight, lens = "people", selected, 
     // Screen position of the node.
     const sx = s.x * view.k + view.x, sy = s.y * view.k + view.y;
     const flip = sx > size.w * 0.62;
-    return { id, type: n.type, label: n.label, lines, sx, sy, flip, pinned: s.fx !== undefined, isSelected: selected?.id === id };
-  }, [hovered, selected, graph, nodes, byId, view, size.w]);
+    return { id, type: n.type, label: n.label, lines, github, linkedin, sx, sy, flip, pinned: s.fx !== undefined, isSelected: selected?.id === id };
+  }, [hovered, selected, graph, nodes, byId, view, size.w, people]);
 
   // Reset puts everything back: pan/zoom, pinned nodes, hover, and the highlight.
   const resetAll = useCallback(() => {
@@ -448,6 +454,12 @@ export default function OrgGraph({ graph, highlight, lens = "people", selected, 
           <div className="jeff-graph-card-kind">{card.type === "skill" ? (card.id.startsWith("section:") ? "section" : "skill area") : "person"}{card.pinned ? " · pinned" : ""}</div>
           <strong>{card.type === "skill" ? shortSkill(card.label) : card.label}</strong>
           {card.lines.map((l) => <div key={l} className="jeff-graph-card-line">{l}</div>)}
+          {card.isSelected && (card.github || card.linkedin) && (
+            <div className="jeff-graph-card-links">
+              {card.github && <a href={card.github} target="_blank" rel="noreferrer" title="GitHub" aria-label="GitHub"><GithubIcon /></a>}
+              {card.linkedin && <a href={card.linkedin} target="_blank" rel="noreferrer" title="LinkedIn" aria-label="LinkedIn"><LinkedinIcon /></a>}
+            </div>
+          )}
           {card.isSelected && onAsk && (
             <div className="jeff-graph-card-actions">
               <button type="button" onClick={() => onAsk({ type: card.type as Pick["type"], label: card.label, id: card.id })}>Ask Jeff</button>
@@ -474,6 +486,22 @@ export default function OrgGraph({ graph, highlight, lens = "people", selected, 
         <span className="jeff-graph-hint">click to focus · drag to pin · wheel to zoom</span>
       </div>
     </div>
+  );
+}
+
+function GithubIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.5 7.5 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
+    </svg>
+  );
+}
+
+function LinkedinIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M3.58 5.34H.62V15.4h2.96V5.34ZM2.1 0C1.05 0 .3.75.3 1.72c0 .95.73 1.72 1.76 1.72h.02c1.07 0 1.76-.77 1.76-1.72C3.82.75 3.15 0 2.1 0ZM15.7 9.63c0-3.02-1.62-4.43-3.77-4.43-1.74 0-2.51.96-2.94 1.63V5.34H6.03c.04.83 0 10.06 0 10.06h2.96v-5.62c0-.3.02-.6.11-.82.24-.6.79-1.23 1.71-1.23 1.21 0 1.7.92 1.7 2.27v5.4h2.96l.23-5.77Z" />
+    </svg>
   );
 }
 

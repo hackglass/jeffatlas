@@ -589,7 +589,7 @@ function Jeff() {
         ) : view === "board" && boardBusy ? (
           <div className="wb"><div className="wb-busy">sketching “{boardBusy}”…</div></div>
         ) : (
-          <OrgGraph graph={graph} highlight={highlight} lens={lens} selected={selected} onPick={onPick} onAsk={onAsk} onClear={() => { setHighlight(null); setSelected(null); }} />
+          <OrgGraph graph={graph} people={people} highlight={highlight} lens={lens} selected={selected} onPick={onPick} onAsk={onAsk} onClear={() => { setHighlight(null); setSelected(null); }} />
         )}
         {panel?.kind === "experts" && <ExpertCards ranked={panel.ranked} />}
         {panel?.kind === "impact" && <ImpactCards report={panel.report} />}
