@@ -19,9 +19,25 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import { PostHog } from "posthog-node";
 import { z } from "zod";
 import { SceneSchema, BOARD_W, BOARD_H, type Scene } from "@/lib/board";
+import { serverLog } from "@/lib/serverLog";
+
+const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+
+if ((!posthogKey || !posthogHost) && process.env.NODE_ENV !== "production") {
+  const missingVariable = posthogKey ? "NEXT_PUBLIC_POSTHOG_HOST" : "NEXT_PUBLIC_POSTHOG_KEY";
+  throw new Error(`${missingVariable} variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once ${missingVariable} is configured`);
+}
+
+const posthog = posthogKey && posthogHost
+  ? new PostHog(posthogKey, { host: posthogHost, privacyMode: false, flushAt: 1, flushInterval: 0 })
+  : null;
+const aiSessionId = `board-server-${process.pid}`;
 
 const SYSTEM = `You are the whiteboard hand of Jeff, a veteran engineer at Red Hat Boston who explains things by sketching while he talks. Turn his brief into a whiteboard scene that a person in the room would find clear at a glance.
 
@@ -66,7 +82,8 @@ function userMessage(brief: string, context: string) {
 
 // ---------- Sciforium (OpenAI-compatible) ----------
 
-async function chatCompletion(messages: { role: string; content: string }[]) {
+async function chatCompletion(messages: { role: string; content: string }[], traceId: string) {
+  const startedAt = Date.now();
   const base = (process.env.SCIFORIUM_BASE_URL ?? "https://api.sciforium.com/v1").replace(/\/+$/, "");
   const res = await fetch(`${base}/chat/completions`, {
     method: "POST",
@@ -86,6 +103,22 @@ async function chatCompletion(messages: { role: string; content: string }[]) {
   if (!res.ok) throw new Error(`Sciforium ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
   const text: string = data?.choices?.[0]?.message?.content ?? "";
+  posthog?.capture({
+    distinctId: aiSessionId,
+    event: "$ai_generation",
+    properties: {
+      $ai_trace_id: traceId,
+      $ai_session_id: aiSessionId,
+      $process_person_profile: false,
+      $ai_provider: "sciforium",
+      $ai_model: process.env.SCIFORIUM_MODEL,
+      $ai_input: messages,
+      $ai_output_choices: [{ role: "assistant", content: text }],
+      $ai_input_tokens: data?.usage?.prompt_tokens,
+      $ai_output_tokens: data?.usage?.completion_tokens,
+      $ai_latency: (Date.now() - startedAt) / 1000,
+    },
+  });
   return { text, usage: data?.usage };
 }
 
@@ -120,9 +153,10 @@ async function sceneViaSciforium(brief: string, context: string): Promise<{ scen
     { role: "system", content: `${SYSTEM}\n\n${JSON_SHAPE}` },
     { role: "user", content: userMessage(brief, context) },
   ];
+  const traceId = randomUUID();
   let lastErr = "";
   for (let attempt = 0; attempt < 2; attempt++) {
-    const { text, usage } = await chatCompletion(messages);
+    const { text, usage } = await chatCompletion(messages, traceId);
     try {
       const parsed = SceneSchema.safeParse(normalize(extractJson(text)));
       if (parsed.success) return { scene: parsed.data, usage };
@@ -140,12 +174,32 @@ async function sceneViaSciforium(brief: string, context: string): Promise<{ scen
 
 async function sceneViaAnthropic(brief: string, context: string): Promise<{ scene: Scene; usage?: unknown }> {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const model = process.env.BOARD_MODEL ?? "claude-opus-5";
+  const messages = [{ role: "user" as const, content: userMessage(brief, context) }];
+  const traceId = randomUUID();
+  const startedAt = Date.now();
   const response = await anthropic.messages.parse({
-    model: process.env.BOARD_MODEL ?? "claude-opus-5",
+    model,
     max_tokens: 6000,
     system: SYSTEM,
     output_config: { effort: "low", format: zodOutputFormat(SceneSchema) },
-    messages: [{ role: "user", content: userMessage(brief, context) }],
+    messages,
+  });
+  posthog?.capture({
+    distinctId: aiSessionId,
+    event: "$ai_generation",
+    properties: {
+      $ai_trace_id: traceId,
+      $ai_session_id: aiSessionId,
+      $process_person_profile: false,
+      $ai_provider: "anthropic",
+      $ai_model: model,
+      $ai_input: [{ role: "system", content: SYSTEM }, ...messages],
+      $ai_output_choices: [{ role: "assistant", content: response.content }],
+      $ai_input_tokens: response.usage.input_tokens,
+      $ai_output_tokens: response.usage.output_tokens,
+      $ai_latency: (Date.now() - startedAt) / 1000,
+    },
   });
   if (response.stop_reason === "refusal") throw new Error("The drawing brain declined this one.");
   if (!response.parsed_output) throw new Error("Could not parse a scene.");
@@ -168,10 +222,15 @@ export async function POST(req: Request) {
   try {
     const t0 = Date.now();
     const { scene, usage } = provider === "sciforium" ? await sceneViaSciforium(brief, context) : await sceneViaAnthropic(brief, context);
-    return NextResponse.json({ scene, usage, provider, ms: Date.now() - t0 });
+    const ms = Date.now() - t0;
+    serverLog("board scene drawn", { route: "/api/board", provider, brief, ms, steps: scene.steps.length });
+    return NextResponse.json({ scene, usage, provider, ms });
   } catch (err) {
     const msg = err instanceof Anthropic.APIError ? `${err.status} ${err.message}` : err instanceof Error ? err.message : "unknown error";
     console.error(`[board:${provider}]`, msg);
+    serverLog("board scene failed", { route: "/api/board", provider, brief, error: msg }, "error");
     return NextResponse.json({ error: msg }, { status: 502 });
+  } finally {
+    await posthog?.flush();
   }
 }

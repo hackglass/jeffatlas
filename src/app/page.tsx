@@ -506,7 +506,7 @@ function Jeff() {
   useEffect(() => {
     tellJeffRef.current = (text) => {
       if (status !== "connected") return;
-      try { sendContextualUpdate(text); } catch { /* not connected */ }
+      try { sendContextualUpdate(text); track("context", { kind: "update", text }); } catch { /* not connected */ }
     };
   }, [status, sendContextualUpdate]);
 
