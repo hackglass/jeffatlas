@@ -187,10 +187,22 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 }
 .voice-dock-hint.is-error { color: #b42318; }
 
-/* Paused: Jeff stays green and recognizable, but goes almost still. */
-.voice-blob--paused .voice-blob-core { animation-duration: 18s; }
-.voice-blob--paused .voice-blob-halo { opacity: 0.25; animation: none; }
-.voice-dock-word--paused { color: var(--jeff-muted); }
+.voice-end {
+  margin-top: 12px;
+  padding: 7px 12px;
+  border: 1px solid var(--jeff-line-strong);
+  border-radius: 999px;
+  background: #fff;
+  color: #b42318;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.voice-end:hover { background: #fff5f5; border-color: #e7b6b1; }
+.voice-end:focus-visible { outline: 2px solid #b42318; outline-offset: 2px; }
+
 .voice-blob { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 
 /* ── The turns: both sides, newest at the bottom ────────────────────────── */

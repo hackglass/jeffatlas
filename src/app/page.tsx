@@ -141,9 +141,6 @@ function Jeff() {
   const [transcript, setTranscript] = useState<DockTurn[]>([]);
   const [endedNote, setEndedNote] = useState<string | null>(null);
   const lastJeffLineRef = useRef<string | null>(null);
-  // Paused: the mic is off and Jeff has been told to sit tight. One tap
-  // resumes. (Mute and end used to be two gestures; feedback said make it one.)
-  const [paused, setPaused] = useState(false);
   // "Done" mutes the mic to hand Jeff the floor; cleared when he starts talking.
   const handoffRef = useRef(false);
   const transcriptRef = useRef<DockTurn[]>([]);
@@ -523,7 +520,7 @@ function Jeff() {
     onConnect: ({ conversationId }) => {
       beginConversation(conversationId);
       track("conversation_started", { access: accessRef.current, user: userRef.current.trim() || "anonymous", lens: lensRef.current, drawing_brain: brainRef.current });
-      setError(null); setTranscript([]); setEndedNote(null); setBoard(null); setView("graph"); setPaused(false); handoffRef.current = false; lastJeffLineRef.current = null;
+      setError(null); setTranscript([]); setEndedNote(null); setBoard(null); setView("graph"); handoffRef.current = false; lastJeffLineRef.current = null;
       const a = accessRef.current;
       sessionRef.current = history.startSession(ACCESS_LABEL[a]);
       setHistStats(history.historyStats());
@@ -563,7 +560,7 @@ function Jeff() {
     },
     onError: (msg) => { track("error", { where: "conversation", message: String(msg) }); setError(typeof msg === "string" ? msg : "Something went wrong with the connection."); },
   });
-  const { status, isSpeaking, isMuted, setMuted, startSession, endSession, sendUserMessage, sendContextualUpdate, getInputVolume, getOutputVolume } = conversation;
+  const { status, isSpeaking, isMuted, setMuted, startSession, endSession, sendUserMessage, sendUserActivity, sendContextualUpdate, getInputVolume, getOutputVolume } = conversation;
   const conversationRef = useRef<typeof conversation | null>(null);
   useEffect(() => { conversationRef.current = conversation; }, [conversation]);
   useEffect(() => {
@@ -608,11 +605,18 @@ function Jeff() {
     else { pendingAskRef.current = q; void start(); }
   }, [status, sendUserMessage, start, say]);
 
-  const mood: BlobMood = status === "connected" ? (paused ? "paused" : isSpeaking ? "speaking" : thinking ? "thinking" : "listening") : status === "connecting" ? "connecting" : "dormant";
+  const mood: BlobMood = status === "connected" ? (isSpeaking ? "speaking" : thinking ? "thinking" : "listening") : status === "connecting" ? "connecting" : "dormant";
 
-  // Cut Jeff off. The SDK has no interrupt call; an empty user turn is the
-  // cheapest thing that stops his audio and hands the floor back.
-  const interrupt = useCallback(() => { track("control", { action: "interrupt" }); try { sendUserMessage(""); } catch { /* not connected */ } }, [sendUserMessage]);
+  // User activity is the SDK's interruption signal. Unlike an empty user
+  // message, it stops the current response without inviting another one.
+  const interrupt = useCallback(() => {
+    track("control", { action: "interrupt" });
+    handoffRef.current = false;
+    setThinking(false);
+    if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
+    setMuted(false);
+    try { sendUserActivity(); } catch { /* not connected */ }
+  }, [sendUserActivity, setMuted]);
 
   // "I'm done": hand Jeff the floor now instead of waiting for him to decide
   // the pause was long enough. The mic goes quiet until he starts talking.
@@ -623,34 +627,22 @@ function Jeff() {
     think();
     try { sendUserMessage(""); } catch { /* not connected */ }
   }, [setMuted, sendUserMessage, think]);
-
-
-  const pause = useCallback(() => {
-    track("control", { action: "pause" });
-    handoffRef.current = false;
-    setPaused(true);
-    setMuted(true);
-    if (isSpeaking) { try { sendUserMessage(""); } catch { /* fine */ } }
-    tellJeffRef.current("The viewer paused the conversation. Say nothing until they come back.");
-  }, [setMuted, isSpeaking, sendUserMessage, setPaused]);
-  const resume = useCallback(() => {
-    track("control", { action: "resume" });
-    setPaused(false);
-    setMuted(false);
-    tellJeffRef.current("The viewer is back; pick up where you left off, in a few words.");
-  }, [setMuted, setPaused]);
-
-  // The blob is the one control: start when idle, cancel while connecting,
-  // cut in while Jeff talks, otherwise pause; tap again to resume.
+  // The blob controls turns: finish the person's turn while listening, or
+  // stop Jeff while he is responding. Hanging up is a separate visible action.
   const onTap = useCallback(() => {
     if (mood === "dormant") void start();
     else if (mood === "connecting") void endSession();
-    else if (mood === "paused") resume();
-    else if (mood === "speaking") interrupt();
-    else pause();
-  }, [mood, start, endSession, interrupt, pause, resume]);
+    else if (mood === "speaking" || mood === "thinking") interrupt();
+    else done();
+  }, [mood, start, endSession, interrupt, done]);
 
-  const stop = useCallback(() => { track("control", { action: "end" }); setPaused(false); void endSession(); }, [endSession, setPaused]);
+  const stop = useCallback(() => {
+    track("control", { action: "end" });
+    handoffRef.current = false;
+    setThinking(false);
+    setMuted(true);
+    void endSession();
+  }, [endSession, setMuted]);
 
   // Keyboard: Escape hangs up, Space cuts Jeff off or says "done" (unless typing in a field).
   useEffect(() => {
@@ -658,11 +650,11 @@ function Jeff() {
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       if (e.key === "Escape" && status === "connected") { e.preventDefault(); stop(); }
-      else if (e.key === " " && status === "connected" && !paused) { e.preventDefault(); if (isSpeaking) interrupt(); else done(); }
+      else if (e.key === " " && status === "connected") { e.preventDefault(); if (isSpeaking || thinking) interrupt(); else done(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [status, isSpeaking, paused, stop, interrupt, done]);
+  }, [status, isSpeaking, thinking, stop, interrupt, done]);
 
   const getLevel = useCallback(() => {
     try {
@@ -690,6 +682,7 @@ function Jeff() {
           mood={mood}
           getLevel={getLevel}
           onTap={onTap}
+          onEnd={stop}
           muted={isMuted}
           error={error}
           disabled={!people && mood === "dormant"}
