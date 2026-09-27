@@ -28,7 +28,7 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .jeff-page--collapsed { grid-template-columns: 1fr 0fr; }
 .jeff-page--collapsed .jeff-panel { overflow: hidden; padding-left: 0; padding-right: 0; }
 .jeff-page--collapsed .jeff-stage { border-right: 0; }
-.jeff-page:not(.jeff-page--collapsed) .voice-blob { width: min(72vmin, 42vw); height: min(72vmin, 42vw); }
+.jeff-page:not(.jeff-page--collapsed) .voice-blob { width: min(58vmin, 34vw); height: min(58vmin, 34vw); }
 
 @media (max-width: 860px) {
   .jeff-page, .jeff-page--collapsed { grid-template-columns: 1fr; }
@@ -51,15 +51,14 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 @media (max-width: 860px) { .jeff-stage { border-right: 0; min-height: auto; } }
 
 .jeff-brand {
-  position: absolute;
-  top: 24px;
-  left: 28px;
   display: flex;
+  justify-content: center;
   align-items: baseline;
   gap: 10px;
+  margin-bottom: 28px;
 }
 
-.jeff-brand h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+.jeff-brand h1 { font-size: 26px; font-weight: 500; letter-spacing: 0.02em; color: var(--jeff-ink); }
 .jeff-brand span { font-size: 12.5px; color: var(--jeff-muted); }
 
 .voice-dock {
@@ -79,8 +78,8 @@ html, body { background: #ffffff; color: var(--jeff-ink); }
 .voice-blob {
   --voice-level: 0;
   position: relative;
-  width: 72vmin;
-  height: 72vmin;
+  width: 58vmin;
+  height: 58vmin;
   margin: 0;
   padding: 0;
   border: 0;
