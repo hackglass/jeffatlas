@@ -35,8 +35,8 @@ GLM_URL = "https://open.bigmodel.cn/api/paas/v4"
 
 # Plain hello. Humor is part of Jeff's personality in the prompt, not a scripted opener.
 FIRST_MESSAGE = (
-    "Hey, I'm Jeff, the org chart that actually knows who does what around Boston. "
-    "Who are you trying to find, or what are you trying to figure out?"
+    "Hey, I'm Jeff. Been around the Boston office long enough to know who actually does what. "
+    "Pull up a chair. Who are you looking for, or what are you trying to figure out?"
 )
 
 # Client tools: the browser answers these (see src/lib/jeffTools.ts).
