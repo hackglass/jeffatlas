@@ -58,7 +58,7 @@ jobs:
         run: npm run build
         env:
           # For project sites this is "/<repo>"; empty for user/org sites.
-          PAGES_BASE_PATH: ""
+          PAGES_BASE_PATH: ${{ steps.setup_pages.outputs.base_path }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

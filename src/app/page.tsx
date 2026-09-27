@@ -9,7 +9,7 @@ export default function Home() {
 
       <div className="flex max-w-md flex-col items-center gap-3 text-center">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Hello, Trust Highway
+          Hello, Jeff!
         </h1>
         <p className="text-balance text-foreground/70">
           A Next.js App Router starter with TypeScript, Tailwind CSS and Lucide
